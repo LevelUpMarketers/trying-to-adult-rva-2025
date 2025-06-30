@@ -2,7 +2,7 @@
 <phpunit bootstrap="vendor/autoload.php">
     <testsuites>
         <testsuite name="Plugin Test Suite">
-            <directory>./tests</directory>
+            <directory>./app/public/wp-content/plugins/tta-management-plugin/tests</directory>
         </testsuite>
     </testsuites>
 </phpunit>
