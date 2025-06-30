@@ -1,6 +1,6 @@
 (function($){
   var headerSelector = '.site-header, .tta-header';
-  var extraOffset    = 200;
+  var extraOffset    = 260;
 
   function getHeaderHeight(){
     return $(headerSelector).first().outerHeight() || 0;

@@ -16,11 +16,15 @@ The layout consists of three columns:
    friends box is a **Your Upcoming Events** widget showing events for the logged
    in member. Beneath the “Join Your Friends” thumbnails a new **Your Events**
    section links to profile information, upcoming and past events, billing, and
-   logout. When visitors are not logged in the section displays a login link.
-   The sidebar still ends with the **Membership Perks** panel encouraging
-   upgrades.
+  logout. When visitors are not logged in the section displays a login link
+  that smoothly scrolls to the login form with extra offset so it remains
+  fully visible beneath sticky headers. The sidebar still ends with the
+  **Membership Perks** panel encouraging
+  upgrades.
 2. **Center column** – the list of upcoming events ordered by date. Each row links
-   to the corresponding Event Page. Event images are displayed at 150×150px using `object-fit: cover` and are right aligned.
+  to the corresponding Event Page. Event images are set as background images on
+  a 150×150&nbsp;px container so every row stays the same size without image
+  distortion. They are right aligned.
    Below each event name a list of key details appears with the same icons used on individual Event Pages.
 3. **Right column** – an advertising slot that displays one random ad image from
    the Ads admin page.
