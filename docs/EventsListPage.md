@@ -14,7 +14,11 @@ The layout consists of three columns:
    are highlighted and link to the first event scheduled on that date. Navigation
    happens over AJAX so changing months no longer resets pagination. Above the
    friends box is a **Your Upcoming Events** widget showing events for the logged
-   in member and a **Membership Perks** panel encouraging upgrades.
+   in member. Beneath the “Join Your Friends” thumbnails a new **Your Events**
+   section links to profile information, upcoming and past events, billing, and
+   logout. When visitors are not logged in the section displays a login link.
+   The sidebar still ends with the **Membership Perks** panel encouraging
+   upgrades.
 2. **Center column** – the list of upcoming events ordered by date. Each row links
    to the corresponding Event Page. Event images are constrained with `object-fit: contain`
    and are right aligned. Below each event name a list of key details appears with
