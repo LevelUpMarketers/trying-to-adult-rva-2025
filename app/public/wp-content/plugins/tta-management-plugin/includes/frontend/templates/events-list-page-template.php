@@ -34,7 +34,10 @@ $friend_imgs = [];
 foreach ( $events as $ev ) {
     $profiles = tta_get_event_attendee_profiles( $ev['id'] );
     foreach ( $profiles as $p ) {
-        $friend_imgs[] = intval( $p['img_id'] );
+        $friend_imgs[] = [
+            'img_id' => intval( $p['img_id'] ),
+            'name'   => trim( $p['first_name'] . ' ' . $p['last_name'] ),
+        ];
     }
 }
 
@@ -129,16 +132,17 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
             <h2><?php esc_html_e( 'Join Your Friends', 'tta' ); ?></h2>
             <p class="tta-join-sub"><?php esc_html_e( 'Members attending upcoming events', 'tta' ); ?></p>
             <div class="tta-friend-grid">
-                <?php foreach ( $friend_imgs as $img_id ) : ?>
-                    <?php if ( $img_id ) : ?>
+                <?php foreach ( $friend_imgs as $f ) : ?>
+                    <?php if ( $f['img_id'] ) : ?>
                         <?php
-                        $thumb = wp_get_attachment_image( $img_id, 'thumbnail', false, [
+                        $thumb = wp_get_attachment_image( $f['img_id'], 'thumbnail', false, [
                             'class'     => 'tta-friend-thumb tta-popup-img',
-                            'data-full' => wp_get_attachment_image_url( $img_id, 'large' ),
+                            'data-full' => wp_get_attachment_image_url( $f['img_id'], 'large' ),
+                            'alt'       => esc_attr( $f['name'] )
                         ] );
                         echo $thumb; ?>
                     <?php else : ?>
-                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" class="tta-friend-thumb tta-popup-img" data-full="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" alt="">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" class="tta-friend-thumb tta-popup-img" data-full="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" alt="<?php echo esc_attr( $f['name'] ); ?>">
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>

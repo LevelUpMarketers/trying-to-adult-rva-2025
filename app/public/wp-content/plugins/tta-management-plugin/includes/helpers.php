@@ -106,6 +106,43 @@ function tta_sanitize_email( $value ) {
 }
 
 /**
+ * Collect unique attendee emails from the nested attendee array structure.
+ *
+ * @param array $attendees Attendee data posted from checkout.
+ * @return array           Sanitized list of unique emails.
+ */
+function tta_collect_attendee_emails( array $attendees ) {
+    $emails = [];
+    foreach ( $attendees as $rows ) {
+        foreach ( (array) $rows as $row ) {
+            $email = tta_sanitize_email( $row['email'] ?? '' );
+            if ( $email ) {
+                $emails[] = $email;
+            }
+        }
+    }
+    return array_values( array_unique( $emails ) );
+}
+
+/**
+ * Get a member's current membership level by email.
+ *
+ * @param string $email Email address.
+ * @return string       free, basic or premium.
+ */
+function tta_get_membership_level_by_email( $email ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $email = sanitize_email( $email );
+    if ( ! $email ) {
+        return 'free';
+    }
+    $level = $wpdb->get_var( $wpdb->prepare( "SELECT membership_level FROM {$members_table} WHERE email = %s LIMIT 1", $email ) );
+    $level = $level ? strtolower( $level ) : 'free';
+    return in_array( $level, [ 'free', 'basic', 'premium' ], true ) ? $level : 'free';
+}
+
+/**
  * Sanitize a URL input preserving apostrophes.
  *
  * @param mixed $value
@@ -504,7 +541,7 @@ function tta_get_event_attendee_profiles( $event_id ) {
             'last_name'        => $hide ? '' : $ln,
             'img_id'           => $hide ? 0 : intval( $row['profileimgid'] ),
             'hide'             => $hide,
-            'membership_level' => $row['membership_level'] ?? 'free',
+            'membership_level' => tta_get_membership_level_by_email( $email ),
             'is_host'          => in_array( $lower, $host_lower, true ),
             'is_volunteer'     => in_array( $lower, $vol_lower, true ),
         ];

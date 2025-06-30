@@ -9,4 +9,5 @@ The script and its accompanying stylesheet are loaded on the Event Page, Events 
 ```
 
 Clicking the thumbnail opens an overlay showing the `data-full` image or falls back to the image's own `src` attribute.
+If the image has an `alt` attribute, that text appears beneath the popup as a caption.
 

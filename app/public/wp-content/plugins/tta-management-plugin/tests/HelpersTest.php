@@ -136,6 +136,7 @@ class HelpersTest extends TestCase {
     public function test_get_event_attendee_profiles_caches_results() {
         global $wpdb;
         $this->wpdb->event_row_data = [ 'ute_id' => 'ute1', 'hosts' => 'Ann Bee', 'volunteers' => '' ];
+        $this->wpdb->var_value = 'premium';
         $profiles1 = tta_get_event_attendee_profiles(5);
         $this->assertCount(1, $profiles1);
         $this->assertSame(1, $wpdb->row_calls);
