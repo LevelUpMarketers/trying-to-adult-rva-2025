@@ -16,20 +16,25 @@ jQuery(function($){
 });
 
 jQuery(function($){
-  $('.tta-accordion-toggle-image-gallery').on('click', function(){
-    var $btn  = $(this),
-        $cont = $btn.siblings('.tta-accordion-content'),
-        readMore = 'View Gallery',
-        showLess = 'Show less';
+  $('.tta-accordion-toggle-image-gallery')
+    .each(function(){
+      var txt = $(this).text().trim();
+      $(this).data('readMore', txt || 'View Gallery');
+    })
+    .on('click', function(){
+      var $btn  = $(this),
+          $cont = $btn.siblings('.tta-accordion-content'),
+          readMore = $btn.data('readMore') || 'View Gallery',
+          showLess = 'Show less';
 
-    if ( $cont.hasClass('expanded') ) {
-      $cont.removeClass('expanded');
-      $btn.text( readMore );
-    } else {
-      $cont.addClass('expanded');
-      $btn.text( showLess );
-    }
-  });
+      if ( $cont.hasClass('expanded') ) {
+        $cont.removeClass('expanded');
+        $btn.text( readMore );
+      } else {
+        $cont.addClass('expanded');
+        $btn.text( showLess );
+      }
+    });
 });
 
 
