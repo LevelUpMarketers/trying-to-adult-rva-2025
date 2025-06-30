@@ -10,7 +10,12 @@
   display: flex;
   gap: 20px;
 }
-
+li.tta-event-list-item > div > ul > a:hover, li.tta-event-list-item > div > a:hover, li.tta-event-list-item > div > ul > li > div > a:hover{
+  text-decoration:none;
+}
+li.tta-event-list-item > div > a > span:hover{
+  background-color: #2f516a;
+}
 .tta-events-left {
   flex: 0 0 220px;
 }

@@ -146,12 +146,12 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         <?php endif; ?>
 
         <section class="tta-event-section tta-your-events">
-            <h2 class="tta-eventpage-sidebar-heading"><?php esc_html_e( 'Your Events', 'tta' ); ?></h2>
+            <h2 class="tta-eventpage-sidebar-heading"><?php esc_html_e( 'Your Profile', 'tta' ); ?></h2>
             <ul class="tta-your-events-list">
             <?php if ( ! $context['is_logged_in'] ) : ?>
                 <li>
                     <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/login.svg' ); ?>" alt="<?php esc_attr_e( 'Login', 'tta' ); ?>">
-                    <div class="tta-event-details-icon-after"><a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Login to see info about your events', 'tta' ); ?></a></div>
+                    <div class="tta-event-details-icon-after"><a href="#loginform"><?php esc_html_e( 'Login to see info about your events', 'tta' ); ?></a></div>
                 </li>
             <?php else : ?>
                 <li>
@@ -267,12 +267,12 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                         <?php endif; ?>
                         <li>
                             <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt="">
-                            <div class="tta-event-details-icon-after"><strong><?php esc_html_e( 'Location:', 'tta' ); ?></strong> <a href="<?php echo esc_url( $maps_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $address ); ?></a></div>
+                            <div class="tta-event-details-icon-after"><strong><?php esc_html_e( 'Location:', 'tta' ); ?></strong> <a href="<?php echo esc_url( $page_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $address ); ?></a></div>
                         </li>
                     </ul>
                     <p class="tta-event-excerpt"><?php echo esc_html( $excerpt ); ?></p>
                     <p class="tta-event-remaining"><?php printf( esc_html__( '%d tickets remaining', 'tta' ), $remaining ); ?></p>
-                    <span class="tta-event-link"><?php esc_html_e( 'Get Your Tickets', 'tta' ); ?></span>
+                    <a href="<?php echo esc_url( $page_url ); ?>"><span class="tta-event-link"><?php esc_html_e( 'Get Your Tickets', 'tta' ); ?></span></a>
                 </div>
             </a>
         </li>
