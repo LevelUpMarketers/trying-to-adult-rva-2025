@@ -208,10 +208,9 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
     <?php foreach ( $events as $ev ) :
         $page_url = get_permalink( $ev['page_id'] );
         if ( ! empty( $ev['mainimageid'] ) ) {
-            $img_html = wp_get_attachment_image( intval( $ev['mainimageid'] ), 'medium' );
+            $img_url = wp_get_attachment_image_url( intval( $ev['mainimageid'] ), 'medium' );
         } else {
-            $default  = esc_url( TTA_PLUGIN_URL . 'assets/images/admin/default-event.png' );
-            $img_html = '<img src="' . $default . '" alt="" class="attachment-medium size-medium" />';
+            $img_url = TTA_PLUGIN_URL . 'assets/images/admin/default-event.png';
         }
         $ts       = strtotime( $ev['date'] );
         $date_str = date_i18n( 'm-d-Y', $ts );
@@ -241,7 +240,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
     ?>
         <li class="tta-event-list-item">
             <a href="<?php echo esc_url( $page_url ); ?>">
-                <div class="tta-event-thumb"><?php echo $img_html; ?></div>
+                <div class="tta-event-thumb" style="background-image:url('<?php echo esc_url( $img_url ); ?>');"></div>
                 <div class="tta-event-summary">
                     <h2 class="tta-event-name"><?php echo esc_html( $ev['name'] ); ?></h2>
                     <ul class="tta-event-detail-list">
