@@ -110,7 +110,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                 <?php if ( $member_events ) : ?>
                     <ul>
                         <?php foreach ( $member_events as $mev ) : ?>
-                            <li><a href="<?php echo esc_url( get_permalink( $mev['page_id'] ) ); ?>"><?php echo esc_html( $mev['name'] ); ?></a> <span class="tta-member-date"><?php echo esc_html( date_i18n( 'M j', strtotime( $mev['date'] ) ) ); ?></span></li>
+                             <li><a href="<?php echo esc_url( get_permalink( $mev['page_id'] ) ); ?>"><?php echo esc_html( $mev['name'] ); ?></a> <span class="tta-member-date">&nbsp;- <?php echo esc_html( date_i18n( 'F j', strtotime( $mev['date'] ) ) ); ?></span></li>
                         <?php endforeach; ?>
                     </ul>
                 <?php else : ?>
