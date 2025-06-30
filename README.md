@@ -1,6 +1,6 @@
 # Trying To Adult Management Plugin
 
-This plugin integrates with Authorize.Net for payment processing. For development you may place the API credentials in an `authnet-config.php` file at the plugin root or set them as environment variables before WordPress loads:
+This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin` within this repository. For development you may place the API credentials in an `authnet-config.php` file at the plugin root or set them as environment variables before WordPress loads:
 
 ```
 define('TTA_AUTHNET_LOGIN_ID', 'your_login_id');
