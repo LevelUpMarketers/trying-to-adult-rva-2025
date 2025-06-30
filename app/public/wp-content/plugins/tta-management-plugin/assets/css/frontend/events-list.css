@@ -148,10 +148,9 @@ li.tta-event-list-item > div > a > span:hover{
 
 .tta-event-thumb img {
   width: 100%;
-  height: auto;
-  max-height: 150px;
-  object-fit: contain;
-  object-position: right center;
+  height: 150px;
+  object-fit: cover;
+  object-position: center;
   border-radius: 4px;
 }
 
