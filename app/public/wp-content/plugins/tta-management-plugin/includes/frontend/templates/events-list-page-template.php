@@ -151,7 +151,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
             <?php if ( ! $context['is_logged_in'] ) : ?>
                 <li>
                     <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/login.svg' ); ?>" alt="<?php esc_attr_e( 'Login', 'tta' ); ?>">
-                    <div class="tta-event-details-icon-after"><a href="#loginform"><?php esc_html_e( 'Login to see info about your events', 'tta' ); ?></a></div>
+                    <div class="tta-event-details-icon-after"><a href="#loginform" class="tta-scroll-login"><?php esc_html_e( 'Login to see info about your events', 'tta' ); ?></a></div>
                 </li>
             <?php else : ?>
                 <li>

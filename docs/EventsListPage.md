@@ -20,9 +20,8 @@ The layout consists of three columns:
    The sidebar still ends with the **Membership Perks** panel encouraging
    upgrades.
 2. **Center column** – the list of upcoming events ordered by date. Each row links
-   to the corresponding Event Page. Event images are constrained with `object-fit: contain`
-   and are right aligned. Below each event name a list of key details appears with
-   the same icons used on individual Event Pages.
+   to the corresponding Event Page. Event images are displayed at 150×150px using `object-fit: cover` and are right aligned.
+   Below each event name a list of key details appears with the same icons used on individual Event Pages.
 3. **Right column** – an advertising slot that displays one random ad image from
    the Ads admin page.
 

@@ -250,6 +250,13 @@ class TTA_Assets {
                 TTA_PLUGIN_VERSION,
                 true
             );
+            wp_enqueue_script(
+                'tta-eventslist-js',
+                TTA_PLUGIN_URL . 'assets/js/frontend/events-list-page.js',
+                [ 'jquery' ],
+                TTA_PLUGIN_VERSION,
+                true
+            );
             $current_year = intval( date_i18n( 'Y' ) );
             $year  = isset( $_GET['cal_year'] ) ? intval( $_GET['cal_year'] ) : $current_year;
             $month = isset( $_GET['cal_month'] ) ? intval( $_GET['cal_month'] ) : intval( date_i18n( 'n' ) );
