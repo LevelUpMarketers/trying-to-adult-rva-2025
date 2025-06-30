@@ -29,7 +29,7 @@ The layout consists of three columns:
 3. **Right column** – an advertising slot that displays one random ad image from
    the Ads admin page.
 
-Profile thumbnails within the “Join Your Friends” section open a larger version in a simple popup when clicked. The popup is disabled on very small screens.
+Profile thumbnails within the “Join Your Friends” section open a larger version in a simple popup when clicked. Duplicate attendees are filtered out so each member only appears once. The first twelve profiles are shown initially with a **View All Attendees** button to reveal the rest. The popup is disabled on very small screens.
 
 On small screens the columns stack vertically for a mobile‑friendly layout.
 

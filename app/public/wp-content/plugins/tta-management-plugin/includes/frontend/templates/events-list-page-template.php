@@ -31,9 +31,15 @@ $days_in_month = (int) date( 't', mktime( 0, 0, 0, $month, 1, $year ) );
 $first_wday = (int) date( 'w', mktime( 0, 0, 0, $month, 1, $year ) );
 
 $friend_imgs = [];
+$seen        = [];
 foreach ( $events as $ev ) {
     $profiles = tta_get_event_attendee_profiles( $ev['id'] );
     foreach ( $profiles as $p ) {
+        $key = strtolower( trim( $p['first_name'] . ' ' . $p['last_name'] ) . '|' . $p['img_id'] );
+        if ( isset( $seen[ $key ] ) ) {
+            continue;
+        }
+        $seen[ $key ] = true;
         $friend_imgs[] = [
             'img_id' => intval( $p['img_id'] ),
             'name'   => trim( $p['first_name'] . ' ' . $p['last_name'] ),
@@ -128,23 +134,31 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         </div>
 
         <?php if ( $friend_imgs ) : ?>
-        <div class="tta-join-friends">
-            <h2><?php esc_html_e( 'Join Your Friends', 'tta' ); ?></h2>
-            <p class="tta-join-sub"><?php esc_html_e( 'Members attending upcoming events', 'tta' ); ?></p>
-            <div class="tta-friend-grid">
-                <?php foreach ( $friend_imgs as $f ) : ?>
-                    <?php if ( $f['img_id'] ) : ?>
-                        <?php
-                        $thumb = wp_get_attachment_image( $f['img_id'], 'thumbnail', false, [
-                            'class'     => 'tta-friend-thumb tta-popup-img',
-                            'data-full' => wp_get_attachment_image_url( $f['img_id'], 'large' ),
-                            'alt'       => esc_attr( $f['name'] )
-                        ] );
-                        echo $thumb; ?>
-                    <?php else : ?>
-                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" class="tta-friend-thumb tta-popup-img" data-full="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" alt="<?php echo esc_attr( $f['name'] ); ?>">
-                    <?php endif; ?>
-                <?php endforeach; ?>
+        <div class="tta-join-friends tta-event-image-gallery-accordion">
+            <div class="tta-accordion">
+                <div class="tta-accordion-content">
+                    <h2><?php esc_html_e( 'Join Your Friends', 'tta' ); ?></h2>
+                    <p class="tta-join-sub"><?php esc_html_e( 'Members attending upcoming events', 'tta' ); ?></p>
+                    <div class="tta-friend-grid">
+                        <?php $fi = 0; foreach ( $friend_imgs as $f ) : ?>
+                            <?php $extra = $fi >= 12 ? ' tta-extra-friend' : ''; ?>
+                            <?php if ( $f['img_id'] ) : ?>
+                                <?php
+                                $thumb = wp_get_attachment_image( $f['img_id'], 'thumbnail', false, [
+                                    'class'     => 'tta-friend-thumb tta-popup-img' . $extra,
+                                    'data-full' => wp_get_attachment_image_url( $f['img_id'], 'large' ),
+                                    'alt'       => esc_attr( $f['name'] )
+                                ] );
+                                echo $thumb; ?>
+                            <?php else : ?>
+                                <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" class="tta-friend-thumb tta-popup-img<?php echo esc_attr( $extra ); ?>" data-full="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' ); ?>" alt="<?php echo esc_attr( $f['name'] ); ?>">
+                            <?php endif; ?>
+                        <?php $fi++; endforeach; ?>
+                    </div>
+                </div>
+                <?php if ( count( $friend_imgs ) > 12 ) : ?>
+                    <button type="button" class="tta-button tta-button-primary tta-accordion-toggle-image-gallery"><?php esc_html_e( 'View All Attendees', 'tta' ); ?></button>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>

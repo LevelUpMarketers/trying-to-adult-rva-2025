@@ -68,11 +68,32 @@ li.tta-event-list-item > div > a > span:hover{
   flex-wrap: wrap;
   gap: 6px;
 }
+.tta-friend-grid .tta-extra-friend { display:none; }
+.tta-friend-grid.expanded .tta-extra-friend { display:inline-block; }
 .tta-friend-thumb {
   width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
+}
+
+.tta-accordion-content {
+  max-height: 200px;
+  overflow: hidden;
+  position: relative;
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 4px;
+  transition: max-height 0.4s ease;
+}
+.tta-accordion-content.expanded {
+  max-height: 2000px;
+}
+.tta-accordion-toggle-image-gallery {
+  display: block;
+  margin: 0.5em auto;
+  padding: 0.5em 1em;
   cursor: pointer;
 }
 
