@@ -4,6 +4,9 @@ jQuery(function($){
     var wrap = $('<div class="tta-popup-wrap"/>');
     var img = $('<img/>').attr('src', url).attr('alt', alt);
     wrap.append(img);
+    if (alt) {
+      wrap.append($('<p class="tta-popup-caption"/>').text(alt));
+    }
     overlay.append(wrap);
     $('body').append(overlay);
     overlay.on('click', function(){ overlay.remove(); });

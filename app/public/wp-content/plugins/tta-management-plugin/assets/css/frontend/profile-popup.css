@@ -15,4 +15,9 @@
   max-height: 90vh;
   border-radius: 4px;
 }
+.tta-popup-caption {
+  margin-top: 8px;
+  text-align: center;
+  color: #fff;
+}
 

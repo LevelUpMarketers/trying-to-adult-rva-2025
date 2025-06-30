@@ -73,6 +73,7 @@ li.tta-event-list-item > div > a > span:hover{
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
 }
 
 .tta-calendar {
