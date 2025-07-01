@@ -154,6 +154,9 @@ class TTA_Plugin {
         // Expired cart cleanup
         TTA_Cart_Cleanup::init();
         TTA_Event_Archiver::init();
+
+        // Clear plugin caches after a successful checkout
+        add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );
     }
 }
 ?>

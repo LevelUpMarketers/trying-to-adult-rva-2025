@@ -87,6 +87,9 @@ li.tta-event-list-item > div > a > span:hover{
   border-radius: 4px;
   transition: max-height 0.4s ease;
 }
+.tta-accordion-content.tta-auto-height {
+  max-height: none;
+}
 .tta-accordion-content.expanded {
   max-height: 2000px;
 }
