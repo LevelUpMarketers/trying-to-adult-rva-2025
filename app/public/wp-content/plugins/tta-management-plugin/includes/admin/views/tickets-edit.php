@@ -308,7 +308,18 @@ $tickets = $wpdb->get_results(
                 </tr>
               </thead>
               <tbody>
-                <?php foreach ( $attendees as $a ) : ?>
+                <?php $last_tx = 0; foreach ( $attendees as $a ) : ?>
+                  <?php
+                  $txn_id = intval( $a['transaction_id'] );
+                  if ( $txn_id !== $last_tx ) :
+                    $last_tx = $txn_id;
+                  ?>
+                    <tr class="tta-transaction-group">
+                      <td colspan="6" style="background:#f9f9f9;font-weight:bold;">
+                        <?php echo esc_html( sprintf( __( 'Transaction #%d', 'tta' ), $txn_id ) ); ?>
+                      </td>
+                    </tr>
+                  <?php endif; ?>
                   <?php
                   $name  = trim( $a['first_name'] . ' ' . $a['last_name'] );
                   $email = $a['email'];

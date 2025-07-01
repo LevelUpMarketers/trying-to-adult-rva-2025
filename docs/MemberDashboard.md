@@ -22,6 +22,7 @@ Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the
 `tta_attendees` table.
 Event thumbnails use the medium image size and are scaled to a consistent width so nothing is cropped.
+Once an attendee is refunded and their attendance cancelled, the event is removed from this tab.
 
 ## Past Events Tab
 
