@@ -10,4 +10,5 @@ admins specify a partial refund before clicking either **Refund & Cancel
 Attendance** or **Refund & Keep Attendance**. The first option both issues the
 refund and removes the attendee from the event while increasing the available
 ticket count. The second option refunds the amount but leaves the attendee
-registered.
+registered. If the transaction has not yet settled, the refund request will
+automatically void the original charge instead.
