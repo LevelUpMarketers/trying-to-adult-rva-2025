@@ -30,6 +30,7 @@ The layout consists of three columns:
    the Ads admin page.
 
 Profile thumbnails within the “Join Your Friends” section open a larger version in a simple popup when clicked. Duplicate attendees are filtered out so each member only appears once. The first twelve profiles are shown initially with a **View All Attendees** button to reveal the rest. The popup is disabled on very small screens.
+When twelve or fewer profiles are available the box auto-expands so all thumbnails are fully visible without needing the button.
 
 On small screens the columns stack vertically for a mobile‑friendly layout.
 

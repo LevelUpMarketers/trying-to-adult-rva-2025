@@ -136,7 +136,8 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         <?php if ( $friend_imgs ) : ?>
         <div class="tta-join-friends tta-event-image-gallery-accordion">
             <div class="tta-accordion">
-                <div class="tta-accordion-content">
+                <?php $friend_count = count( $friend_imgs ); ?>
+                <div class="tta-accordion-content<?php echo ( $friend_count <= 12 ) ? ' tta-auto-height' : ''; ?>">
                     <h2><?php esc_html_e( 'Join Your Friends', 'tta' ); ?></h2>
                     <p class="tta-join-sub"><?php esc_html_e( 'Members attending upcoming events', 'tta' ); ?></p>
                     <div class="tta-friend-grid">
@@ -156,7 +157,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                         <?php $fi++; endforeach; ?>
                     </div>
                 </div>
-                <?php if ( count( $friend_imgs ) > 12 ) : ?>
+                <?php if ( $friend_count > 12 ) : ?>
                     <button type="button" class="tta-button tta-button-primary tta-accordion-toggle-image-gallery"><?php esc_html_e( 'View All Attendees', 'tta' ); ?></button>
                 <?php endif; ?>
             </div>
