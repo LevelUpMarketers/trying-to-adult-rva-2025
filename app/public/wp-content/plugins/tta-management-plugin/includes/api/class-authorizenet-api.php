@@ -220,6 +220,49 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
+     * Void a previous transaction that has not yet settled.
+     *
+     * @param string $transaction_id Original Authorize.Net transaction ID.
+     * @return array { success:bool, transaction_id?:string, error?:string }
+     */
+    public function void( $transaction_id ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
+        }
+
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication->setName( $this->login_id );
+        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+
+        $transactionRequest = new AnetAPI\TransactionRequestType();
+        $transactionRequest->setTransactionType( 'voidTransaction' );
+        $transactionRequest->setRefTransId( $transaction_id );
+
+        $request = new AnetAPI\CreateTransactionRequest();
+        $request->setMerchantAuthentication( $merchantAuthentication );
+        $request->setTransactionRequest( $transactionRequest );
+
+        $controller = new AnetController\CreateTransactionController( $request );
+        $response   = $controller->executeWithApiResponse( $this->environment );
+
+        if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
+            $tresponse = $response->getTransactionResponse();
+            if ( $tresponse && $tresponse->getResponseCode() === '1' ) {
+                return [ 'success' => true, 'transaction_id' => $tresponse->getTransId() ];
+            }
+            return [
+                'success' => false,
+                'error'   => $this->format_error( $response, $tresponse, 'Void failed' ),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $this->format_error( $response, null, 'API error' ),
+        ];
+    }
+
+    /**
      * Create a recurring subscription via the Authorize.Net API.
      *
      * @param float  $amount     Monthly charge amount.
