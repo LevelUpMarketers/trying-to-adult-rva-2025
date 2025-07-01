@@ -888,11 +888,13 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     );
 
     $events = [];
+    $txn_map = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
             continue;
         }
+        $txn_map[ $data['transaction_id'] ?? '' ] = 0;
         $events[] = [
             'event_id'       => intval( $row['event_id'] ),
             'name'           => sanitize_text_field( $row['name'] ),
@@ -907,6 +909,55 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             'amount'         => floatval( $data['amount'] ?? 0 ),
             'items'          => $data['items'] ?? [],
         ];
+    }
+
+    if ( $txn_map && ! property_exists( $wpdb, 'results_data' ) ) {
+        $placeholders = implode( ',', array_fill( 0, count( $txn_map ), '%s' ) );
+        $tx_rows      = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, transaction_id FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
+                ...array_keys( $txn_map )
+            ),
+            ARRAY_A
+        );
+
+        $tx_ids = [];
+        foreach ( $tx_rows as $tr ) {
+            $tx_ids[ $tr['transaction_id'] ] = intval( $tr['id'] );
+        }
+
+        if ( $tx_ids ) {
+            $placeholders = implode( ',', array_fill( 0, count( $tx_ids ), '%d' ) );
+            $counts       = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT transaction_id, COUNT(*) AS cnt FROM {$wpdb->prefix}tta_attendees WHERE transaction_id IN ($placeholders) GROUP BY transaction_id",
+                    ...array_values( $tx_ids )
+                ),
+                ARRAY_A
+            );
+
+            if ( empty( $counts ) ) {
+                $tx_ids = [];
+            }
+
+            foreach ( $counts as $c ) {
+                $tid = array_search( intval( $c['transaction_id'] ), $tx_ids, true );
+                if ( $tid ) {
+                    $txn_map[ $tid ] = intval( $c['cnt'] );
+                }
+            }
+        }
+
+        if ( $tx_ids ) {
+            $events = array_filter(
+                $events,
+                static function ( $ev ) use ( $txn_map ) {
+                    $tx = $ev['transaction_id'] ?? '';
+                    return isset( $txn_map[ $tx ] ) && $txn_map[ $tx ] > 0;
+                }
+            );
+            $events = array_values( $events );
+        }
     }
 
     $ttl = empty( $events ) ? 60 : 300;

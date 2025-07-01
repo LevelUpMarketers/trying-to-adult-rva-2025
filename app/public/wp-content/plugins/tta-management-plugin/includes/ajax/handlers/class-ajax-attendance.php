@@ -82,7 +82,19 @@ class TTA_Ajax_Attendance {
         }
 
         if ( $amount <= 0 ) {
-            $amount = floatval( $tx['amount'] );
+            $details = json_decode( $tx['details'], true );
+            $amount  = 0;
+            if ( is_array( $details ) ) {
+                foreach ( $details as $item ) {
+                    if ( intval( $item['ticket_id'] ?? 0 ) === intval( $att['ticket_id'] ) ) {
+                        $amount = floatval( $item['final_price'] ?? 0 );
+                        break;
+                    }
+                }
+            }
+            if ( $amount <= 0 ) {
+                $amount = floatval( $tx['amount'] );
+            }
         }
 
         $api = new TTA_AuthorizeNet_API();

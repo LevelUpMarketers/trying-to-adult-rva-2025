@@ -11,4 +11,6 @@ Attendance** or **Refund & Keep Attendance**. The first option both issues the
 refund and removes the attendee from the event while increasing the available
 ticket count. The second option refunds the amount but leaves the attendee
 registered. If the transaction has not yet settled, the refund request will
-automatically void the original charge instead.
+automatically void the original charge instead. Leaving the **Refund $** field
+blank refunds the full amount paid for that attendee only, not the entire
+transaction.
