@@ -52,6 +52,8 @@ class TTA_Ajax_Cart {
             $existing_tickets[ intval( $row['ticket_id'] ) ] = intval( $row['quantity'] );
         }
 
+        $added   = false;
+        $message = '';
         foreach ( $items as $it ) {
             $ticket_id = intval( $it['ticket_id'] );
             $qty       = intval( $it['quantity'] );
@@ -78,6 +80,11 @@ class TTA_Ajax_Cart {
             if ( $diff > 0 && $diff > $allowed_total ) {
                 $qty  = $existing_qty + $allowed_total;
                 $diff = $allowed_total;
+                if ( $purchased >= 2 ) {
+                    $message = sprintf( __( "We're sorry, but you've already purchased %d ticket(s). There's a limit of two tickets total per event.", 'tta' ), $purchased );
+                } else {
+                    $message = __( "We're sorry, there's a limit of two tickets total per event.", 'tta' );
+                }
             }
 
             if ( 'basic' === $membership_level ) {
@@ -92,15 +99,23 @@ class TTA_Ajax_Cart {
                 $cart->remove_item( $ticket_id );
             } else {
                 $cart->add_item( $ticket_id, $qty, $price );
+                if ( $diff > 0 ) {
+                    $added = true;
+                }
                 $existing_events[ $event_ute ] = ( $existing_events[ $event_ute ] ?? 0 ) + max( 0, $diff );
                 $existing_tickets[ $ticket_id ] = $qty;
             }
         }
 
-        // Always send users to the dedicated cart page
-        $cart_url = home_url( '/cart' );
+        $data = [];
+        if ( $added ) {
+            $data['cart_url'] = home_url( '/cart' );
+        }
+        if ( $message ) {
+            $data['message'] = $message;
+        }
 
-        wp_send_json_success( [ 'cart_url' => $cart_url ] );
+        wp_send_json_success( $data );
     }
 
     public static function ajax_update_cart() {

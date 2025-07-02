@@ -28,7 +28,12 @@ jQuery(function($){
       nonce:  tta_ajax.nonce
     }, function(res){
       if ( res.success ) {
-        window.location.href = res.data.cart_url;
+        if ( res.data.message && window.ttaShowNotice ) {
+          window.ttaShowNotice($('.tta-qty-input').first(), res.data.message);
+        }
+        if ( res.data.cart_url ) {
+          window.location.href = res.data.cart_url;
+        }
       } else {
         alert( res.data.message || 'Error adding to cart.' );
       }

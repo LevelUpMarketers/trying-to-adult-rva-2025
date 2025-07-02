@@ -121,6 +121,24 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
+
+    foreach ( $refund_rows as $row ) {
+        $data   = json_decode( $row['action_data'], true );
+        $amount = -floatval( $data['amount'] ?? 0 );
+        $eid    = intval( $row['event_id'] );
+        $name   = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
+        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
+        $url    = '';
+        if ( $page_id && function_exists( 'get_permalink' ) ) {
+            $url = get_permalink( $page_id );
+        }
+        $history[] = [
+            'date'        => $row['action_date'],
+            'description' => sanitize_text_field( $name ),
+            'amount'      => $amount,
+            'url'         => $url,
+        ];
+    }
     return array_values( array_unique( $emails ) );
 }
 
@@ -976,10 +994,6 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 ARRAY_A
             );
 
-            if ( empty( $counts ) ) {
-                $tx_ids = [];
-            }
-
             foreach ( $counts as $c ) {
                 $tid = array_search( intval( $c['transaction_id'] ), $tx_ids, true );
                 if ( $tid ) {
@@ -988,7 +1002,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             }
         }
 
-        if ( $tx_ids ) {
+        if ( $txn_map ) {
             $events = array_filter(
                 $events,
                 static function ( $ev ) use ( $txn_map ) {
@@ -1211,7 +1225,8 @@ function tta_get_member_billing_history( $wp_user_id ) {
     }
 
     global $wpdb;
-    $tx_table = $wpdb->prefix . 'tta_transactions';
+    $tx_table   = $wpdb->prefix . 'tta_transactions';
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
@@ -1221,7 +1236,42 @@ function tta_get_member_billing_history( $wp_user_id ) {
         ARRAY_A
     );
 
-    $history = [];
+    $refund_rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT event_id, action_data, action_date FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' ORDER BY action_date DESC",
+            $wp_user_id
+        ),
+        ARRAY_A
+    );
+
+    $history    = [];
+    $event_map  = [];
+    $refund_ids = [];
+    foreach ( $refund_rows as $r ) {
+        $eid = intval( $r['event_id'] );
+        if ( $eid ) {
+            $refund_ids[] = $eid;
+        }
+    }
+
+    if ( $refund_ids ) {
+        $placeholders = implode( ',', array_fill( 0, count( $refund_ids ), '%d' ) );
+        $events_table  = $wpdb->prefix . 'tta_events';
+        $archive_table = $wpdb->prefix . 'tta_events_archive';
+        $ev_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, name, page_id FROM {$events_table} WHERE id IN ($placeholders) UNION SELECT id, name, page_id FROM {$archive_table} WHERE id IN ($placeholders)",
+                [...$refund_ids, ...$refund_ids]
+            ),
+            ARRAY_A
+        );
+        foreach ( $ev_rows as $er ) {
+            $event_map[ intval( $er['id'] ) ] = [
+                'name'    => sanitize_text_field( $er['name'] ),
+                'page_id' => intval( $er['page_id'] ),
+            ];
+        }
+    }
     foreach ( $rows as $row ) {
         $items = json_decode( $row['details'], true );
         if ( ! is_array( $items ) ) {
