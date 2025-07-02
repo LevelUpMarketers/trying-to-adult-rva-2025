@@ -263,6 +263,44 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
+     * Retrieve the current status for a transaction.
+     *
+     * @param string $transaction_id Authorize.Net transaction ID.
+     * @return array { success:bool, status?:string, error?:string }
+     */
+    public function get_transaction_status( $transaction_id ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
+        }
+
+        $auth = new AnetAPI\MerchantAuthenticationType();
+        $auth->setName( $this->login_id );
+        $auth->setTransactionKey( $this->transaction_key );
+
+        $request = new AnetAPI\GetTransactionDetailsRequest();
+        $request->setMerchantAuthentication( $auth );
+        $request->setTransId( $transaction_id );
+
+        $controller = new AnetController\GetTransactionDetailsController( $request );
+        $response   = $controller->executeWithApiResponse( $this->environment );
+
+        if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
+            $txn = $response->getTransaction();
+            if ( $txn && method_exists( $txn, 'getTransactionStatus' ) ) {
+                return [
+                    'success' => true,
+                    'status'  => $txn->getTransactionStatus(),
+                ];
+            }
+        }
+
+        return [
+            'success' => false,
+            'error'   => $this->format_error( $response, null, 'API error' ),
+        ];
+    }
+
+    /**
      * Create a recurring subscription via the Authorize.Net API.
      *
      * @param float  $amount     Monthly charge amount.

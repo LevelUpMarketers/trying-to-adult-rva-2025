@@ -129,16 +129,25 @@ class TTA_Ajax_Attendance {
             }
         }
 
-        $api = new TTA_AuthorizeNet_API();
-        $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
-        if ( ! $res['success'] ) {
-            $msg = strtolower( $res['error'] );
-            if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) ) {
-                $res = $api->void( $tx['transaction_id'] );
-            }
+        $api         = new TTA_AuthorizeNet_API();
+        $status_res  = $api->get_transaction_status( $tx['transaction_id'] );
+        $status_str  = strtolower( $status_res['status'] ?? '' );
+        $should_void = ( false !== strpos( $status_str, 'pending' ) );
+
+        if ( $should_void ) {
+            $res = $api->void( $tx['transaction_id'] );
+        } else {
+            $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
             if ( ! $res['success'] ) {
-                wp_send_json_error( [ 'message' => $res['error'] ] );
+                $msg = strtolower( $res['error'] );
+                if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) ) {
+                    $res = $api->void( $tx['transaction_id'] );
+                }
             }
+        }
+
+        if ( ! $res['success'] ) {
+            wp_send_json_error( [ 'message' => $res['error'] ] );
         }
 
         $wpdb->update(
