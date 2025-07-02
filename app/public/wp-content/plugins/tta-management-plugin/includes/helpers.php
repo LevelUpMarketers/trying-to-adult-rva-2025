@@ -367,24 +367,31 @@ function tta_get_ticket_attendees( $ticket_id ) {
     $txn_ids = array_unique( array_filter( $txn_ids ) );
 
     $price_map = [];
+    $txn_map   = [];
     if ( $txn_ids ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_ids ), '%d' ) );
         $txn_rows     = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
+                "SELECT id, transaction_id, created_at, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
                 $txn_ids
             ),
             ARRAY_A
         );
 
         foreach ( $txn_rows as $tx ) {
+            $txn_id = intval( $tx['id'] );
+            $txn_map[ $txn_id ] = [
+                'gateway_id' => sanitize_text_field( $tx['transaction_id'] ),
+                'created_at' => $tx['created_at'],
+            ];
+
             $details = json_decode( $tx['details'], true );
             if ( ! is_array( $details ) ) {
                 continue;
             }
             foreach ( $details as $item ) {
                 if ( intval( $item['ticket_id'] ?? 0 ) === $ticket_id ) {
-                    $price_map[ intval( $tx['id'] ) ] = floatval( $item['final_price'] ?? 0 );
+                    $price_map[ $txn_id ] = floatval( $item['final_price'] ?? 0 );
                     break;
                 }
             }
@@ -397,8 +404,10 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $r['last_name']  = sanitize_text_field( $r['last_name'] );
         $r['email']      = sanitize_email( $r['email'] );
         $r['phone']      = sanitize_text_field( $r['phone'] );
-        $txid            = intval( $r['transaction_id'] );
-        $r['amount_paid'] = $price_map[ $txid ] ?? 0;
+        $txid             = intval( $r['transaction_id'] );
+        $r['amount_paid']  = $price_map[ $txid ] ?? 0;
+        $r['gateway_id']   = $txn_map[ $txid ]['gateway_id'] ?? '';
+        $r['created_at']   = $txn_map[ $txid ]['created_at'] ?? '';
     }
 
     $ttl = empty( $rows ) ? 60 : 300;

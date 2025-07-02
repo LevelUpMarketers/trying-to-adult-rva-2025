@@ -7,6 +7,7 @@ class TTA_Ajax_Attendance {
         add_action( 'wp_ajax_tta_set_attendance', [ __CLASS__, 'set_attendance' ] );
         add_action( 'wp_ajax_tta_remove_attendee', [ __CLASS__, 'remove_attendee' ] );
         add_action( 'wp_ajax_tta_refund_attendee', [ __CLASS__, 'refund_attendee' ] );
+        add_action( 'wp_ajax_tta_cancel_attendance', [ __CLASS__, 'cancel_attendance' ] );
     }
 
     public static function get_event_attendance() {
@@ -52,6 +53,37 @@ class TTA_Ajax_Attendance {
         $wpdb->delete( $table, [ 'id' => $id ], [ '%d' ] );
         TTA_Cache::flush();
         wp_send_json_success( [ 'message' => __( 'Attendee removed.', 'tta' ) ] );
+    }
+
+    public static function cancel_attendance() {
+        check_ajax_referer( 'tta_attendee_admin_action', 'nonce' );
+
+        $id = intval( $_POST['attendee_id'] ?? 0 );
+        if ( ! $id ) {
+            wp_send_json_error( [ 'message' => 'missing attendee' ] );
+        }
+
+        global $wpdb;
+        $att_table   = $wpdb->prefix . 'tta_attendees';
+        $ticket_table = $wpdb->prefix . 'tta_tickets';
+
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT ticket_id FROM {$att_table} WHERE id = %d", $id ), ARRAY_A );
+        if ( ! $att ) {
+            wp_send_json_error( [ 'message' => 'not found' ] );
+        }
+
+        $ticket = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ), ARRAY_A );
+
+        $wpdb->delete( $att_table, [ 'id' => $id ], [ '%d' ] );
+        if ( $ticket ) {
+            $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
+            if ( ! empty( $ticket['event_ute_id'] ) ) {
+                TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
+            }
+        }
+
+        TTA_Cache::flush();
+        wp_send_json_success( [ 'message' => __( 'Attendance cancelled.', 'tta' ) ] );
     }
 
     public static function refund_attendee() {
