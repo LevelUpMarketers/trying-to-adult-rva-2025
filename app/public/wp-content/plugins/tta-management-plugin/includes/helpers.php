@@ -248,6 +248,10 @@ function tta_get_cart_notice() {
  */
 function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
     global $wpdb;
+
+    $user_id      = intval( $user_id );
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+
     $rows = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND action_type = 'purchase'",
@@ -255,6 +259,7 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
         ),
         ARRAY_A
     );
+
     $total = 0;
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
@@ -264,7 +269,33 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
             }
         }
     }
-    return $total;
+
+    $event_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+            $event_ute_id,
+            $event_ute_id
+        )
+    );
+
+    if ( $event_id ) {
+        $refunds = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND event_id = %d AND action_type = 'refund'",
+                $user_id,
+                $event_id
+            ),
+            ARRAY_A
+        );
+        foreach ( $refunds as $row ) {
+            $data = json_decode( $row['action_data'], true );
+            if ( ! empty( $data['cancel'] ) ) {
+                $total -= 1;
+            }
+        }
+    }
+
+    return max( 0, $total );
 }
 
 /**

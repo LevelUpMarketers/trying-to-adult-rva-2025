@@ -14,7 +14,7 @@ The **Paid** column shows the amount charged for that attendee's ticket. The
 both issues the refund and removes the attendee from the event while increasing
 the available ticket count. The second option refunds the amount but leaves the
 attendee registered. For cases where no refund is needed, a **Cancel Attendance
-(No Refund)** button simply frees the ticket and removes the attendee. If the
+(No Refund)** button simply frees the ticket and removes the attendee. Any refund or cancellation also reduces the member's purchase tally so they can buy additional tickets up to the limit. If the
 transaction has not yet settled, the plugin now checks the transaction status
 and automatically voids the original charge. Leaving the **Refund $** field blank refunds the full amount paid for
 that attendee only, not the entire transaction.

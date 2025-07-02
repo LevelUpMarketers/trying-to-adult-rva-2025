@@ -8,7 +8,17 @@ class DummyWpdbCartHelper {
     public function get_results($query,$output=ARRAY_A){
         if(preg_match('/FROM (\S+) WHERE wpuserid = (\d+)/',$query,$m)){
             $table=$m[1]; $uid=intval($m[2]);
-            return $this->data[$table][$uid] ?? [];
+            $rows = $this->data[$table][$uid] ?? [];
+            if (strpos($query, "action_type = 'refund'") !== false) {
+                $rows = array_filter($rows, function($r){ return ($r['action_type'] ?? '') === 'refund'; });
+            } elseif (strpos($query, "action_type = 'purchase'") !== false) {
+                $rows = array_filter($rows, function($r){ return !isset($r['action_type']) || $r['action_type'] === 'purchase'; });
+            }
+            if (preg_match('/event_id = (\d+)/', $query, $e)) {
+                $eid = intval($e[1]);
+                $rows = array_filter($rows, function($r) use ($eid){ return ($r['event_id'] ?? 0) == $eid; });
+            }
+            return array_values($rows);
         }
         return [];
     }
@@ -23,6 +33,12 @@ class DummyWpdbCartHelper {
             foreach (($this->data[$table][1] ?? []) as $row) {
                 if (($row['email'] ?? '') === $email) return $row;
             }
+        }
+        return null;
+    }
+    public function get_var($q){
+        if (strpos($q, $this->prefix.'tta_events') !== false || strpos($q, $this->prefix.'tta_events_archive') !== false) {
+            if (strpos($q, "'ev1'") !== false || strpos($q, 'ev1') !== false) return 10;
         }
         return null;
     }
@@ -68,12 +84,21 @@ class CartTest extends TestCase {
     public function test_get_purchased_ticket_count(){
         global $wpdb;
         $wpdb = new DummyWpdbCartHelper();
-        $wpdb->data['wp_tta_memberhistory'][1][] = ['action_data'=> json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>1]]])];
-        $wpdb->data['wp_tta_memberhistory'][1][] = ['action_data'=> json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>2]]])];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'action_data' => json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>1]]])
+        ];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'action_data' => json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>2]]])
+        ];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'event_id'   => 10,
+            'action_type'=> 'refund',
+            'action_data'=> json_encode(['transaction_id'=>'t1','attendee_id'=>5,'cancel'=>1,'amount'=>0])
+        ];
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/cart/class-cart.php';
         $count = tta_get_purchased_ticket_count(1,'ev1');
-        $this->assertSame(3,$count);
+        $this->assertSame(2,$count);
     }
 
     public function test_render_cart_contains_event_link(){
