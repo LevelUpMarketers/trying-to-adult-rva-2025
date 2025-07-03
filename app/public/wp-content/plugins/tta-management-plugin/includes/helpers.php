@@ -1011,6 +1011,39 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 }
             );
             $events = array_values( $events );
+
+            // Refresh attendee lists using the current database state
+            foreach ( $events as &$ev ) {
+                $gateway_tx = $ev['transaction_id'] ?? '';
+                if ( ! isset( $tx_ids[ $gateway_tx ] ) ) {
+                    continue;
+                }
+                $internal_tx = $tx_ids[ $gateway_tx ];
+                $new_items   = [];
+                foreach ( $ev['items'] as $item ) {
+                    $tid = intval( $item['ticket_id'] ?? 0 );
+                    if ( ! $tid ) {
+                        continue;
+                    }
+                    $attendees = array_filter(
+                        tta_get_ticket_attendees( $tid ),
+                        static function ( $a ) use ( $internal_tx ) {
+                            return intval( $a['transaction_id'] ) === $internal_tx;
+                        }
+                    );
+                    $item['attendees'] = array_values( $attendees );
+                    $item['quantity']  = count( $item['attendees'] );
+                    if ( $item['quantity'] > 0 ) {
+                        $new_items[] = $item;
+                    }
+                }
+                $ev['items'] = $new_items;
+            }
+            unset( $ev );
+            $events = array_filter( $events, static function ( $e ) {
+                return ! empty( $e['items'] );
+            } );
+            $events = array_values( $events );
         }
     }
 

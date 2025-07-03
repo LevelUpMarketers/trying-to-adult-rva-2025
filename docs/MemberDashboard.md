@@ -21,8 +21,10 @@ shows:
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the
 `tta_attendees` table.
+When a single checkout includes tickets for multiple events each event now
+receives its own history record so it appears individually in this list.
 Event thumbnails use the medium image size and are scaled to a consistent width so nothing is cropped.
-Once an attendee is refunded and their attendance cancelled, the event is removed from this tab.
+Attendee lists now reflect the database in real time. Individual refunds or cancellations remove the person from the list, and an event disappears entirely once all of its attendees are gone.
 
 ## Past Events Tab
 
