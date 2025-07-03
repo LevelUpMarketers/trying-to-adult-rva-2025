@@ -45,5 +45,6 @@ transactions in chronological order including event purchases logged in the
 retrieved from the Authorize.Net API. Refund transactions now appear alongside
 all other charges so members can see every adjustment to their account.
 Event names link to their event pages even after the events move into the
-archive, and each row displays the date, item name, and amount charged. Refunds
-appear as negative amounts in the table.
+archive, and each row displays the date, item name, amount charged, transaction
+type, and the payment method used. Refunds appear as negative amounts in the
+table.

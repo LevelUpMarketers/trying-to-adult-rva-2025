@@ -1225,7 +1225,14 @@ function tta_get_member_history_summary( $member_id ) {
  * Retrieve a member's full billing history including subscription charges.
  *
  * @param int $wp_user_id WordPress user ID.
- * @return array[] { date:string, description:string, amount:float, url?:string }
+ * @return array[] {
+ *     @type string $date   Transaction date.
+ *     @type string $description Description of the item.
+ *     @type float  $amount Amount charged or refunded.
+ *     @type string $url    Optional link to the item.
+ *     @type string $type   Transaction type.
+ *     @type string $method Payment method description.
+ * }
  */
 function tta_get_member_billing_history( $wp_user_id ) {
     $wp_user_id = intval( $wp_user_id );
@@ -1245,7 +1252,7 @@ function tta_get_member_billing_history( $wp_user_id ) {
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT transaction_id, amount, details, created_at FROM {$tx_table} WHERE wpuserid = %d ORDER BY created_at DESC",
+            "SELECT transaction_id, amount, card_last4, details, created_at FROM {$tx_table} WHERE wpuserid = %d ORDER BY created_at DESC",
             $wp_user_id
         ),
         ARRAY_A
@@ -1312,11 +1319,16 @@ function tta_get_member_billing_history( $wp_user_id ) {
                 $url = get_permalink( $page_id );
             }
 
+            $last4  = sanitize_text_field( $row['card_last4'] );
+            $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
+
             $history[] = [
                 'date'        => $row['created_at'],
                 'description' => sanitize_text_field( $name ),
                 'amount'      => $price,
                 'url'         => $url,
+                'type'        => 'purchase',
+                'method'      => $method,
             ];
         }
     }
@@ -1334,22 +1346,35 @@ function tta_get_member_billing_history( $wp_user_id ) {
         if ( $page_id && function_exists( 'get_permalink' ) ) {
             $url = get_permalink( $page_id );
         }
+        $tx_id  = sanitize_text_field( $data['transaction_id'] ?? '' );
+        $last4  = '';
+        if ( $tx_id ) {
+            $last4 = (string) $wpdb->get_var( $wpdb->prepare( "SELECT card_last4 FROM {$tx_table} WHERE transaction_id = %s LIMIT 1", $tx_id ) );
+        }
+        $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
+
         $history[] = [
             'date'        => $row['action_date'],
             'description' => sanitize_text_field( $name ),
             'amount'      => $amount,
             'url'         => $url,
+            'type'        => 'refund',
+            'method'      => $method,
         ];
     }
 
     $sub_id = tta_get_user_subscription_id( $wp_user_id );
     if ( $sub_id ) {
+        $last4  = tta_get_subscription_card_last4( $sub_id );
+        $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
         foreach ( tta_get_subscription_transactions( $sub_id ) as $sub_tx ) {
             $label = __( 'Membership Charge', 'tta' );
             $history[] = [
                 'date'        => $sub_tx['date'],
                 'description' => $label,
                 'amount'      => floatval( $sub_tx['amount'] ),
+                'type'        => 'subscription',
+                'method'      => $method,
             ];
         }
     }
