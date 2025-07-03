@@ -39,7 +39,7 @@ Subscription metadata is stored in two columns on `tta_members`:
 
 Below the membership controls is a **Payment History** table. It lists all
 transactions in chronological order including event purchases logged in the
-`tta_transactions` table and monthly membership charges retrieved from the
-Authorize.Net API. Event names link to their event pages even after the
-events move into the archive, and each row displays the date, item name, and
-amount charged.
+`tta_transactions` table, any refunds processed, and monthly membership charges
+retrieved from the Authorize.Net API. Event names link to their event pages even
+after the events move into the archive, and each row displays the date, item
+name, and amount charged. Refunds appear as negative amounts in the table.

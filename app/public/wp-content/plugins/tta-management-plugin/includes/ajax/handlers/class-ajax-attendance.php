@@ -7,6 +7,7 @@ class TTA_Ajax_Attendance {
         add_action( 'wp_ajax_tta_set_attendance', [ __CLASS__, 'set_attendance' ] );
         add_action( 'wp_ajax_tta_remove_attendee', [ __CLASS__, 'remove_attendee' ] );
         add_action( 'wp_ajax_tta_refund_attendee', [ __CLASS__, 'refund_attendee' ] );
+        add_action( 'wp_ajax_tta_cancel_attendance', [ __CLASS__, 'cancel_attendance' ] );
     }
 
     public static function get_event_attendance() {
@@ -54,6 +55,64 @@ class TTA_Ajax_Attendance {
         wp_send_json_success( [ 'message' => __( 'Attendee removed.', 'tta' ) ] );
     }
 
+    public static function cancel_attendance() {
+        check_ajax_referer( 'tta_attendee_admin_action', 'nonce' );
+
+        $id = intval( $_POST['attendee_id'] ?? 0 );
+        if ( ! $id ) {
+            wp_send_json_error( [ 'message' => 'missing attendee' ] );
+        }
+
+        global $wpdb;
+        $att_table   = $wpdb->prefix . 'tta_attendees';
+        $ticket_table = $wpdb->prefix . 'tta_tickets';
+        $tx_table     = $wpdb->prefix . 'tta_transactions';
+        $hist_table   = $wpdb->prefix . 'tta_memberhistory';
+
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE id = %d", $id ), ARRAY_A );
+        if ( ! $att ) {
+            wp_send_json_error( [ 'message' => 'not found' ] );
+        }
+
+        $ticket = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ), ARRAY_A );
+        $tx     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tx_table} WHERE id = %d", intval( $att['transaction_id'] ) ), ARRAY_A );
+
+        $event_id = 0;
+        if ( $ticket && ! empty( $ticket['event_ute_id'] ) ) {
+            $event_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1", $ticket['event_ute_id'], $ticket['event_ute_id'] ) );
+        }
+
+        if ( $tx ) {
+            $wpdb->insert(
+                $hist_table,
+                [
+                    'member_id'   => intval( $tx['member_id'] ),
+                    'wpuserid'    => intval( $tx['wpuserid'] ),
+                    'event_id'    => $event_id,
+                    'action_type' => 'refund',
+                    'action_data' => wp_json_encode([
+                        'amount'         => 0,
+                        'transaction_id' => $tx['transaction_id'],
+                        'attendee_id'    => $id,
+                        'cancel'         => 1,
+                    ]),
+                ],
+                [ '%d','%d','%d','%s','%s' ]
+            );
+        }
+
+        $wpdb->delete( $att_table, [ 'id' => $id ], [ '%d' ] );
+        if ( $ticket ) {
+            $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
+            if ( ! empty( $ticket['event_ute_id'] ) ) {
+                TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
+            }
+        }
+
+        TTA_Cache::flush();
+        wp_send_json_success( [ 'message' => __( 'Attendance cancelled.', 'tta' ) ] );
+    }
+
     public static function refund_attendee() {
         check_ajax_referer( 'tta_attendee_admin_action', 'nonce' );
 
@@ -97,16 +156,25 @@ class TTA_Ajax_Attendance {
             }
         }
 
-        $api = new TTA_AuthorizeNet_API();
-        $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
-        if ( ! $res['success'] ) {
-            $msg = strtolower( $res['error'] );
-            if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) ) {
-                $res = $api->void( $tx['transaction_id'] );
-            }
+        $api         = new TTA_AuthorizeNet_API();
+        $status_res  = $api->get_transaction_status( $tx['transaction_id'] );
+        $status_str  = strtolower( $status_res['status'] ?? '' );
+        $should_void = ( false !== strpos( $status_str, 'pending' ) );
+
+        if ( $should_void ) {
+            $res = $api->void( $tx['transaction_id'] );
+        } else {
+            $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
             if ( ! $res['success'] ) {
-                wp_send_json_error( [ 'message' => $res['error'] ] );
+                $msg = strtolower( $res['error'] );
+                if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) ) {
+                    $res = $api->void( $tx['transaction_id'] );
+                }
             }
+        }
+
+        if ( ! $res['success'] ) {
+            wp_send_json_error( [ 'message' => $res['error'] ] );
         }
 
         $wpdb->update(

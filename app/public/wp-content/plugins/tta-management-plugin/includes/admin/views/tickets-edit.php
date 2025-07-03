@@ -313,10 +313,12 @@ $tickets = $wpdb->get_results(
                   $txn_id = intval( $a['transaction_id'] );
                   if ( $txn_id !== $last_tx ) :
                     $last_tx = $txn_id;
+                    $txid    = $a['gateway_id'] ? ' - ' . __( 'Transaction ID', 'tta' ) . ' ' . $a['gateway_id'] : '';
+                    $txdate  = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
                     <tr class="tta-transaction-group">
                       <td colspan="6" style="background:#f9f9f9;font-weight:bold;">
-                        <?php echo esc_html( sprintf( __( 'Transaction #%d', 'tta' ), $txn_id ) ); ?>
+                        <?php echo esc_html( sprintf( __( 'Transaction #%d%s%s', 'tta' ), $txn_id, $txid, $txdate ) ); ?>
                       </td>
                     </tr>
                   <?php endif; ?>
@@ -340,6 +342,9 @@ $tickets = $wpdb->get_results(
                       </button>
                       <button type="button" class="tta-refund-keep-attendee" data-attendee="<?php echo esc_attr( $a['id'] ); ?>">
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
+                      </button>
+                      <button type="button" class="tta-cancel-attendee" data-attendee="<?php echo esc_attr( $a['id'] ); ?>">
+                        <?php esc_html_e( 'Cancel Attendance (No Refund)', 'tta' ); ?>
                       </button>
                     </td>
                   </tr>

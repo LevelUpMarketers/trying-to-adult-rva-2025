@@ -121,6 +121,24 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
+
+    foreach ( $refund_rows as $row ) {
+        $data   = json_decode( $row['action_data'], true );
+        $amount = -floatval( $data['amount'] ?? 0 );
+        $eid    = intval( $row['event_id'] );
+        $name   = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
+        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
+        $url    = '';
+        if ( $page_id && function_exists( 'get_permalink' ) ) {
+            $url = get_permalink( $page_id );
+        }
+        $history[] = [
+            'date'        => $row['action_date'],
+            'description' => sanitize_text_field( $name ),
+            'amount'      => $amount,
+            'url'         => $url,
+        ];
+    }
     return array_values( array_unique( $emails ) );
 }
 
@@ -248,6 +266,10 @@ function tta_get_cart_notice() {
  */
 function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
     global $wpdb;
+
+    $user_id      = intval( $user_id );
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+
     $rows = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND action_type = 'purchase'",
@@ -255,6 +277,7 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
         ),
         ARRAY_A
     );
+
     $total = 0;
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
@@ -264,7 +287,33 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
             }
         }
     }
-    return $total;
+
+    $event_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+            $event_ute_id,
+            $event_ute_id
+        )
+    );
+
+    if ( $event_id ) {
+        $refunds = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND event_id = %d AND action_type = 'refund'",
+                $user_id,
+                $event_id
+            ),
+            ARRAY_A
+        );
+        foreach ( $refunds as $row ) {
+            $data = json_decode( $row['action_data'], true );
+            if ( ! empty( $data['cancel'] ) ) {
+                $total -= 1;
+            }
+        }
+    }
+
+    return max( 0, $total );
 }
 
 /**
@@ -367,24 +416,31 @@ function tta_get_ticket_attendees( $ticket_id ) {
     $txn_ids = array_unique( array_filter( $txn_ids ) );
 
     $price_map = [];
+    $txn_map   = [];
     if ( $txn_ids ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_ids ), '%d' ) );
         $txn_rows     = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
+                "SELECT id, transaction_id, created_at, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
                 $txn_ids
             ),
             ARRAY_A
         );
 
         foreach ( $txn_rows as $tx ) {
+            $txn_id = intval( $tx['id'] );
+            $txn_map[ $txn_id ] = [
+                'gateway_id' => sanitize_text_field( $tx['transaction_id'] ),
+                'created_at' => $tx['created_at'],
+            ];
+
             $details = json_decode( $tx['details'], true );
             if ( ! is_array( $details ) ) {
                 continue;
             }
             foreach ( $details as $item ) {
                 if ( intval( $item['ticket_id'] ?? 0 ) === $ticket_id ) {
-                    $price_map[ intval( $tx['id'] ) ] = floatval( $item['final_price'] ?? 0 );
+                    $price_map[ $txn_id ] = floatval( $item['final_price'] ?? 0 );
                     break;
                 }
             }
@@ -397,8 +453,10 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $r['last_name']  = sanitize_text_field( $r['last_name'] );
         $r['email']      = sanitize_email( $r['email'] );
         $r['phone']      = sanitize_text_field( $r['phone'] );
-        $txid            = intval( $r['transaction_id'] );
-        $r['amount_paid'] = $price_map[ $txid ] ?? 0;
+        $txid             = intval( $r['transaction_id'] );
+        $r['amount_paid']  = $price_map[ $txid ] ?? 0;
+        $r['gateway_id']   = $txn_map[ $txid ]['gateway_id'] ?? '';
+        $r['created_at']   = $txn_map[ $txid ]['created_at'] ?? '';
     }
 
     $ttl = empty( $rows ) ? 60 : 300;
@@ -936,10 +994,6 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 ARRAY_A
             );
 
-            if ( empty( $counts ) ) {
-                $tx_ids = [];
-            }
-
             foreach ( $counts as $c ) {
                 $tid = array_search( intval( $c['transaction_id'] ), $tx_ids, true );
                 if ( $tid ) {
@@ -948,7 +1002,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             }
         }
 
-        if ( $tx_ids ) {
+        if ( $txn_map ) {
             $events = array_filter(
                 $events,
                 static function ( $ev ) use ( $txn_map ) {
@@ -1171,7 +1225,8 @@ function tta_get_member_billing_history( $wp_user_id ) {
     }
 
     global $wpdb;
-    $tx_table = $wpdb->prefix . 'tta_transactions';
+    $tx_table   = $wpdb->prefix . 'tta_transactions';
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
@@ -1181,7 +1236,42 @@ function tta_get_member_billing_history( $wp_user_id ) {
         ARRAY_A
     );
 
-    $history = [];
+    $refund_rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT event_id, action_data, action_date FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' ORDER BY action_date DESC",
+            $wp_user_id
+        ),
+        ARRAY_A
+    );
+
+    $history    = [];
+    $event_map  = [];
+    $refund_ids = [];
+    foreach ( $refund_rows as $r ) {
+        $eid = intval( $r['event_id'] );
+        if ( $eid ) {
+            $refund_ids[] = $eid;
+        }
+    }
+
+    if ( $refund_ids ) {
+        $placeholders = implode( ',', array_fill( 0, count( $refund_ids ), '%d' ) );
+        $events_table  = $wpdb->prefix . 'tta_events';
+        $archive_table = $wpdb->prefix . 'tta_events_archive';
+        $ev_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, name, page_id FROM {$events_table} WHERE id IN ($placeholders) UNION SELECT id, name, page_id FROM {$archive_table} WHERE id IN ($placeholders)",
+                [...$refund_ids, ...$refund_ids]
+            ),
+            ARRAY_A
+        );
+        foreach ( $ev_rows as $er ) {
+            $event_map[ intval( $er['id'] ) ] = [
+                'name'    => sanitize_text_field( $er['name'] ),
+                'page_id' => intval( $er['page_id'] ),
+            ];
+        }
+    }
     foreach ( $rows as $row ) {
         $items = json_decode( $row['details'], true );
         if ( ! is_array( $items ) ) {
@@ -1965,9 +2055,9 @@ function tta_render_attendee_fields( TTA_Cart $cart, $disabled = false ) {
     ob_start();
     echo '<div class="tta-attendee-fields">';
     $context      = tta_get_current_user_context();
-    $used_default = false;
     $d_attr = $disabled ? ' disabled' : '';
     foreach ( $groups as $grp ) {
+        $used_default = false;
         echo '<div class="tta-event-group">';
         echo '<h4><a href="' . esc_url( get_permalink( $grp['page_id'] ) ) . '">' . esc_html( $grp['event_name'] ) . '</a></h4>';
         echo '<p class="tta-attendee-note">' . esc_html__( 'Complete the information below for each attendee. This information will be used for checking attendees in when arriving at the event.', 'tta' ) . '</p>';
@@ -1983,20 +2073,37 @@ function tta_render_attendee_fields( TTA_Cart $cart, $disabled = false ) {
                 $ph_val  = '';
                 $sms_chk = 'checked';
                 $em_chk  = 'checked';
+                $locked = '';
                 if ( ! $used_default && $context['member'] ) {
                     $fn_val  = esc_attr( $context['member']['first_name'] );
                     $ln_val  = esc_attr( $context['member']['last_name'] );
                     $em_val  = esc_attr( $context['member']['email'] );
                     $ph_val  = esc_attr( $context['member']['phone'] ?? '' );
+                    $locked  = ' disabled';
                     $used_default = true;
                 }
                 $img = esc_url( TTA_PLUGIN_URL . 'assets/images/public/question.svg' );
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'First name for event check-in.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'First Name', 'tta' ) . '<span class="tta-required">*</span><br />';
-                echo '<input type="text" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '">';
+                    echo '<input type="text" value="' . $fn_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="text" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Last name for event check-in.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Last Name', 'tta' ) . '<br />';
-                echo '<input type="text" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '">';
+                    echo '<input type="text" value="' . $ln_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="text" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Email used for ticket confirmation.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Email', 'tta' ) . '<span class="tta-required">*</span><br />';
-                echo '<input type="email" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '">';
+                    echo '<input type="email" value="' . $em_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="email" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Phone used for event updates or issues.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Phone', 'tta' ) . '<br />';
                 echo '<input type="tel" name="' . esc_attr( $base . '[phone]' ) . '" value="' . $ph_val . '"' . $d_attr . '></label>';
                 echo '<div class="optin-container"><label class="tta-ticket-optin"><input type="checkbox" name="' . esc_attr( $base . '[opt_in_sms]' ) . '" ' . $sms_chk . $d_attr . '> <span class="tta-ticket-opt-text">' . esc_html__( 'text me updates about this event', 'tta' ) . '</span></label>';

@@ -80,6 +80,8 @@ jQuery(function($){
     $n.data('timer', setTimeout(function(){ $n.fadeOut(200); }, 4000));
   }
 
+  window.ttaShowNotice = showNotice;
+
   function enforceLimit(){
     var $input = $(this);
     var total = 0;

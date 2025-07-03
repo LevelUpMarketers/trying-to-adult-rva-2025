@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 if (!defined('ARRAY_A')) { define('ARRAY_A','ARRAY_A'); }
+if (!function_exists('__')) { function __($s, $d = null) { return $s; } }
 
 class DummyWpdbCartHelper {
     public $prefix = 'wp_';
@@ -8,7 +9,17 @@ class DummyWpdbCartHelper {
     public function get_results($query,$output=ARRAY_A){
         if(preg_match('/FROM (\S+) WHERE wpuserid = (\d+)/',$query,$m)){
             $table=$m[1]; $uid=intval($m[2]);
-            return $this->data[$table][$uid] ?? [];
+            $rows = $this->data[$table][$uid] ?? [];
+            if (strpos($query, "action_type = 'refund'") !== false) {
+                $rows = array_filter($rows, function($r){ return ($r['action_type'] ?? '') === 'refund'; });
+            } elseif (strpos($query, "action_type = 'purchase'") !== false) {
+                $rows = array_filter($rows, function($r){ return !isset($r['action_type']) || $r['action_type'] === 'purchase'; });
+            }
+            if (preg_match('/event_id = (\d+)/', $query, $e)) {
+                $eid = intval($e[1]);
+                $rows = array_filter($rows, function($r) use ($eid){ return ($r['event_id'] ?? 0) == $eid; });
+            }
+            return array_values($rows);
         }
         return [];
     }
@@ -23,6 +34,12 @@ class DummyWpdbCartHelper {
             foreach (($this->data[$table][1] ?? []) as $row) {
                 if (($row['email'] ?? '') === $email) return $row;
             }
+        }
+        return null;
+    }
+    public function get_var($q){
+        if (strpos($q, $this->prefix.'tta_events') !== false || strpos($q, $this->prefix.'tta_events_archive') !== false) {
+            if (strpos($q, "'ev1'") !== false || strpos($q, 'ev1') !== false) return 10;
         }
         return null;
     }
@@ -68,12 +85,21 @@ class CartTest extends TestCase {
     public function test_get_purchased_ticket_count(){
         global $wpdb;
         $wpdb = new DummyWpdbCartHelper();
-        $wpdb->data['wp_tta_memberhistory'][1][] = ['action_data'=> json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>1]]])];
-        $wpdb->data['wp_tta_memberhistory'][1][] = ['action_data'=> json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>2]]])];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'action_data' => json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>1]]])
+        ];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'action_data' => json_encode(['items'=>[['event_ute_id'=>'ev1','quantity'=>2]]])
+        ];
+        $wpdb->data['wp_tta_memberhistory'][1][] = [
+            'event_id'   => 10,
+            'action_type'=> 'refund',
+            'action_data'=> json_encode(['transaction_id'=>'t1','attendee_id'=>5,'cancel'=>1,'amount'=>0])
+        ];
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/cart/class-cart.php';
         $count = tta_get_purchased_ticket_count(1,'ev1');
-        $this->assertSame(3,$count);
+        $this->assertSame(2,$count);
     }
 
     public function test_render_cart_contains_event_link(){
@@ -142,6 +168,50 @@ class CartTest extends TestCase {
         $this->assertStringContainsString('attendees[1][0][opt_in_email]" checked', $html);
         $this->assertStringContainsString('value="First"', $html);
         $this->assertStringContainsString('VIP #2', $html);
+    }
+
+    public function test_attendee_fields_prefill_each_event(){
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/cart/class-cart.php';
+        global $wpdb;
+        $wpdb = new DummyWpdbCartHelper();
+        $wpdb->data['wp_tta_members'][1][] = [
+            'wpuserid'=>1,
+            'first_name'=>'First',
+            'last_name'=>'Last',
+            'email'=>'me@example.com',
+            'phone'=>'555',
+            'opt_in_event_update_sms'=>1,
+            'opt_in_event_update_email'=>1,
+        ];
+        $cart = $this->createMock('TTA_Cart');
+        $items = [
+            [
+                'ticket_id'=>1,
+                'ticket_name'=>'VIP',
+                'quantity'=>2,
+                'price'=>10,
+                'event_name'=>'Party',
+                'page_id'=>55,
+                'event_ute_id'=>'ev1',
+                'expires_at'=> date('Y-m-d H:i:s', time()+60)
+            ],
+            [
+                'ticket_id'=>2,
+                'ticket_name'=>'VIP',
+                'quantity'=>2,
+                'price'=>10,
+                'event_name'=>'Gala',
+                'page_id'=>56,
+                'event_ute_id'=>'ev2',
+                'expires_at'=> date('Y-m-d H:i:s', time()+60)
+            ]
+        ];
+        $cart->method('get_items')->willReturn($items);
+        $html = tta_render_attendee_fields($cart, false);
+        $this->assertStringContainsString('attendees[1][0][first_name]', $html);
+        $this->assertStringContainsString('attendees[2][0][first_name]', $html);
+        $this->assertEquals(4, substr_count($html, 'value="First"'));
     }
 
     public function test_get_event_attendees_queries_table(){

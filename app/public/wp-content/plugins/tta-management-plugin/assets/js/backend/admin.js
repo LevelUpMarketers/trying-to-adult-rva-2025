@@ -955,6 +955,26 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     handleRefund(e, 'keep');
   });
 
+  function handleCancel(e){
+    e.preventDefault();
+    var id  = $(e.currentTarget).data('attendee');
+    var $row = $(e.currentTarget).closest('tr[data-attendee-id]');
+    $.post(TTA_Ajax.ajax_url, {
+      action: 'tta_cancel_attendance',
+      attendee_id: id,
+      nonce: TTA_Ajax.attendee_admin_nonce
+    }, function(res){
+      if(res.success){
+        $row.remove();
+        alert(res.data && res.data.message ? res.data.message : 'Attendance cancelled');
+      }else{
+        alert(res.data && res.data.message ? res.data.message : 'Error');
+      }
+    }, 'json');
+  }
+
+  $(document).on('click', '.tta-cancel-attendee', handleCancel);
+
   // Inline edit toggle for Email & SMS templates
   $(document).on('click', '.widefat tbody tr[data-comms-key]', function(e){
     if ( $(e.target).is('a, button, input, textarea, select') ) return;
