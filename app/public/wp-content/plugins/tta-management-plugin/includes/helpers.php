@@ -121,24 +121,6 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
-
-    foreach ( $refund_rows as $row ) {
-        $data   = json_decode( $row['action_data'], true );
-        $amount = -floatval( $data['amount'] ?? 0 );
-        $eid    = intval( $row['event_id'] );
-        $name   = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
-        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
-        $url    = '';
-        if ( $page_id && function_exists( 'get_permalink' ) ) {
-            $url = get_permalink( $page_id );
-        }
-        $history[] = [
-            'date'        => $row['action_date'],
-            'description' => sanitize_text_field( $name ),
-            'amount'      => $amount,
-            'url'         => $url,
-        ];
-    }
     return array_values( array_unique( $emails ) );
 }
 
@@ -1337,6 +1319,27 @@ function tta_get_member_billing_history( $wp_user_id ) {
                 'url'         => $url,
             ];
         }
+    }
+
+    foreach ( $refund_rows as $row ) {
+        $data = json_decode( $row['action_data'], true );
+        if ( ! is_array( $data ) ) {
+            continue;
+        }
+        $amount  = -floatval( $data['amount'] ?? 0 );
+        $eid     = intval( $row['event_id'] );
+        $name    = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
+        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
+        $url     = '';
+        if ( $page_id && function_exists( 'get_permalink' ) ) {
+            $url = get_permalink( $page_id );
+        }
+        $history[] = [
+            'date'        => $row['action_date'],
+            'description' => sanitize_text_field( $name ),
+            'amount'      => $amount,
+            'url'         => $url,
+        ];
     }
 
     $sub_id = tta_get_user_subscription_id( $wp_user_id );
