@@ -1,6 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 if (!defined('ARRAY_A')) { define('ARRAY_A','ARRAY_A'); }
+if (!function_exists('__')) { function __($s, $d = null) { return $s; } }
 
 class DummyWpdbCartHelper {
     public $prefix = 'wp_';
@@ -167,6 +168,50 @@ class CartTest extends TestCase {
         $this->assertStringContainsString('attendees[1][0][opt_in_email]" checked', $html);
         $this->assertStringContainsString('value="First"', $html);
         $this->assertStringContainsString('VIP #2', $html);
+    }
+
+    public function test_attendee_fields_prefill_each_event(){
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/cart/class-cart.php';
+        global $wpdb;
+        $wpdb = new DummyWpdbCartHelper();
+        $wpdb->data['wp_tta_members'][1][] = [
+            'wpuserid'=>1,
+            'first_name'=>'First',
+            'last_name'=>'Last',
+            'email'=>'me@example.com',
+            'phone'=>'555',
+            'opt_in_event_update_sms'=>1,
+            'opt_in_event_update_email'=>1,
+        ];
+        $cart = $this->createMock('TTA_Cart');
+        $items = [
+            [
+                'ticket_id'=>1,
+                'ticket_name'=>'VIP',
+                'quantity'=>2,
+                'price'=>10,
+                'event_name'=>'Party',
+                'page_id'=>55,
+                'event_ute_id'=>'ev1',
+                'expires_at'=> date('Y-m-d H:i:s', time()+60)
+            ],
+            [
+                'ticket_id'=>2,
+                'ticket_name'=>'VIP',
+                'quantity'=>2,
+                'price'=>10,
+                'event_name'=>'Gala',
+                'page_id'=>56,
+                'event_ute_id'=>'ev2',
+                'expires_at'=> date('Y-m-d H:i:s', time()+60)
+            ]
+        ];
+        $cart->method('get_items')->willReturn($items);
+        $html = tta_render_attendee_fields($cart, false);
+        $this->assertStringContainsString('attendees[1][0][first_name]', $html);
+        $this->assertStringContainsString('attendees[2][0][first_name]', $html);
+        $this->assertEquals(4, substr_count($html, 'value="First"'));
     }
 
     public function test_get_event_attendees_queries_table(){

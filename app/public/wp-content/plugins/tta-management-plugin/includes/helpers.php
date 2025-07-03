@@ -2055,9 +2055,9 @@ function tta_render_attendee_fields( TTA_Cart $cart, $disabled = false ) {
     ob_start();
     echo '<div class="tta-attendee-fields">';
     $context      = tta_get_current_user_context();
-    $used_default = false;
     $d_attr = $disabled ? ' disabled' : '';
     foreach ( $groups as $grp ) {
+        $used_default = false;
         echo '<div class="tta-event-group">';
         echo '<h4><a href="' . esc_url( get_permalink( $grp['page_id'] ) ) . '">' . esc_html( $grp['event_name'] ) . '</a></h4>';
         echo '<p class="tta-attendee-note">' . esc_html__( 'Complete the information below for each attendee. This information will be used for checking attendees in when arriving at the event.', 'tta' ) . '</p>';
@@ -2073,20 +2073,37 @@ function tta_render_attendee_fields( TTA_Cart $cart, $disabled = false ) {
                 $ph_val  = '';
                 $sms_chk = 'checked';
                 $em_chk  = 'checked';
+                $locked = '';
                 if ( ! $used_default && $context['member'] ) {
                     $fn_val  = esc_attr( $context['member']['first_name'] );
                     $ln_val  = esc_attr( $context['member']['last_name'] );
                     $em_val  = esc_attr( $context['member']['email'] );
                     $ph_val  = esc_attr( $context['member']['phone'] ?? '' );
+                    $locked  = ' disabled';
                     $used_default = true;
                 }
                 $img = esc_url( TTA_PLUGIN_URL . 'assets/images/public/question.svg' );
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'First name for event check-in.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'First Name', 'tta' ) . '<span class="tta-required">*</span><br />';
-                echo '<input type="text" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '">';
+                    echo '<input type="text" value="' . $fn_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="text" name="' . esc_attr( $base . '[first_name]' ) . '" value="' . $fn_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Last name for event check-in.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Last Name', 'tta' ) . '<br />';
-                echo '<input type="text" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '">';
+                    echo '<input type="text" value="' . $ln_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="text" name="' . esc_attr( $base . '[last_name]' ) . '" value="' . $ln_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Email used for ticket confirmation.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Email', 'tta' ) . '<span class="tta-required">*</span><br />';
-                echo '<input type="email" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '" required' . $d_attr . '></label> ';
+                if ( $locked ) {
+                    echo '<input type="hidden" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '">';
+                    echo '<input type="email" value="' . $em_val . '" required disabled></label> ';
+                } else {
+                    echo '<input type="email" name="' . esc_attr( $base . '[email]' ) . '" value="' . $em_val . '" required' . $d_attr . '></label> ';
+                }
                 echo '<label><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Phone used for event updates or issues.', 'tta' ) . '"><img src="' . $img . '" alt="?"></span>' . esc_html__( 'Phone', 'tta' ) . '<br />';
                 echo '<input type="tel" name="' . esc_attr( $base . '[phone]' ) . '" value="' . $ph_val . '"' . $d_attr . '></label>';
                 echo '<div class="optin-container"><label class="tta-ticket-optin"><input type="checkbox" name="' . esc_attr( $base . '[opt_in_sms]' ) . '" ' . $sms_chk . $d_attr . '> <span class="tta-ticket-opt-text">' . esc_html__( 'text me updates about this event', 'tta' ) . '</span></label>';
