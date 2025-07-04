@@ -6,9 +6,31 @@
   $status = strtolower( $member['subscription_status'] ?? 'active' );
   $sub_id = $member['subscription_id'] ?? '';
   $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
-  if ( 'free' === $level ) :
+  $cancel = ( 'cancelled' === $status ) ? tta_get_last_membership_cancellation( get_current_user_id() ) : null;
+  if ( 'free' === $level && 'cancelled' !== $status ) :
   ?>
     <p><?php esc_html_e( 'You do not currently have a paid membership.', 'tta' ); ?></p>
+  <?php elseif ( 'cancelled' === $status ) :
+    $prev_level = $cancel['level'] ?? 'basic';
+    ?>
+    <p>
+      <?php
+      printf(
+        esc_html__( 'Your %1$s membership was cancelled on %2$s by %3$s.', 'tta' ),
+        esc_html( tta_get_membership_label( $prev_level ) ),
+        esc_html( date_i18n( 'F j, Y', strtotime( $cancel['date'] ?? current_time( 'mysql' ) ) ) ),
+        ( ( $cancel['by'] ?? 'member' ) === 'admin' ) ? esc_html__( 'an administrator', 'tta' ) : esc_html__( 'you', 'tta' )
+      );
+      ?>
+    </p>
+    <?php if ( ! empty( $cancel['card_last4'] ) ) : ?>
+      <p><?php esc_html_e( 'Last Card Used:', 'tta' ); ?> **** <?php echo esc_html( $cancel['card_last4'] ); ?></p>
+    <?php endif; ?>
+    <p>
+      <a class="button" href="<?php echo esc_url( home_url( '/become-a-member/?level=' . urlencode( $prev_level ) ) ); ?>">
+        <?php esc_html_e( 'Reactivate Membership', 'tta' ); ?>
+      </a>
+    </p>
   <?php else :
     $price = tta_get_membership_price( $level );
     ?>

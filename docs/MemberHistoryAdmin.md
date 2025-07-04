@@ -8,6 +8,7 @@ The **Member History** tab is available under **Members** in the WordPress admin
 - Count of no‑shows
 - Number of refund or cancellation requests
 - A complete payment history table including event purchases and membership charges
+- Membership cancellation entries noting who performed the action and the last four digits of the card
 - Any private notes stored with the member record appear in the expanded detail view rather than as a table column
 
 The summary metrics, member email and notes appear as columns in a single-row `widefat` table above the payment history for quick reference. The “Member Summary” heading also includes a tooltip describing the data shown.

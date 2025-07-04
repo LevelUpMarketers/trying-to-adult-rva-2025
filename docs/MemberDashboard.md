@@ -39,6 +39,11 @@ Subscription metadata is stored in two columns on `tta_members`:
 - `subscription_id` – Authorize.Net identifier for the recurring payment
 - `subscription_status` – either `active` or `cancelled`
 
+When a membership is cancelled the action is recorded in `tta_memberhistory`.
+If the dashboard detects a cancelled status it shows the date of cancellation,
+who initiated it and the last four digits of the card used along with a button
+to reactivate the previous level.
+
 Below the membership controls is a **Payment History** table. It lists all
 transactions in chronological order including event purchases logged in the
 `tta_transactions` table, any refunds processed, and monthly membership charges

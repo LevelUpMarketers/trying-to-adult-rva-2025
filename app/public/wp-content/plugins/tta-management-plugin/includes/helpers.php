@@ -730,6 +730,54 @@ function tta_update_user_subscription_status( $wp_user_id, $status ) {
 }
 
 /**
+ * Record a membership cancellation in the member history table.
+ *
+ * @param int    $wp_user_id WordPress user ID.
+ * @param string $level      Membership level that was cancelled.
+ * @param string $actor      Who cancelled (member or admin).
+ */
+function tta_log_membership_cancellation( $wp_user_id, $level, $actor = 'member' ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $hist_table    = $wpdb->prefix . 'tta_memberhistory';
+
+    $member_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$members_table} WHERE wpuserid = %d LIMIT 1",
+            intval( $wp_user_id )
+        )
+    );
+    if ( ! $member_id ) {
+        return;
+    }
+
+    $sub_id = tta_get_user_subscription_id( $wp_user_id );
+    $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
+
+    $data = [
+        'by'            => sanitize_text_field( $actor ),
+        'previous_level'=> sanitize_text_field( $level ),
+        'card_last4'    => sanitize_text_field( $last4 ),
+        'subscription_id' => sanitize_text_field( $sub_id ),
+    ];
+
+    $wpdb->insert(
+        $hist_table,
+        [
+            'member_id'   => intval( $member_id ),
+            'wpuserid'    => intval( $wp_user_id ),
+            'event_id'    => 0,
+            'action_type' => 'membership_cancel',
+            'action_data' => wp_json_encode( $data ),
+        ],
+        [ '%d', '%d', '%d', '%s', '%s' ]
+    );
+
+    TTA_Cache::delete( 'billing_hist_' . $wp_user_id );
+    TTA_Cache::delete( 'mem_cancel_' . $wp_user_id );
+}
+
+/**
  * Get the timestamp until which a user is banned.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -809,6 +857,49 @@ function tta_get_subscription_transactions( $subscription_id ) {
     $txns = $info['transactions'] ?? [];
     TTA_Cache::set( $cache_key, $txns, 600 );
     return $txns;
+}
+
+/**
+ * Fetch the most recent membership cancellation record for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array|null { date:string, by:string, level:string, card_last4:string }
+ */
+function tta_get_last_membership_cancellation( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return null;
+    }
+    $cache_key = 'mem_cancel_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT action_data, action_date FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'membership_cancel' ORDER BY action_date DESC LIMIT 1",
+            $wp_user_id
+        ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        TTA_Cache::set( $cache_key, null, 300 );
+        return null;
+    }
+
+    $data = json_decode( $row['action_data'], true );
+    $info = [
+        'date'       => $row['action_date'],
+        'by'         => sanitize_text_field( $data['by'] ?? '' ),
+        'level'      => sanitize_text_field( $data['previous_level'] ?? '' ),
+        'card_last4' => sanitize_text_field( $data['card_last4'] ?? '' ),
+    ];
+
+    TTA_Cache::set( $cache_key, $info, 300 );
+    return $info;
 }
 
 /**
