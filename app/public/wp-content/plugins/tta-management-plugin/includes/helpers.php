@@ -1142,6 +1142,7 @@ function tta_get_member_history_summary( $member_id ) {
     $archive_table = $wpdb->prefix . 'tta_events_archive';
     $tx_table      = $wpdb->prefix . 'tta_transactions';
     $att_table     = $wpdb->prefix . 'tta_attendees';
+    $members_table = $wpdb->prefix . 'tta_members';
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
@@ -1216,6 +1217,39 @@ function tta_get_member_history_summary( $member_id ) {
         "SELECT COUNT(*) FROM {$hist_table} WHERE member_id = %d AND action_type = 'cancel_request'",
         $member_id
     ) );
+
+    // Include membership purchases in the total spent calculation
+    $wp_user_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT wpuserid FROM {$members_table} WHERE id = %d LIMIT 1",
+            $member_id
+        )
+    );
+    if ( $wp_user_id ) {
+        $tx_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT details FROM {$tx_table} WHERE wpuserid = %d",
+                $wp_user_id
+            ),
+            ARRAY_A
+        );
+        $membership_total = 0;
+        foreach ( $tx_rows as $tx_row ) {
+            $items = json_decode( $tx_row['details'], true );
+            if ( ! is_array( $items ) ) {
+                continue;
+            }
+            foreach ( $items as $it ) {
+                if ( empty( $it['membership'] ) ) {
+                    continue;
+                }
+                $price = isset( $it['final_price'] ) ? floatval( $it['final_price'] ) : floatval( $it['price'] );
+                $qty   = intval( $it['quantity'] ?? 1 );
+                $membership_total += $price * $qty;
+            }
+        }
+        $summary['total_spent'] += $membership_total;
+    }
 
     TTA_Cache::set( $cache_key, $summary, 300 );
     return $summary;

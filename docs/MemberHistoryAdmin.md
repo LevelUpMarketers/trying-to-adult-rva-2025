@@ -2,7 +2,7 @@
 
 The **Member History** tab is available under **Members** in the WordPress admin. It lists all members just like the Manage Members tab. Clicking a member row loads a detailed history view showing:
 
-- Total amount spent across all transactions
+- Total amount spent across all transactions, including membership purchases
 - Count of events they have purchased
 - Count of events checked in
 - Count of no‑shows
