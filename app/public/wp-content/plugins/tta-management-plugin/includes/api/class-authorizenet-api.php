@@ -312,7 +312,7 @@ class TTA_AuthorizeNet_API {
      * @param string $description  Optional subscription description.
      * @return array { success:bool, subscription_id?:string, error?:string }
      */
-    public function create_subscription( $amount, $card_number, $exp_date, $card_code, array $billing = [], $name = 'Membership Subscription', $description = '' ) {
+    public function create_subscription( $amount, $card_number, $exp_date, $card_code, array $billing = [], $name = 'Membership Subscription', $description = '', $start_date = null ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
         }
@@ -334,9 +334,11 @@ class TTA_AuthorizeNet_API {
         $interval->setLength( 1 );
         $interval->setUnit( 'months' );
         $schedule->setInterval( $interval );
-        $start_date = date( 'Y-m-d' );
-        if ( $this->environment === ANetEnvironment::SANDBOX ) {
-            $start_date = date( 'Y-m-d', strtotime( '-1 day' ) );
+        if ( null === $start_date ) {
+            $start_date = date( 'Y-m-d' );
+            if ( $this->environment === ANetEnvironment::SANDBOX ) {
+                $start_date = date( 'Y-m-d', strtotime( '-1 day' ) );
+            }
         }
         $schedule->setStartDate( new DateTime( $start_date ) );
         $schedule->setTotalOccurrences( 9999 );

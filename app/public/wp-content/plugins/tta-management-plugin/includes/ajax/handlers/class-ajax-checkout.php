@@ -54,6 +54,34 @@ class TTA_Ajax_Checkout {
         $api = new TTA_AuthorizeNet_API();
         $transaction_id = '';
         if ( $membership_total > 0 ) {
+            $charge = $api->charge(
+                $membership_total,
+                preg_replace( '/\D/', '', $_POST['card_number'] ?? '' ),
+                $exp_date,
+                tta_sanitize_text_field( $_POST['card_cvc'] ?? '' ),
+                $billing
+            );
+            if ( ! $charge['success'] ) {
+                wp_send_json_error( [ 'message' => $charge['error'] ] );
+            }
+
+            TTA_Transaction_Logger::log(
+                $charge['transaction_id'],
+                $membership_total,
+                [
+                    [
+                        'membership'  => ucfirst( $membership_level ) . ' Membership',
+                        'quantity'    => 1,
+                        'price'       => $membership_total,
+                        'final_price' => $membership_total,
+                    ],
+                ],
+                '',
+                0,
+                get_current_user_id(),
+                substr( preg_replace( '/\D/', '', $_POST['card_number'] ?? '' ), -4 )
+            );
+
             $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
             $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
             $sub      = $api->create_subscription(
@@ -63,7 +91,8 @@ class TTA_Ajax_Checkout {
                 tta_sanitize_text_field( $_POST['card_cvc'] ?? '' ),
                 $billing,
                 $sub_name,
-                $sub_desc
+                $sub_desc,
+                date( 'Y-m-d', strtotime( '+1 month' ) )
             );
             if ( ! $sub['success'] ) {
                 wp_send_json_error( [ 'message' => $sub['error'] ] );

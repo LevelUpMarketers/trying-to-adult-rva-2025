@@ -59,25 +59,25 @@
         <p>
           <label>
             <?php esc_html_e( 'Billing First Name', 'tta' ); ?><br />
-            <input type="text" name="bill_first" required />
+            <input type="text" name="bill_first" value="<?php echo esc_attr( $member['first_name'] ); ?>" required />
           </label>
         </p>
         <p>
           <label>
             <?php esc_html_e( 'Billing Last Name', 'tta' ); ?><br />
-            <input type="text" name="bill_last" required />
+            <input type="text" name="bill_last" value="<?php echo esc_attr( $member['last_name'] ); ?>" required />
           </label>
         </p>
         <p>
           <label>
             <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
-            <input type="text" name="bill_address" required />
+            <input type="text" name="bill_address" value="<?php echo esc_attr( $street_address ); ?>" required />
           </label>
         </p>
         <p>
           <label>
             <?php esc_html_e( 'City', 'tta' ); ?><br />
-            <input type="text" name="bill_city" required />
+            <input type="text" name="bill_city" value="<?php echo esc_attr( $city ); ?>" required />
           </label>
         </p>
         <p>
@@ -85,7 +85,7 @@
             <?php esc_html_e( 'State', 'tta' ); ?><br />
             <select name="bill_state">
               <?php foreach ( tta_get_us_states() as $abbr => $name ) : ?>
-                <option value="<?php echo esc_attr( $abbr ); ?>"><?php echo esc_html( $name ); ?></option>
+                <option value="<?php echo esc_attr( $abbr ); ?>" <?php selected( $state, $abbr ); ?>><?php echo esc_html( $name ); ?></option>
               <?php endforeach; ?>
             </select>
           </label>
@@ -93,7 +93,7 @@
         <p>
           <label>
             <?php esc_html_e( 'ZIP', 'tta' ); ?><br />
-            <input type="text" name="bill_zip" required />
+            <input type="text" name="bill_zip" value="<?php echo esc_attr( $zip ); ?>" required />
           </label>
         </p>
         <p class="tta-submit-wrap">
