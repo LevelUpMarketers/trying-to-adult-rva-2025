@@ -467,6 +467,7 @@ class TTA_AuthorizeNet_API {
 
         if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
             $sub      = $response->getSubscription();
+            $status   = $sub && method_exists( $sub, 'getStatus' ) ? strtolower( $sub->getStatus() ) : '';
             $profile  = $sub ? $sub->getProfile() : null;
             $pay_prof = $profile ? $profile->getPaymentProfile() : null;
             $payment  = $pay_prof ? $pay_prof->getPayment() : null;
@@ -474,7 +475,7 @@ class TTA_AuthorizeNet_API {
             $masked   = $card ? $card->getCardNumber() : '';
             $last4    = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
 
-            $data = [ 'success' => true, 'card_last4' => $last4 ];
+            $data = [ 'success' => true, 'card_last4' => $last4, 'status' => $status ];
 
             if ( $include_transactions ) {
                 $amount   = $sub->getAmount();

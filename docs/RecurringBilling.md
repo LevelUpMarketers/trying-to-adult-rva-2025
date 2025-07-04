@@ -18,3 +18,8 @@ After a successful membership checkout the confirmation page now displays the re
 `subscriptionId` along with the API result code. If the ID is missing, the profile
 was not created and the message will contain the error details reported by
 Authorize.Net.
+
+Each time a user logs in the plugin checks the status of any stored subscription.
+If the gateway reports a problem, the member's `membership_level` is temporarily
+set to `free` and `subscription_status` becomes `paymentproblem` until the issue
+is resolved.

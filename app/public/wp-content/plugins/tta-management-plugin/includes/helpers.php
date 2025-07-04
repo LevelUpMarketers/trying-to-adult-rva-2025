@@ -636,6 +636,20 @@ function tta_get_membership_price( $level ) {
 }
 
 /**
+ * Fetch a member's current membership level by user ID.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return string free, basic or premium.
+ */
+function tta_get_user_membership_level( $wp_user_id ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $level = $wpdb->get_var( $wpdb->prepare( "SELECT membership_level FROM {$members_table} WHERE wpuserid = %d LIMIT 1", intval( $wp_user_id ) ) );
+    $level = $level ? strtolower( $level ) : 'free';
+    return in_array( $level, [ 'free', 'basic', 'premium' ], true ) ? $level : 'free';
+}
+
+/**
  * Update a member's subscription level.
  *
  * @param int    $wp_user_id WordPress user ID.
@@ -727,6 +741,53 @@ function tta_update_user_subscription_status( $wp_user_id, $status ) {
         [ '%s' ],
         [ '%d' ]
     );
+}
+
+/**
+ * Verify a member's subscription status at login.
+ *
+ * @param string  $user_login Username.
+ * @param WP_User $user       Logged in user object.
+ */
+function tta_check_subscription_on_login( $user_login, $user ) {
+    $wp_user_id = intval( $user->ID );
+    if ( ! $wp_user_id ) {
+        return;
+    }
+
+    $cache_key = 'login_sub_check_' . $wp_user_id;
+    if ( TTA_Cache::get( $cache_key ) ) {
+        return;
+    }
+    TTA_Cache::set( $cache_key, 1, HOUR_IN_SECONDS );
+
+    $level = tta_get_user_membership_level( $wp_user_id );
+    if ( 'free' === $level ) {
+        return;
+    }
+
+    $sub_id = tta_get_user_subscription_id( $wp_user_id );
+    if ( ! $sub_id ) {
+        return;
+    }
+
+    $info = tta_get_subscription_status_info( $sub_id );
+    $status = $info['status'] ?? '';
+
+    if ( 'active' !== $status ) {
+        update_user_meta( $wp_user_id, 'tta_prev_level', $level );
+        tta_update_user_membership_level( $wp_user_id, 'free', null, 'paymentproblem' );
+    } else {
+        $current = tta_get_user_subscription_status( $wp_user_id );
+        if ( 'paymentproblem' === $current ) {
+            $prev = get_user_meta( $wp_user_id, 'tta_prev_level', true );
+            if ( ! in_array( $prev, [ 'basic', 'premium' ], true ) ) {
+                $prev = 'basic';
+            }
+            tta_update_user_membership_level( $wp_user_id, $prev, null, 'active' );
+            delete_user_meta( $wp_user_id, 'tta_prev_level' );
+        }
+    }
 }
 
 /**
@@ -824,11 +885,11 @@ function tta_get_subscription_card_last4( $subscription_id ) {
     if ( false !== $cached ) {
         return $cached;
     }
-    $api  = new TTA_AuthorizeNet_API();
-    $info = $api->get_subscription_details( $subscription_id );
-    if ( $info['success'] ) {
-        TTA_Cache::set( $cache_key, $info['card_last4'], 600 );
-        return $info['card_last4'];
+
+    $info = tta_get_subscription_status_info( $subscription_id );
+    if ( $info ) {
+        TTA_Cache::set( $cache_key, $info['last4'], 600 );
+        return $info['last4'];
     }
     return '';
 }
@@ -857,6 +918,37 @@ function tta_get_subscription_transactions( $subscription_id ) {
     $txns = $info['transactions'] ?? [];
     TTA_Cache::set( $cache_key, $txns, 600 );
     return $txns;
+}
+
+/**
+ * Retrieve the status and last four digits for a subscription.
+ *
+ * @param string $subscription_id Authorize.Net subscription ID.
+ * @return array{status:string,last4:string}|array
+ */
+function tta_get_subscription_status_info( $subscription_id ) {
+    if ( ! $subscription_id ) {
+        return [];
+    }
+
+    $cache_key = 'sub_status_' . $subscription_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $api  = new TTA_AuthorizeNet_API();
+    $info = $api->get_subscription_details( $subscription_id );
+    if ( $info['success'] ) {
+        $data = [
+            'status' => strtolower( $info['status'] ?? '' ),
+            'last4'  => $info['card_last4'] ?? '',
+        ];
+        TTA_Cache::set( $cache_key, $data, 600 );
+        return $data;
+    }
+
+    return [];
 }
 
 /**
