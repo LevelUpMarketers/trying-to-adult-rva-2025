@@ -44,6 +44,9 @@ transactions in chronological order including event purchases logged in the
 `tta_transactions` table, any refunds processed, and monthly membership charges
 retrieved from the Authorize.Net API. Refund transactions now appear alongside
 all other charges so members can see every adjustment to their account.
+Charges related to a membership, including the first month billed at checkout
+and all recurring payments, use the transaction type **Membership Subscription**
+in the history table.
 Event names link to their event pages even after the events move into the
 archive, and each row displays the date, item name, amount charged, transaction
 type, and the payment method used. Refunds appear as negative amounts in the

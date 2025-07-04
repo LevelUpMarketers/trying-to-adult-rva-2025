@@ -1322,12 +1322,13 @@ function tta_get_member_billing_history( $wp_user_id ) {
             $last4  = sanitize_text_field( $row['card_last4'] );
             $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
 
+            $type = empty( $it['membership'] ) ? 'purchase' : 'membership subscription';
             $history[] = [
                 'date'        => $row['created_at'],
                 'description' => sanitize_text_field( $name ),
                 'amount'      => $price,
                 'url'         => $url,
-                'type'        => 'purchase',
+                'type'        => $type,
                 'method'      => $method,
             ];
         }
@@ -1373,7 +1374,7 @@ function tta_get_member_billing_history( $wp_user_id ) {
                 'date'        => $sub_tx['date'],
                 'description' => $label,
                 'amount'      => floatval( $sub_tx['amount'] ),
-                'type'        => 'subscription',
+                'type'        => 'membership subscription',
                 'method'      => $method,
             ];
         }

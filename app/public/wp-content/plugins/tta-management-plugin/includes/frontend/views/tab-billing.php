@@ -135,7 +135,7 @@
               <?php endif; ?>
             </td>
             <td>$<?php echo esc_html( number_format( $row['amount'], 2 ) ); ?></td>
-            <td><?php echo esc_html( ucfirst( $row['type'] ) ); ?></td>
+            <td><?php echo esc_html( ucwords( $row['type'] ) ); ?></td>
             <td><?php echo esc_html( $row['method'] ); ?></td>
           </tr>
         <?php endforeach; ?>
