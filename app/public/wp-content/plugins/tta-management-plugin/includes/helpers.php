@@ -1248,6 +1248,15 @@ function tta_get_member_history_summary( $member_id ) {
                 $membership_total += $price * $qty;
             }
         }
+
+        // Include recurring subscription charges from Authorize.Net
+        $sub_id = tta_get_user_subscription_id( $wp_user_id );
+        if ( $sub_id ) {
+            foreach ( tta_get_subscription_transactions( $sub_id ) as $sub_tx ) {
+                $membership_total += floatval( $sub_tx['amount'] );
+            }
+        }
+
         $summary['total_spent'] += $membership_total;
     }
 
