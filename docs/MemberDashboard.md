@@ -45,6 +45,8 @@ who initiated it and the last four digits of the card used along with a button
 to reactivate the previous level. If the subscription status is *paymentproblem*
 the tab displays the gateway's reported status and prompts the member to update
 their card information directly on the dashboard.
+If no membership is active and there is no payment issue, a simple message
+"You do not currently have a paid membership." appears instead of the controls.
 
 Below the membership controls is a **Payment History** table. It lists all
 transactions in chronological order including event purchases logged in the

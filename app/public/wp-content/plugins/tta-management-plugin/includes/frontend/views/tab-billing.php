@@ -7,7 +7,7 @@
   $sub_id = $member['subscription_id'] ?? '';
   $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
   $cancel = ( 'cancelled' === $status ) ? tta_get_last_membership_cancellation( get_current_user_id() ) : null;
-  if ( 'free' === $level && 'cancelled' !== $status ) :
+  if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) :
   ?>
     <p><?php esc_html_e( 'You do not currently have a paid membership.', 'tta' ); ?></p>
   <?php elseif ( 'cancelled' === $status ) :
