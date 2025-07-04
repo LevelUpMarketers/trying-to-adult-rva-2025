@@ -24,7 +24,7 @@ Attendee details are pulled from the transaction history and stored in the
 When a single checkout includes tickets for multiple events each event now
 receives its own history record so it appears individually in this list.
 Event thumbnails use the medium image size and are scaled to a consistent width so nothing is cropped.
-Once an attendee is refunded and their attendance cancelled, the event is removed from this tab.
+Attendee lists now reflect the database in real time. Individual refunds or cancellations remove the person from the list, and an event disappears entirely once all of its attendees are gone.
 
 ## Past Events Tab
 
@@ -42,6 +42,9 @@ Subscription metadata is stored in two columns on `tta_members`:
 Below the membership controls is a **Payment History** table. It lists all
 transactions in chronological order including event purchases logged in the
 `tta_transactions` table, any refunds processed, and monthly membership charges
-retrieved from the Authorize.Net API. Event names link to their event pages even
-after the events move into the archive, and each row displays the date, item
-name, and amount charged. Refunds appear as negative amounts in the table.
+retrieved from the Authorize.Net API. Refund transactions now appear alongside
+all other charges so members can see every adjustment to their account.
+Event names link to their event pages even after the events move into the
+archive, and each row displays the date, item name, amount charged, transaction
+type, and the payment method used. Refunds appear as negative amounts in the
+table.

@@ -117,6 +117,8 @@
           <th><?php esc_html_e( 'Date', 'tta' ); ?></th>
           <th><?php esc_html_e( 'Item', 'tta' ); ?></th>
           <th><?php esc_html_e( 'Amount', 'tta' ); ?></th>
+          <th><?php esc_html_e( 'Type', 'tta' ); ?></th>
+          <th><?php esc_html_e( 'Payment Method', 'tta' ); ?></th>
         </tr>
       </thead>
       <tbody>
@@ -133,6 +135,8 @@
               <?php endif; ?>
             </td>
             <td>$<?php echo esc_html( number_format( $row['amount'], 2 ) ); ?></td>
+            <td><?php echo esc_html( ucfirst( $row['type'] ) ); ?></td>
+            <td><?php echo esc_html( $row['method'] ); ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>

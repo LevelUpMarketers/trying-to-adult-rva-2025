@@ -464,10 +464,13 @@ class TTA_AuthorizeNet_API {
         $this->log_response( 'get_subscription_details', $response );
 
         if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
-            $sub    = $response->getSubscription();
-            $card   = $sub->getPayment()->getCreditCard();
-            $masked = $card ? $card->getCardNumber() : '';
-            $last4  = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
+            $sub      = $response->getSubscription();
+            $profile  = $sub ? $sub->getProfile() : null;
+            $pay_prof = $profile ? $profile->getPaymentProfile() : null;
+            $payment  = $pay_prof ? $pay_prof->getPayment() : null;
+            $card     = $payment ? $payment->getCreditCard() : null;
+            $masked   = $card ? $card->getCardNumber() : '';
+            $last4    = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
 
             $data = [ 'success' => true, 'card_last4' => $last4 ];
 

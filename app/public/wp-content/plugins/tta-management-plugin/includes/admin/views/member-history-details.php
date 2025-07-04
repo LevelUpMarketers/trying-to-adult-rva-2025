@@ -60,6 +60,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
           <th><?php esc_html_e( 'Date', 'tta' ); ?></th>
           <th><?php esc_html_e( 'Item', 'tta' ); ?></th>
           <th><?php esc_html_e( 'Amount', 'tta' ); ?></th>
+          <th><?php esc_html_e( 'Type', 'tta' ); ?></th>
+          <th><?php esc_html_e( 'Payment Method', 'tta' ); ?></th>
         </tr>
       </thead>
       <tbody>
@@ -74,6 +76,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
               <?php endif; ?>
             </td>
             <td>$<?php echo esc_html( number_format( $row['amount'], 2 ) ); ?></td>
+            <td><?php echo esc_html( ucfirst( $row['type'] ) ); ?></td>
+            <td><?php echo esc_html( $row['method'] ); ?></td>
           </tr>
         <?php endforeach; ?>
       </tbody>
