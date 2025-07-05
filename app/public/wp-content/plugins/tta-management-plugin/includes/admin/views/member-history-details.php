@@ -249,9 +249,11 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
         <input type="text" name="bill_zip" value="<?php echo esc_attr( $billing_prefill['zip'] ?? '' ); ?>" required />
       </label>
     </p>
+    <input type="hidden" name="use_current" value="0" />
     <p class="submit">
       <div class="tta-submit-history-div">
-        <button type="submit" class="button"><?php esc_html_e( 'Update & Reactivate Subscription', 'tta' ); ?></button>
+        <button type="submit" class="button" data-tooltip="<?php esc_attr_e( 'Use the details entered above to restart billing.', 'tta' ); ?>"><?php esc_html_e( 'Reactivate & Update Using Info Above', 'tta' ); ?></button>
+        <button type="button" id="tta-reactivate-current-btn" class="button" data-tooltip="<?php esc_attr_e( 'Attempt to restart billing using the payment information already on file in Authorize.Net.', 'tta' ); ?>"><?php esc_html_e( 'Attempt Reactivation using Current Authorize.net Subscription Info', 'tta' ); ?></button>
         <div class="tta-admin-progress-spinner-div"><img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="" style="display:none;opacity:0"></div>
       </div>
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
