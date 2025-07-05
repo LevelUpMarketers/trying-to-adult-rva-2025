@@ -1064,6 +1064,7 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   $(document).on('submit','#tta-admin-cancel-subscription-form',function(e){ handleSubForm($(this),'tta_admin_cancel_subscription',e); });
   $(document).on('submit','#tta-admin-reactivate-subscription-form',function(e){ handleSubForm($(this),'tta_admin_reactivate_subscription',e); });
   $(document).on('submit','#tta-admin-change-level-form',function(e){ handleSubForm($(this),'tta_admin_change_level',e); });
+  $(document).on('submit','#tta-admin-assign-membership-form',function(e){ handleSubForm($(this),'tta_admin_assign_membership',e); });
 
   // Track the last focused input for token insertion
   var activeField = null;

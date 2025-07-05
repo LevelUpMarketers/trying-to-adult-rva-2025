@@ -995,6 +995,45 @@ function tta_get_last_membership_cancellation( $wp_user_id ) {
 }
 
 /**
+ * Determine if a user has ever purchased a membership.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return bool
+ */
+function tta_user_had_membership( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return false;
+    }
+
+    $cache_key = 'mem_had_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return (bool) $cached;
+    }
+
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $hist_table    = $wpdb->prefix . 'tta_memberhistory';
+
+    $row = $wpdb->get_row( $wpdb->prepare( "SELECT membership_level, subscription_id FROM {$members_table} WHERE wpuserid = %d", $wp_user_id ), ARRAY_A );
+
+    $has = false;
+    if ( $row ) {
+        $level = strtolower( $row['membership_level'] );
+        $has   = in_array( $level, array( 'basic', 'premium' ), true ) || ! empty( $row['subscription_id'] );
+    }
+
+    if ( ! $has ) {
+        $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'membership_cancel'", $wp_user_id ) );
+        $has   = $count > 0;
+    }
+
+    TTA_Cache::set( $cache_key, $has ? 1 : 0, 300 );
+    return $has;
+}
+
+/**
  * Format a raw address string from the events table.
  *
  * @param string $raw Raw address ("street - addr2 - city - state - zip").

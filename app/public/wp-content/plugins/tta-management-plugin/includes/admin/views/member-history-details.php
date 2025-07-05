@@ -100,6 +100,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     $sub_id = $member['subscription_id'] ?? '';
     $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
     $cancel = tta_get_last_membership_cancellation( $member['wpuserid'] );
+    $had_mem = tta_user_had_membership( $member['wpuserid'] );
 
     if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) {
         if ( $cancel ) {
@@ -131,6 +132,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
   </div>
 
   <div class="tta-subscription-forms">
+<?php if ( $had_mem ) : ?>
 
   <form id="tta-admin-update-payment-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
     <h5>
@@ -336,5 +338,97 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
     </p>
   </form>
+</div>
+<?php else : ?>
+  <form id="tta-admin-assign-membership-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+    <h5>
+      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Sign this user up for a new membership and charge the first month immediately.', 'tta' ); ?>">
+        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+      </span>
+      <?php esc_html_e( 'Assign This Member a Membership', 'tta' ); ?>
+    </h5>
+    <input type="hidden" name="member_id" value="<?php echo esc_attr( $member_id ); ?>">
+    <p>
+      <label>
+        <?php esc_html_e( 'Level', 'tta' ); ?><br />
+        <select name="level">
+          <option value="basic">Basic</option>
+          <option value="premium">Premium</option>
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Monthly Amount', 'tta' ); ?><br />
+        <input type="number" step="0.01" name="amount" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Card Number', 'tta' ); ?><br />
+        <input type="text" name="card_number" placeholder="&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Expiration', 'tta' ); ?><br />
+        <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'CVC', 'tta' ); ?><br />
+        <input type="text" name="card_cvc" placeholder="123" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Billing First Name', 'tta' ); ?><br />
+        <input type="text" name="bill_first" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Billing Last Name', 'tta' ); ?><br />
+        <input type="text" name="bill_last" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
+        <input type="text" name="bill_address" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'City', 'tta' ); ?><br />
+        <input type="text" name="bill_city" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'State', 'tta' ); ?><br />
+        <select name="bill_state">
+          <?php foreach ( tta_get_us_states() as $abbr => $name ) : ?>
+            <option value="<?php echo esc_attr( $abbr ); ?>"><?php echo esc_html( $name ); ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'ZIP', 'tta' ); ?><br />
+        <input type="text" name="bill_zip" required />
+      </label>
+    </p>
+    <p class="submit">
+      <div class="tta-submit-history-div">
+        <button type="submit" class="button"><?php esc_html_e( 'Assign Membership', 'tta' ); ?></button>
+        <div class="tta-admin-progress-spinner-div"><img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="" style="display:none;opacity:0"></div>
+      </div>
+      <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
+    </p>
+  </form>
+<?php endif; ?>
 </div>
 </div>
