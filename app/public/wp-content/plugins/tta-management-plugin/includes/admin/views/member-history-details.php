@@ -124,6 +124,11 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
         if ( $last4 ) {
             echo '<p>' . esc_html__( 'Current Card:', 'tta' ) . ' <span>**** ' . esc_html( $last4 ) . '</span></p>';
         }
+        $prev = get_user_meta( $member['wpuserid'], 'tta_prev_level', true );
+        if ( 'paymentproblem' === $status && $prev ) {
+            $prev_price = tta_get_membership_price( $prev );
+            echo '<p>' . esc_html__( 'Previous Membership:', 'tta' ) . ' <span>' . esc_html( tta_get_membership_label( $prev ) ) . ' - $' . number_format( $prev_price, 2 ) . ' ' . esc_html__( 'per month', 'tta' ) . '</span></p>';
+        }
         if ( 'paymentproblem' === $status ) {
             echo '<p>' . esc_html__( 'There is a payment problem with this subscription.', 'tta' ) . '</p>';
         }
