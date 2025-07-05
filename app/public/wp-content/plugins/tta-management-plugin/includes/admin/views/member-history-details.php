@@ -128,6 +128,19 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
         if ( 'paymentproblem' === $status && $prev ) {
             $prev_price = tta_get_membership_price( $prev );
             echo '<p>' . esc_html__( 'Previous Membership:', 'tta' ) . ' <span>' . esc_html( tta_get_membership_label( $prev ) ) . ' - $' . number_format( $prev_price, 2 ) . ' ' . esc_html__( 'per month', 'tta' ) . '</span></p>';
+        } elseif ( 'cancelled' === $status && $cancel ) {
+            $prev_level = $cancel['level'] ?? 'basic';
+            $prev_price = tta_get_membership_price( $prev_level );
+            echo '<p>' . esc_html__( 'Previous Membership:', 'tta' ) . ' <span>' . esc_html( tta_get_membership_label( $prev_level ) ) . ' - $' . number_format( $prev_price, 2 ) . ' ' . esc_html__( 'per month', 'tta' ) . '</span></p>';
+            echo '<p>' . sprintf(
+                /* translators: 1: cancellation date, 2: actor */
+                esc_html__( 'Cancelled on %1$s by %2$s.', 'tta' ),
+                esc_html( date_i18n( 'F j, Y', strtotime( $cancel['date'] ) ) ),
+                ( 'admin' === ( $cancel['by'] ?? 'member' ) ) ? esc_html__( 'an administrator', 'tta' ) : esc_html__( 'the member', 'tta' )
+            ) . '</p>';
+            if ( ! empty( $cancel['card_last4'] ) ) {
+                echo '<p>' . esc_html__( 'Last Card Used:', 'tta' ) . ' **** ' . esc_html( $cancel['card_last4'] ) . '</p>';
+            }
         }
         if ( 'paymentproblem' === $status ) {
             echo '<p>' . esc_html__( 'There is a payment problem with this subscription.', 'tta' ) . '</p>';
