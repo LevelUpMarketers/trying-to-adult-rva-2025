@@ -1069,6 +1069,15 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   $(document).on('submit','#tta-admin-reactivate-subscription-form',function(e){ handleSubForm($(this),'tta_admin_reactivate_subscription',e); });
   $(document).on('submit','#tta-admin-change-level-form',function(e){ handleSubForm($(this),'tta_admin_change_level',e); });
   $(document).on('submit','#tta-admin-assign-membership-form',function(e){ handleSubForm($(this),'tta_admin_assign_membership',e); });
+  $(document).on('click','#tta-reactivate-current-btn',function(e){
+    e.preventDefault();
+    var $form = $('#tta-admin-reactivate-subscription-form');
+    $form.find('input[name="use_current"]').val('1');
+    $form.find('input[name="card_number"],input[name="exp_date"],input[name="card_cvc"]').prop('required',false);
+    $form.trigger('submit');
+    $form.find('input[name="card_number"],input[name="exp_date"],input[name="card_cvc"]').prop('required',true);
+    $form.find('input[name="use_current"]').val('0');
+  });
 
   // Auto-fill price fields when membership level changes
   function syncLevelPrice($select){

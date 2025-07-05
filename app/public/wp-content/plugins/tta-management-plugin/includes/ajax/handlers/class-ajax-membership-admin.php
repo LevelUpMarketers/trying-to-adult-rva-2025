@@ -92,15 +92,16 @@ class TTA_Ajax_Membership_Admin {
             wp_send_json_error( [ 'message' => __( 'Member not found.', 'tta' ) ] );
         }
 
-        $level   = $member['membership_level'];
-        $status  = strtolower( $member['subscription_status'] );
-        $sub_id  = $member['subscription_id'];
-        $amount  = floatval( $_POST['amount'] ?? tta_get_membership_price( $level ) );
-        $card    = preg_replace( '/\D/', '', $_POST['card_number'] ?? '' );
-        $exp     = sanitize_text_field( $_POST['exp_date'] ?? '' );
-        $cvc     = sanitize_text_field( $_POST['card_cvc'] ?? '' );
+        $level      = $member['membership_level'];
+        $status     = strtolower( $member['subscription_status'] );
+        $sub_id     = $member['subscription_id'];
+        $use_current = ! empty( $_POST['use_current'] );
+        $amount     = floatval( $_POST['amount'] ?? tta_get_membership_price( $level ) );
+        $card       = $use_current ? '' : preg_replace( '/\D/', '', $_POST['card_number'] ?? '' );
+        $exp        = $use_current ? '' : sanitize_text_field( $_POST['exp_date'] ?? '' );
+        $cvc        = $use_current ? '' : sanitize_text_field( $_POST['card_cvc'] ?? '' );
 
-        $billing = [
+        $billing = $use_current ? [] : [
             'first_name' => sanitize_text_field( $_POST['bill_first'] ?? '' ),
             'last_name'  => sanitize_text_field( $_POST['bill_last'] ?? '' ),
             'address'    => sanitize_text_field( $_POST['bill_address'] ?? '' ),
@@ -113,7 +114,16 @@ class TTA_Ajax_Membership_Admin {
         $api    = new TTA_AuthorizeNet_API();
         $new_id = $sub_id;
 
-        if ( $sub_id && 'cancelled' !== $status ) {
+        if ( $use_current ) {
+            if ( $sub_id && 'cancelled' !== $status ) {
+                $res = $api->update_subscription_payment( $sub_id );
+                if ( ! $res['success'] ) {
+                    wp_send_json_error( [ 'message' => $res['error'] ] );
+                }
+            } else {
+                wp_send_json_error( [ 'message' => __( 'Subscription cancelled or missing. Provide payment details to create a new subscription.', 'tta' ) ] );
+            }
+        } elseif ( $sub_id && 'cancelled' !== $status ) {
             if ( $card && $exp ) {
                 $res = $api->update_subscription_payment( $sub_id, $card, $exp, $cvc, $billing );
                 if ( ! $res['success'] ) {
@@ -139,8 +149,9 @@ class TTA_Ajax_Membership_Admin {
         tta_update_user_membership_level( $member['wpuserid'], $level, $new_id, 'active' );
         TTA_Cache::flush();
 
+        $msg = $use_current ? __( 'Reactivation attempted using stored info.', 'tta' ) : __( 'Subscription reactivated.', 'tta' );
         wp_send_json_success( [
-            'message'        => __( 'Subscription reactivated.', 'tta' ),
+            'message'        => $msg,
             'subscriptionId' => $new_id,
         ] );
     }

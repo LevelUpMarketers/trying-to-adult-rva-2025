@@ -348,9 +348,10 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Restart billing for a cancelled member. A new subscription may be created if needed.', 'tta' ); ?>">
         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
       </span>
-      <?php esc_html_e( 'Reactivate Subscription', 'tta' ); ?>
+      <?php esc_html_e( 'Update & Reactivate Membership', 'tta' ); ?>
     </h5>
     <input type="hidden" name="member_id" value="<?php echo esc_attr( $member_id ); ?>">
+    <input type="hidden" name="use_current" value="0" />
     <p>
       <label>
         <?php esc_html_e( 'Monthly Amount', 'tta' ); ?><br />
@@ -424,7 +425,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     </p>
     <p class="submit">
       <div class="tta-submit-history-div">
-        <button type="submit" class="button"><?php esc_html_e( 'Reactivate this Member\'s Subscription', 'tta' ); ?></button>
+        <button type="submit" class="button" data-tooltip="<?php esc_attr_e( 'Use the details entered above to restart billing.', 'tta' ); ?>"><?php esc_html_e( 'Reactivate & Update Using Info Above', 'tta' ); ?></button>
+        <button type="button" id="tta-reactivate-current-btn" class="button" data-tooltip="<?php esc_attr_e( 'Attempt to restart billing using the payment information already on file in Authorize.Net.', 'tta' ); ?>"><?php esc_html_e( 'Attempt Reactivation using Current Authorize.net Subscription Info', 'tta' ); ?></button>
         <div class="tta-admin-progress-spinner-div"><img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="" style="display:none;opacity:0"></div>
       </div>
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
