@@ -93,9 +93,42 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <?php esc_html_e( 'Manage Subscription', 'tta' ); ?>
   </h4>
 
-  <p class="description">
-    <?php esc_html_e( 'Fill out the payment and billing fields when updating payment details, reactivating a subscription or changing levels. They are not required for cancellation.', 'tta' ); ?>
-  </p>
+  <div class="tta-subscription-info">
+    <?php
+    $level  = strtolower( $member['membership_level'] ?? 'free' );
+    $status = strtolower( $member['subscription_status'] ?? 'active' );
+    $sub_id = $member['subscription_id'] ?? '';
+    $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
+    $cancel = tta_get_last_membership_cancellation( $member['wpuserid'] );
+
+    if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) {
+        if ( $cancel ) {
+            echo '<p>' . sprintf(
+                /* translators: 1: membership level, 2: date, 3: actor */
+                esc_html__( 'Previous membership: %1$s. Cancelled on %2$s by %3$s.', 'tta' ),
+                esc_html( tta_get_membership_label( $cancel['level'] ) ),
+                esc_html( date_i18n( 'F j, Y', strtotime( $cancel['date'] ) ) ),
+                ( 'admin' === ( $cancel['by'] ?? 'member' ) ) ? esc_html__( 'an administrator', 'tta' ) : esc_html__( 'the member', 'tta' )
+            ) . '</p>';
+            if ( ! empty( $cancel['card_last4'] ) ) {
+                echo '<p>' . esc_html__( 'Last Card Used:', 'tta' ) . ' **** ' . esc_html( $cancel['card_last4'] ) . '</p>';
+            }
+        } else {
+            echo '<p>' . esc_html__( 'This member has never purchased a membership.', 'tta' ) . '</p>';
+        }
+    } else {
+        $price = tta_get_membership_price( $level );
+        echo '<p><strong>' . esc_html( tta_get_membership_label( $level ) ) . '</strong> - $' . number_format( $price, 2 ) . ' ' . esc_html__( 'Per Month', 'tta' ) . '</p>';
+        echo '<p>' . esc_html__( 'Status:', 'tta' ) . ' <span>' . esc_html( ucfirst( $status ) ) . '</span></p>';
+        if ( $last4 ) {
+            echo '<p>' . esc_html__( 'Current Card:', 'tta' ) . ' <span>**** ' . esc_html( $last4 ) . '</span></p>';
+        }
+        if ( 'paymentproblem' === $status ) {
+            echo '<p>' . esc_html__( 'There is a payment problem with this subscription.', 'tta' ) . '</p>';
+        }
+    }
+    ?>
+  </div>
 
   <div class="tta-subscription-forms">
 

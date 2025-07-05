@@ -24,7 +24,7 @@ Below the summary is a **Manage Subscription** section. The controls are arrange
 - Cancel or reactivate the subscription without leaving WordPress.
 - Change the membership level and specify a custom monthly price. The update attempts to modify the existing subscription via Authorize.Net; on failure a clear error message is returned.
 - Each form displays its own response message directly below the submit button for clearer feedback.
-- The payment and billing fields only need to be filled out when updating the stored card information, reactivating a cancelled membership or changing levels. Cancelling does not require them.
+The section now shows the member's current or most recent membership details. When a subscription is active it lists the level, monthly price, status and the last four digits of the stored card. If the member previously cancelled a plan those details are shown instead. A short note appears if they have never subscribed. The payment and billing fields still only need to be filled out when updating the stored card, reactivating a cancelled membership or changing levels. Cancelling does not require them.
 The payment form uses the same field layout as the public checkout page so administrators see familiar labels and the expiration field auto‑formats as they type.
 
 Each member profile form now includes a **Ban Status** control. Choose "Banned Indefinitely" or a 1‑4 week duration to prevent the member from buying tickets or memberships. A banner on their dashboard shows the ban end date.
