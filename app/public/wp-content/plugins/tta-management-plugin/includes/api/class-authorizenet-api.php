@@ -482,7 +482,13 @@ class TTA_AuthorizeNet_API {
                 $txn_list = [];
                 $txns     = $sub->getArbTransactions();
                 if ( $txns ) {
-                    foreach ( $txns->getArbTransaction() as $tx ) {
+                    $tx_list = [];
+                    if ( is_array( $txns ) ) {
+                        $tx_list = $txns;
+                    } elseif ( is_object( $txns ) && method_exists( $txns, 'getArbTransaction' ) ) {
+                        $tx_list = $txns->getArbTransaction();
+                    }
+                    foreach ( $tx_list as $tx ) {
                         $txn_list[] = [
                             'id'    => $tx->getTransId(),
                             'date'  => $tx->getSubmitTimeUTC(),
