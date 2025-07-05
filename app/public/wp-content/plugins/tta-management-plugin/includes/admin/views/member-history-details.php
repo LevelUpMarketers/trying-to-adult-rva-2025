@@ -245,6 +245,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
   </form>
 
 
+  <?php if ( 'active' !== $status ) : ?>
   <form id="tta-admin-reactivate-subscription-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
     <h5>
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Restart billing for a cancelled member. A new subscription may be created if needed.', 'tta' ); ?>">
@@ -326,6 +327,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
     </p>
   </form>
+  <?php endif; ?>
 
   <form id="tta-admin-change-level-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
     <h5>
