@@ -489,9 +489,13 @@ class TTA_AuthorizeNet_API {
                         $tx_list = $txns->getArbTransaction();
                     }
                     foreach ( $tx_list as $tx ) {
+                        $ts = $tx->getSubmitTimeUTC();
+                        if ( $ts instanceof \DateTime ) {
+                            $ts = $ts->format( 'Y-m-d H:i:s' );
+                        }
                         $txn_list[] = [
                             'id'    => $tx->getTransId(),
-                            'date'  => $tx->getSubmitTimeUTC(),
+                            'date'  => $ts,
                             'amount'=> $amount,
                         ];
                     }
