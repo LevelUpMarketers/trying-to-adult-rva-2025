@@ -542,7 +542,7 @@ class TTA_AuthorizeNet_API {
      * @param string $card_code        Card code/CVV.
      * @return array { success:bool, error?:string }
      */
-    public function update_subscription_payment( $subscription_id, $card_number, $exp_date, $card_code, array $billing = [] ) {
+    public function update_subscription_payment( $subscription_id, $card_number = '', $exp_date = '', $card_code = '', array $billing = [] ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
         }
@@ -551,16 +551,18 @@ class TTA_AuthorizeNet_API {
         $merchantAuthentication->setName( $this->login_id );
         $merchantAuthentication->setTransactionKey( $this->transaction_key );
 
-        $card = new AnetAPI\CreditCardType();
-        $card->setCardNumber( $card_number );
-        $card->setExpirationDate( $exp_date );
-        $card->setCardCode( $card_code );
-
-        $payment = new AnetAPI\PaymentType();
-        $payment->setCreditCard( $card );
-
         $subscription = new AnetAPI\ARBSubscriptionType();
-        $subscription->setPayment( $payment );
+        if ( $card_number && $exp_date ) {
+            $card = new AnetAPI\CreditCardType();
+            $card->setCardNumber( $card_number );
+            $card->setExpirationDate( $exp_date );
+            if ( $card_code ) {
+                $card->setCardCode( $card_code );
+            }
+            $payment = new AnetAPI\PaymentType();
+            $payment->setCreditCard( $card );
+            $subscription->setPayment( $payment );
+        }
 
         if ( $billing ) {
             $bill = new AnetAPI\NameAndAddressType();

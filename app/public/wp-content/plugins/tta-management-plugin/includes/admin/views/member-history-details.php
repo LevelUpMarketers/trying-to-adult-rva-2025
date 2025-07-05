@@ -169,6 +169,97 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
   <div class="tta-subscription-forms">
 <?php if ( $had_mem ) : ?>
 
+<?php if ( in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) : ?>
+  <form id="tta-admin-reactivate-subscription-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
+    <h5>
+      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Update the billing details and restart charges for this member.', 'tta' ); ?>">
+        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+      </span>
+      <?php esc_html_e( 'Update & Reactivate Membership', 'tta' ); ?>
+    </h5>
+    <input type="hidden" name="member_id" value="<?php echo esc_attr( $member_id ); ?>">
+    <p>
+      <label>
+        <?php esc_html_e( 'Monthly Amount', 'tta' ); ?><br />
+        <input type="number" step="0.01" name="amount" value="<?php echo esc_attr( $react_amount ); ?>" />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Card Number', 'tta' ); ?><br />
+        <?php $ph = $last4 ? '**** **** **** ' . esc_attr( $last4 ) : '&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;'; ?>
+        <input type="text" name="card_number" placeholder="<?php echo $ph; ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Expiration', 'tta' ); ?><br />
+        <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" value="<?php echo esc_attr( $exp_prefill ); ?>" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'CVC', 'tta' ); ?><br />
+        <input type="text" name="card_cvc" placeholder="123" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Billing First Name', 'tta' ); ?><br />
+        <input type="text" name="bill_first" value="<?php echo esc_attr( $billing_prefill['first_name'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Billing Last Name', 'tta' ); ?><br />
+        <input type="text" name="bill_last" value="<?php echo esc_attr( $billing_prefill['last_name'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
+        <input type="text" name="bill_address" value="<?php echo esc_attr( $billing_prefill['address'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+        <input type="text" name="bill_address2" value="<?php echo esc_attr( $billing_prefill['address2'] ?? '' ); ?>" />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'City', 'tta' ); ?><br />
+        <input type="text" name="bill_city" value="<?php echo esc_attr( $billing_prefill['city'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'State', 'tta' ); ?><br />
+        <select name="bill_state">
+          <?php foreach ( tta_get_us_states() as $abbr => $name ) : ?>
+            <option value="<?php echo esc_attr( $abbr ); ?>" <?php selected( $billing_prefill['state'] ?? '', $abbr ); ?>><?php echo esc_html( $name ); ?></option>
+          <?php endforeach; ?>
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'ZIP', 'tta' ); ?><br />
+        <input type="text" name="bill_zip" value="<?php echo esc_attr( $billing_prefill['zip'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p class="submit">
+      <div class="tta-submit-history-div">
+        <button type="submit" class="button"><?php esc_html_e( 'Update & Reactivate Subscription', 'tta' ); ?></button>
+        <div class="tta-admin-progress-spinner-div"><img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="" style="display:none;opacity:0"></div>
+      </div>
+      <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
+    </p>
+  </form>
+
+<?php else : ?>
+
   <form id="tta-admin-update-payment-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
     <h5>
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Change the card and billing address used for the member\'s recurring payments.', 'tta' ); ?>">
@@ -339,6 +430,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
     </p>
   </form>
+  <?php endif; ?>
+
   <?php endif; ?>
 
   <form id="tta-admin-change-level-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
