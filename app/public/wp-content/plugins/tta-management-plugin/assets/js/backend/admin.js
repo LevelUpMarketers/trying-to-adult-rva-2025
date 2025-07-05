@@ -1066,6 +1066,20 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   $(document).on('submit','#tta-admin-change-level-form',function(e){ handleSubForm($(this),'tta_admin_change_level',e); });
   $(document).on('submit','#tta-admin-assign-membership-form',function(e){ handleSubForm($(this),'tta_admin_assign_membership',e); });
 
+  // Auto-fill price fields when membership level changes
+  function syncLevelPrice($select){
+    var level = $select.val();
+    var price = '';
+    if(level === 'basic'){ price = '5.00'; }
+    else if(level === 'premium'){ price = '10.00'; }
+    if(price){
+      $select.closest('form').find('input[name="price"], input[name="amount"]').val(price);
+    }
+  }
+
+  $('form select[name="level"]').each(function(){ syncLevelPrice($(this)); });
+  $(document).on('change','form select[name="level"]',function(){ syncLevelPrice($(this)); });
+
   // Track the last focused input for token insertion
   var activeField = null;
   $(document).on('focus', '.tta-comm-input', function(){
