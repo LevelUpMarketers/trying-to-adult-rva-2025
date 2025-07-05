@@ -474,8 +474,29 @@ class TTA_AuthorizeNet_API {
             $card     = $payment ? $payment->getCreditCard() : null;
             $masked   = $card ? $card->getCardNumber() : '';
             $last4    = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
+            $exp      = $card && method_exists( $card, 'getExpirationDate' ) ? $card->getExpirationDate() : '';
+            $amount   = $sub && method_exists( $sub, 'getAmount' ) ? floatval( $sub->getAmount() ) : 0.0;
+            $bill     = $pay_prof && method_exists( $pay_prof, 'getBillTo' ) ? $pay_prof->getBillTo() : null;
+            $billing  = [];
+            if ( $bill ) {
+                $billing = [
+                    'first_name' => $bill->getFirstName(),
+                    'last_name'  => $bill->getLastName(),
+                    'address'    => $bill->getAddress(),
+                    'city'       => $bill->getCity(),
+                    'state'      => $bill->getState(),
+                    'zip'        => $bill->getZip(),
+                ];
+            }
 
-            $data = [ 'success' => true, 'card_last4' => $last4, 'status' => $status ];
+            $data = [
+                'success'   => true,
+                'card_last4'=> $last4,
+                'status'    => $status,
+                'amount'    => $amount,
+                'exp_date'  => $exp,
+                'billing'   => $billing,
+            ];
 
             if ( $include_transactions ) {
                 $amount   = $sub->getAmount();

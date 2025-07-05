@@ -95,12 +95,29 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
 
   <div class="tta-subscription-info">
     <?php
-    $level  = strtolower( $member['membership_level'] ?? 'free' );
-    $status = strtolower( $member['subscription_status'] ?? 'active' );
-    $sub_id = $member['subscription_id'] ?? '';
-    $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
-    $cancel = tta_get_last_membership_cancellation( $member['wpuserid'] );
-    $had_mem = tta_user_had_membership( $member['wpuserid'] );
+    $level    = strtolower( $member['membership_level'] ?? 'free' );
+    $status   = strtolower( $member['subscription_status'] ?? 'active' );
+    $sub_id   = $member['subscription_id'] ?? '';
+    $sub_info   = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
+    $last4      = $sub_info['last4'] ?? '';
+    $prev_level = get_user_meta( $member['wpuserid'], 'tta_prev_level', true );
+    if ( ! $prev_level && $cancel ) {
+        $prev_level = $cancel['level'] ?? '';
+    }
+    $react_amount = $sub_info['amount'] ?? 0;
+    if ( ! $react_amount && $prev_level ) {
+        $react_amount = tta_get_membership_price( $prev_level );
+    }
+    if ( ! $react_amount ) {
+        $react_amount = tta_get_membership_price( $level );
+    }
+    $billing_prefill = $sub_info['billing'] ?? [];
+    $exp_prefill     = '';
+    if ( ! empty( $sub_info['exp_date'] ) && preg_match( '/^(\d{4})-(\d{2})$/', $sub_info['exp_date'], $m ) ) {
+        $exp_prefill = $m[2] . '/' . substr( $m[1], -2 );
+    }
+    $cancel   = tta_get_last_membership_cancellation( $member['wpuserid'] );
+    $had_mem  = tta_user_had_membership( $member['wpuserid'] );
 
     if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) {
         if ( $cancel ) {
@@ -239,19 +256,20 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <p>
       <label>
         <?php esc_html_e( 'Monthly Amount', 'tta' ); ?><br />
-        <input type="number" step="0.01" name="amount" value="<?php echo esc_attr( tta_get_membership_price( $member['membership_level'] ) ); ?>" />
+        <input type="number" step="0.01" name="amount" value="<?php echo esc_attr( $react_amount ); ?>" />
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'Card Number', 'tta' ); ?><br />
-        <input type="text" name="card_number" placeholder="&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;" required />
+        <?php $ph = $last4 ? '**** **** **** ' . esc_attr( $last4 ) : '&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;'; ?>
+        <input type="text" name="card_number" placeholder="<?php echo $ph; ?>" required />
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'Expiration', 'tta' ); ?><br />
-        <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
+        <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" value="<?php echo esc_attr( $exp_prefill ); ?>" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
       </label>
     </p>
     <p>
@@ -263,25 +281,25 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <p>
       <label>
         <?php esc_html_e( 'Billing First Name', 'tta' ); ?><br />
-        <input type="text" name="bill_first" required />
+        <input type="text" name="bill_first" value="<?php echo esc_attr( $billing_prefill['first_name'] ?? '' ); ?>" required />
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'Billing Last Name', 'tta' ); ?><br />
-        <input type="text" name="bill_last" required />
+        <input type="text" name="bill_last" value="<?php echo esc_attr( $billing_prefill['last_name'] ?? '' ); ?>" required />
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
-        <input type="text" name="bill_address" required />
+        <input type="text" name="bill_address" value="<?php echo esc_attr( $billing_prefill['address'] ?? '' ); ?>" required />
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'City', 'tta' ); ?><br />
-        <input type="text" name="bill_city" required />
+        <input type="text" name="bill_city" value="<?php echo esc_attr( $billing_prefill['city'] ?? '' ); ?>" required />
       </label>
     </p>
     <p>
@@ -289,7 +307,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
         <?php esc_html_e( 'State', 'tta' ); ?><br />
         <select name="bill_state">
           <?php foreach ( tta_get_us_states() as $abbr => $name ) : ?>
-            <option value="<?php echo esc_attr( $abbr ); ?>"><?php echo esc_html( $name ); ?></option>
+            <option value="<?php echo esc_attr( $abbr ); ?>" <?php selected( $billing_prefill['state'] ?? '', $abbr ); ?>><?php echo esc_html( $name ); ?></option>
           <?php endforeach; ?>
         </select>
       </label>
@@ -297,7 +315,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <p>
       <label>
         <?php esc_html_e( 'ZIP', 'tta' ); ?><br />
-        <input type="text" name="bill_zip" required />
+        <input type="text" name="bill_zip" value="<?php echo esc_attr( $billing_prefill['zip'] ?? '' ); ?>" required />
       </label>
     </p>
     <p class="submit">

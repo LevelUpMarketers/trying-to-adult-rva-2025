@@ -941,8 +941,11 @@ function tta_get_subscription_status_info( $subscription_id ) {
     $info = $api->get_subscription_details( $subscription_id );
     if ( $info['success'] ) {
         $data = [
-            'status' => strtolower( $info['status'] ?? '' ),
-            'last4'  => $info['card_last4'] ?? '',
+            'status'  => strtolower( $info['status'] ?? '' ),
+            'last4'   => $info['card_last4'] ?? '',
+            'amount'  => isset( $info['amount'] ) ? floatval( $info['amount'] ) : 0,
+            'exp_date'=> $info['exp_date'] ?? '',
+            'billing' => $info['billing'] ?? [],
         ];
         TTA_Cache::set( $cache_key, $data, 600 );
         return $data;
