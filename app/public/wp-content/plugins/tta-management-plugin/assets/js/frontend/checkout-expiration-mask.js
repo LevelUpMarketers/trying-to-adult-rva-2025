@@ -1,16 +1,17 @@
 jQuery(function($){
-  $('.tta-card-exp').each(function(){
-    var $exp = $(this);
-
-    function format(){
-      var digits = $exp.val().replace(/[^0-9]/g,'').slice(0,4);
-      if(digits.length>2){
-        digits = digits.slice(0,2)+'/'+digits.slice(2);
-      }
-      $exp.val(digits);
+  function mask(el){
+    var digits = el.value.replace(/[^0-9]/g,'').slice(0,4);
+    if(digits.length>2){
+      digits = digits.slice(0,2)+'/'+digits.slice(2);
     }
+    el.value = digits;
+  }
 
-    format();
-    $exp.on('input', format);
+  $(document).on('input', '.tta-card-exp', function(){
+    mask(this);
+  });
+
+  $('.tta-card-exp').each(function(){
+    mask(this);
   });
 });
