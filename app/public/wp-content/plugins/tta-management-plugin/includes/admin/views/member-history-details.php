@@ -215,6 +215,12 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     </p>
     <p>
       <label>
+        <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+        <input type="text" name="bill_address2" />
+      </label>
+    </p>
+    <p>
+      <label>
         <?php esc_html_e( 'City', 'tta' ); ?><br />
         <input type="text" name="bill_city" required />
       </label>
@@ -295,6 +301,12 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <label>
         <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
         <input type="text" name="bill_address" value="<?php echo esc_attr( $billing_prefill['address'] ?? '' ); ?>" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+        <input type="text" name="bill_address2" value="<?php echo esc_attr( $billing_prefill['address2'] ?? '' ); ?>" />
       </label>
     </p>
     <p>
@@ -435,6 +447,12 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <label>
         <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
         <input type="text" name="bill_address" required />
+      </label>
+    </p>
+    <p>
+      <label>
+        <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+        <input type="text" name="bill_address2" />
       </label>
     </p>
     <p>

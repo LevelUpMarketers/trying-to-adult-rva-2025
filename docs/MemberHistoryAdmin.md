@@ -20,7 +20,7 @@ events are removed.
 
 Below the summary is a **Manage Subscription** section. The controls are arranged side-by-side for quick access and each heading includes a tooltip describing its purpose. Tooltip icons come before each heading for improved readability. Administrators can:
 
-- Update the stored payment method and billing address for the member's recurring Authorize.Net subscription.
+ - Update the stored payment method and billing address for the member's recurring Authorize.Net subscription. Billing fields now include **Address Line 2** just like the public checkout form.
 - Cancel or reactivate the subscription without leaving WordPress. The Reactivate
   Subscription form only appears when the current plan is not active.
 - Change the membership level and specify a custom monthly price. The update attempts to modify the existing subscription via Authorize.Net; on failure a clear error message is returned.
