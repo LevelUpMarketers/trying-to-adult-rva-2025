@@ -4,6 +4,8 @@ The Member Dashboard is accessible at `/member-dashboard/` via the shortcode `[t
 It presents four tabs: **Profile Info**, **Your Upcoming Events**, **Your Past Events**, and **Billing & Membership Info**. Tooltip icons now appear before each field label for quicker context. The tooltip text is displayed instantly on hover using visibility toggles instead of opacity fades. The dashboard's JavaScript and CSS are enqueued whenever the page is viewed so tab switching works even when not logged in.
 
 If a member is banned the dashboard displays a prominent notice at the top explaining the ban duration and purchases are blocked until it expires.
+Non-admin users never see the WordPress dashboard. On login the page simply reloads, and any attempt to access `/wp-admin/` redirects back to the front end.
+
 
 ## Upcoming Events Tab
 

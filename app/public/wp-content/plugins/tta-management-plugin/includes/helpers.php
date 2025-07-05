@@ -2545,3 +2545,33 @@ function tta_get_first_event_page_id_for_date( $year, $month, $day ) {
     TTA_Cache::set( $cache_key, $page_id, 300 );
     return $page_id;
 }
+
+/**
+ * Redirect non-admin users away from the dashboard.
+ */
+function tta_block_dashboard_access() {
+    if ( is_admin() && ! wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) {
+        $referer = wp_get_referer();
+        wp_safe_redirect( $referer ? $referer : home_url( '/' ) );
+        exit;
+    }
+}
+add_action( 'admin_init', 'tta_block_dashboard_access' );
+
+/**
+ * Keep non-admins on the same page after logging in.
+ *
+ * @param string       $redirect_to           URL to redirect to.
+ * @param string       $requested_redirect_to Requested redirect.
+ * @param WP_User|WP_Error $user             User object or error.
+ * @return string
+ */
+function tta_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+    if ( $user instanceof WP_User && ! user_can( $user, 'manage_options' ) ) {
+        $referer = wp_get_referer();
+        return $referer ? $referer : home_url( '/' );
+    }
+    return $redirect_to;
+}
+add_filter( 'login_redirect', 'tta_login_redirect', 10, 3 );
+
