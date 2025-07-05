@@ -318,7 +318,11 @@ jQuery(function($){
       if(!res.success) return;
       var $new = $('<tr class="tta-inline-row"><td colspan="'+colsp+'"><div class="tta-inline-container"></div></td></tr>');
       $row.after($new);
-      $new.find('.tta-inline-container').html(res.data.html).slideDown(200);
+      var $container = $new.find('.tta-inline-container');
+      $container.html(res.data.html).slideDown(200);
+      $container.find('select[name="level"]').each(function(){
+        syncLevelPrice($(this));
+      });
     }, 'json');
   });
 
