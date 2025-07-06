@@ -1,21 +1,31 @@
 # TTA BI Dashboard
 
-The **TTA BI Dashboard** is a new admin page found under its own menu item in the WordPress dashboard. It surfaces business intelligence metrics about subscriptions and member activity.
+The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js.
 
-The page loads D3.js charts via AJAX. The first version shows:
+## Available Charts
 
-- Counts of active, cancelled and payment-problem subscriptions
-- Number of new member signups in the current month
+The dashboard now displays multiple sections:
 
-These counts are fetched from the database through the `tta_bi_data` AJAX action. The response format is:
+1. **Subscription Status** – bar chart of active, cancelled and payment-problem subscriptions.
+2. **New Member Signups** – line chart showing signups this month.
+3. **Monthly Revenue** – line chart of total revenue from all transactions over the last six months.
+4. **Ticket Sales Per Year** – bar chart summarising yearly event revenue.
+5. **Average Tickets per Event** – monthly average tickets sold per event for the current year.
+6. **Membership Levels** – pie chart of members by current level.
+7. **Predicted Revenue** – simple forecast for next month based on the recent average.
+
+The AJAX response includes arrays for each dataset:
 
 ```json
 {
-  "subs": [ {"label":"Active","count":10}, ... ],
-  "signups": [ {"label":"Jul","count":5} ]
+  "subs": [{"label":"Active","count":10}],
+  "signups": [{"label":"Jul","count":5}],
+  "revenue": [{"label":"2025-01","amount":1200}],
+  "ticket_sales": [{"label":"2025","amount":5000}],
+  "avg_tickets": [{"label":"01","count":15}],
+  "by_level": [{"label":"premium","count":50}],
+  "prediction": {"label":"2025-08","amount":1500}
 }
 ```
 
-The page plots a bar chart of subscription counts and a simple line chart of monthly signups. Additional metrics can be added by extending the AJAX handler.
-
-Charts update asynchronously without a page reload so new data appears immediately when the dashboard is visited.
+Charts are drawn asynchronously without page reloads. Additional metrics can be added by extending the AJAX handler and appending new chart containers in the view.
