@@ -15,23 +15,28 @@ class TTA_Ajax_BI {
         $att     = $wpdb->prefix . 'tta_attendees';
         $events  = $wpdb->prefix . 'tta_events';
 
+        $months = isset( $_GET['months'] ) ? max( 1, min( 24, absint( $_GET['months'] ) ) ) : 6;
+        $start  = gmdate( 'Y-m-01 00:00:00', strtotime( "-$months months" ) );
+
         $active    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$members} WHERE subscription_status = 'active'" );
         $cancelled = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$members} WHERE subscription_status = 'cancelled'" );
         $problem   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$members} WHERE subscription_status = 'paymentproblem'" );
-        $month_signups = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$members} WHERE joined_at >= %s", gmdate( 'Y-m-01 00:00:00' ) ) );
+        $signup_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
 
         $subs = [
             [ 'label' => 'Active', 'count' => $active ],
             [ 'label' => 'Cancelled', 'count' => $cancelled ],
             [ 'label' => 'Payment Issues', 'count' => $problem ],
         ];
-        $signups = [ [ 'label' => gmdate( 'M' ), 'count' => $month_signups ] ];
+        $signups = array_map( function( $r ) {
+            return [ 'label' => $r['m'], 'count' => (int) $r['c'] ];
+        }, $signup_rows );
 
-        // Monthly revenue for last 6 months
-        $rev_rows = $wpdb->get_results( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} GROUP BY m ORDER BY m DESC LIMIT 6", ARRAY_A );
+        // Monthly revenue for selected range
+        $rev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
         $revenue = array_map( function( $r ) {
             return [ 'label' => $r['m'], 'amount' => (float) $r['total'] ];
-        }, array_reverse( $rev_rows ) );
+        }, $rev_rows );
 
         // Ticket sales per year
         $ticket_rows = $wpdb->get_results( "SELECT YEAR(created_at) as y, SUM(amount-refunded) as total FROM {$tx} GROUP BY y ORDER BY y", ARRAY_A );

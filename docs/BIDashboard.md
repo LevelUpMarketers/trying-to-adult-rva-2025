@@ -1,14 +1,14 @@
 # TTA BI Dashboard
 
-The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js.
+The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. A timeframe dropdown lets you view the last 6, 12 or 24 months of data. Selecting a different range reloads the charts without a page refresh.
 
 ## Available Charts
 
 The dashboard now displays multiple sections:
 
 1. **Subscription Status** – bar chart of active, cancelled and payment-problem subscriptions.
-2. **New Member Signups** – line chart showing signups this month.
-3. **Monthly Revenue** – line chart of total revenue from all transactions over the last six months.
+2. **New Member Signups** – line chart showing signups per month for the selected timeframe.
+3. **Monthly Revenue** – line chart of total revenue from all transactions for the chosen period.
 4. **Ticket Sales Per Year** – bar chart summarising yearly event revenue.
 5. **Average Tickets per Event** – monthly average tickets sold per event for the current year.
 6. **Membership Levels** – pie chart of members by current level.
