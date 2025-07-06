@@ -1,51 +1,92 @@
 <div id="tta-bi-dashboard" class="wrap">
-  <div style="margin-bottom:15px">
-    <label for="tta-bi-range">Timeframe:</label>
-    <select id="tta-bi-range">
-      <option value="6">Last 6 months</option>
-      <option value="12">Last 12 months</option>
-      <option value="24">Last 24 months</option>
-    </select>
-  </div>
 
   <section class="tta-bi-section">
     <h2>Subscription Status</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="subs">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Counts of all active, cancelled and problem subscriptions.</p>
     <div id="tta-bi-subscription-chart" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>New Member Signups</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="signups">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Monthly member signups for the selected period.</p>
     <div id="tta-bi-signups-chart" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>Monthly Revenue</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="revenue">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Total revenue from all transactions.</p>
     <div id="tta-bi-revenue-chart" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>Ticket Sales Per Year</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="ticket_sales">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Aggregate event revenue grouped by year.</p>
     <div id="tta-bi-ticket-sales" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>Average Tickets Per Event</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="avg_tickets">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Average tickets sold per event this year.</p>
     <div id="tta-bi-avg-tickets" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>Members by Level</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="by_level">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Current distribution of membership levels.</p>
     <div id="tta-bi-by-level" class="tta-bi-chart"></div>
   </section>
 
   <section class="tta-bi-section">
     <h2>Predicted Revenue Next Month</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="prediction">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
     <p>Simple forecast based on recent months.</p>
     <div id="tta-bi-prediction" class="tta-bi-chart"></div>
   </section>
@@ -53,29 +94,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
 (function(){
-  const rangeSel = document.getElementById('tta-bi-range');
-  function load(){
-    const months = rangeSel.value;
-    fetch(ajaxurl + '?action=tta_bi_data&months=' + months).then(r=>r.json()).then(draw);
+  const selects=document.querySelectorAll('.tta-bi-range');
+  const map={subs:'#tta-bi-subscription-chart',signups:'#tta-bi-signups-chart',revenue:'#tta-bi-revenue-chart',ticket_sales:'#tta-bi-ticket-sales',avg_tickets:'#tta-bi-avg-tickets',by_level:'#tta-bi-by-level',prediction:'#tta-bi-prediction'};
+
+  function load(sel){
+    const months=sel.value;
+    const chart=sel.dataset.chart;
+    fetch(`${ajaxurl}?action=tta_bi_data&chart=${chart}&months=${months}`)
+      .then(r=>r.json()).then(data=>draw(chart,data));
   }
 
-  function clear(){
-    document.querySelectorAll('.tta-bi-chart').forEach(el=>el.innerHTML='');
+  function draw(chart,data){
+    const sel=map[chart];
+    if(!sel)return;
+    document.querySelector(sel).innerHTML='';
+    switch(chart){
+      case 'subs': renderBar(sel, data.subs, 'count'); break;
+      case 'signups': renderLine(sel, data.signups,'count'); break;
+      case 'revenue': renderLine(sel, data.revenue,'amount'); break;
+      case 'ticket_sales': renderBar(sel, data.ticket_sales,'amount'); break;
+      case 'avg_tickets': renderLine(sel, data.avg_tickets,'count'); break;
+      case 'by_level': renderPie(sel, data.by_level,'count'); break;
+      case 'prediction': renderBar(sel, [data.prediction],'amount'); break;
+    }
   }
 
-  function draw(data){
-    clear();
-    renderBar('#tta-bi-subscription-chart', data.subs, 'count');
-    renderLine('#tta-bi-signups-chart', data.signups, 'count');
-    renderLine('#tta-bi-revenue-chart', data.revenue, 'amount');
-    renderBar('#tta-bi-ticket-sales', data.ticket_sales, 'amount');
-    renderLine('#tta-bi-avg-tickets', data.avg_tickets, 'count');
-    renderPie('#tta-bi-by-level', data.by_level, 'count');
-    renderBar('#tta-bi-prediction', [data.prediction], 'amount');
-  }
-
-  rangeSel.addEventListener('change', load);
-  load();
+  selects.forEach(s=>{s.addEventListener('change',()=>load(s)); load(s);});
 
   function renderBar(sel,d,val){
     const svg=d3.select(sel).append('svg').attr('width',600).attr('height',300);

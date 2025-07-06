@@ -1,6 +1,6 @@
 # TTA BI Dashboard
 
-The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. A timeframe dropdown lets you view the last 6, 12 or 24 months of data. Selecting a different range reloads the charts without a page refresh.
+The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. Each chart now has its own timeframe selector so you can independently view the last 6, 12 or 24 months. Changing a selector reloads only that chart without a full page refresh.
 
 ## Available Charts
 
