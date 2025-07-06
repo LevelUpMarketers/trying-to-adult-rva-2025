@@ -22,6 +22,17 @@ class TTA_Ajax_BI {
         $start  = gmdate( 'Y-m-01 00:00:00', strtotime( "-$months months" ) );
         $prev_start = gmdate( 'Y-m-01 00:00:00', strtotime( "-$months months", strtotime( $start ) ) );
 
+        $labels = [];
+        $ts = strtotime( $start );
+        for ( $i = 0; $i < $months; $i++ ) {
+            $labels[] = gmdate( 'Y-m', strtotime( "+$i month", $ts ) );
+        }
+        $prev_labels = [];
+        $pts = strtotime( $prev_start );
+        for ( $i = 0; $i < $months; $i++ ) {
+            $prev_labels[] = gmdate( 'Y-m', strtotime( "+$i month", $pts ) );
+        }
+
         $data = [];
 
         if ( 'all' === $chart || 'subs' === $chart ) {
@@ -36,20 +47,36 @@ class TTA_Ajax_BI {
         }
 
         if ( 'all' === $chart || 'signups' === $chart ) {
-            $signup_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
-            $data['signups'] = array_map( function( $r ) { return [ 'label' => $r['m'], 'count' => (int) $r['c'] ]; }, $signup_rows );
+            $signup_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s GROUP BY m", $start ), ARRAY_A );
+            $map = wp_list_pluck( $signup_rows, 'c', 'm' );
+            $data['signups'] = [];
+            foreach ( $labels as $m ) {
+                $data['signups'][] = [ 'label' => $m, 'count' => isset( $map[ $m ] ) ? (int) $map[ $m ] : 0 ];
+            }
             if ( $compare ) {
-                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s AND joined_at < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
-                $data['signups_prev'] = array_map( function( $r ){ return [ 'label'=>$r['m'], 'count'=>(int)$r['c'] ]; }, $prev_rows );
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s AND joined_at < %s GROUP BY m", $prev_start, $start ), ARRAY_A );
+                $pmap = wp_list_pluck( $prev_rows, 'c', 'm' );
+                $data['signups_prev'] = [];
+                foreach ( $prev_labels as $m ) {
+                    $data['signups_prev'][] = [ 'label' => $m, 'count' => isset( $pmap[ $m ] ) ? (int) $pmap[ $m ] : 0 ];
+                }
             }
         }
 
         if ( 'all' === $chart || 'revenue' === $chart || 'prediction' === $chart || 'cumulative' === $chart ) {
-            $rev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
-            $data['revenue'] = array_map( function( $r ) { return [ 'label' => $r['m'], 'amount' => (float) $r['total'] ]; }, $rev_rows );
+            $rev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s GROUP BY m", $start ), ARRAY_A );
+            $map = wp_list_pluck( $rev_rows, 'total', 'm' );
+            $data['revenue'] = [];
+            foreach ( $labels as $m ) {
+                $data['revenue'][] = [ 'label' => $m, 'amount' => isset( $map[ $m ] ) ? (float) $map[ $m ] : 0 ];
+            }
             if ( $compare ) {
-                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s AND created_at < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
-                $data['revenue_prev'] = array_map( function( $r ){ return [ 'label'=>$r['m'], 'amount'=>(float)$r['total'] ]; }, $prev_rows );
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s AND created_at < %s GROUP BY m", $prev_start, $start ), ARRAY_A );
+                $pmap = wp_list_pluck( $prev_rows, 'total', 'm' );
+                $data['revenue_prev'] = [];
+                foreach ( $prev_labels as $m ) {
+                    $data['revenue_prev'][] = [ 'label' => $m, 'amount' => isset( $pmap[ $m ] ) ? (float) $pmap[ $m ] : 0 ];
+                }
             }
         }
 
@@ -79,12 +106,24 @@ class TTA_Ajax_BI {
         }
 
         if ( 'all' === $chart || 'churn' === $chart ) {
-            $cancel_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
+            $cancel_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s GROUP BY m", $start ), ARRAY_A );
             $total_members = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$members}" );
-            $data['churn'] = array_map( function( $r ) use ( $total_members ) { $rate = $total_members ? ( $r['c'] / $total_members ) * 100 : 0; return [ 'label' => $r['m'], 'rate' => round( $rate, 2 ) ]; }, $cancel_rows );
+            $map = wp_list_pluck( $cancel_rows, 'c', 'm' );
+            $data['churn'] = [];
+            foreach ( $labels as $m ) {
+                $count = isset( $map[ $m ] ) ? $map[ $m ] : 0;
+                $rate = $total_members ? ( $count / $total_members ) * 100 : 0;
+                $data['churn'][] = [ 'label' => $m, 'rate' => round( $rate, 2 ) ];
+            }
             if ( $compare ) {
-                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s AND action_date < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
-                $data['churn_prev'] = array_map( function( $r ) use ( $total_members ){ $rate = $total_members ? ( $r['c'] / $total_members ) * 100 : 0; return [ 'label'=>$r['m'], 'rate'=>round( $rate, 2 ) ]; }, $prev_rows );
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s AND action_date < %s GROUP BY m", $prev_start, $start ), ARRAY_A );
+                $pmap = wp_list_pluck( $prev_rows, 'c', 'm' );
+                $data['churn_prev'] = [];
+                foreach ( $prev_labels as $m ) {
+                    $count = isset( $pmap[ $m ] ) ? $pmap[ $m ] : 0;
+                    $rate = $total_members ? ( $count / $total_members ) * 100 : 0;
+                    $data['churn_prev'][] = [ 'label' => $m, 'rate' => round( $rate, 2 ) ];
+                }
             }
         }
 

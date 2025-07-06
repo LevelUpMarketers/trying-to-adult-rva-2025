@@ -1,9 +1,12 @@
+<?php $tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'events'; ?>
 <div id="tta-bi-dashboard" class="wrap">
-
+<?php if ( $tab === 'members' ) : ?>
   <section class="tta-bi-section">
     <h2>Subscription Status</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="subs">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
         <option value="6">Last 6 months</option>
         <option value="12">Last 12 months</option>
         <option value="24">Last 24 months</option>
@@ -17,6 +20,8 @@
     <h2>New Member Signups</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="signups">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
         <option value="6">Last 6 months</option>
         <option value="12">Last 12 months</option>
         <option value="24">Last 24 months</option>
@@ -28,9 +33,74 @@
   </section>
 
   <section class="tta-bi-section">
+    <h2>Members by Level</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="by_level">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <p>Current distribution of membership levels.</p>
+    <div id="tta-bi-by-level" class="tta-bi-chart"></div>
+  </section>
+
+  <section class="tta-bi-section">
+    <h2>Monthly Churn Rate</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="churn">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <label class="tta-bi-compare"><input type="checkbox" data-chart="churn"> Compare previous</label>
+    <p>Percentage of members who cancelled each month.</p>
+    <div id="tta-bi-churn" class="tta-bi-chart"></div>
+  </section>
+
+<?php elseif ( $tab === 'events' ) : ?>
+  <section class="tta-bi-section">
+    <h2>Ticket Sales Per Year</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="ticket_sales">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <p>Aggregate event revenue grouped by year.</p>
+    <div id="tta-bi-ticket-sales" class="tta-bi-chart"></div>
+  </section>
+
+  <section class="tta-bi-section">
+    <h2>Average Tickets Per Event</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="avg_tickets">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <p>Average tickets sold per event this year.</p>
+    <div id="tta-bi-avg-tickets" class="tta-bi-chart"></div>
+  </section>
+
+<?php else : ?>
+  <section class="tta-bi-section">
     <h2>Monthly Revenue</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="revenue">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
         <option value="6">Last 6 months</option>
         <option value="12">Last 12 months</option>
         <option value="24">Last 24 months</option>
@@ -45,6 +115,8 @@
     <h2>Cumulative Revenue</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="cumulative">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
         <option value="6">Last 6 months</option>
         <option value="12">Last 12 months</option>
         <option value="24">Last 24 months</option>
@@ -56,62 +128,11 @@
   </section>
 
   <section class="tta-bi-section">
-    <h2>Ticket Sales Per Year</h2>
-    <label>Timeframe:
-      <select class="tta-bi-range" data-chart="ticket_sales">
-        <option value="6">Last 6 months</option>
-        <option value="12">Last 12 months</option>
-        <option value="24">Last 24 months</option>
-      </select>
-    </label>
-    <p>Aggregate event revenue grouped by year.</p>
-    <div id="tta-bi-ticket-sales" class="tta-bi-chart"></div>
-  </section>
-
-  <section class="tta-bi-section">
-    <h2>Average Tickets Per Event</h2>
-    <label>Timeframe:
-      <select class="tta-bi-range" data-chart="avg_tickets">
-        <option value="6">Last 6 months</option>
-        <option value="12">Last 12 months</option>
-        <option value="24">Last 24 months</option>
-      </select>
-    </label>
-    <p>Average tickets sold per event this year.</p>
-    <div id="tta-bi-avg-tickets" class="tta-bi-chart"></div>
-  </section>
-
-  <section class="tta-bi-section">
-    <h2>Members by Level</h2>
-    <label>Timeframe:
-      <select class="tta-bi-range" data-chart="by_level">
-        <option value="6">Last 6 months</option>
-        <option value="12">Last 12 months</option>
-        <option value="24">Last 24 months</option>
-      </select>
-    </label>
-    <p>Current distribution of membership levels.</p>
-    <div id="tta-bi-by-level" class="tta-bi-chart"></div>
-  </section>
-
-  <section class="tta-bi-section">
-    <h2>Monthly Churn Rate</h2>
-    <label>Timeframe:
-      <select class="tta-bi-range" data-chart="churn">
-        <option value="6">Last 6 months</option>
-        <option value="12">Last 12 months</option>
-        <option value="24">Last 24 months</option>
-      </select>
-    </label>
-    <label class="tta-bi-compare"><input type="checkbox" data-chart="churn"> Compare previous</label>
-    <p>Percentage of members who cancelled each month.</p>
-    <div id="tta-bi-churn" class="tta-bi-chart"></div>
-  </section>
-
-  <section class="tta-bi-section">
     <h2>Predicted Revenue Next Month</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="prediction">
+        <option value="1">Last month</option>
+        <option value="3">Last 3 months</option>
         <option value="6">Last 6 months</option>
         <option value="12">Last 12 months</option>
         <option value="24">Last 24 months</option>
@@ -120,6 +141,7 @@
     <p>Simple forecast based on recent months.</p>
     <div id="tta-bi-prediction" class="tta-bi-chart"></div>
   </section>
+<?php endif; ?>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
