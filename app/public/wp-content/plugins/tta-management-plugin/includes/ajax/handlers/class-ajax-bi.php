@@ -18,7 +18,9 @@ class TTA_Ajax_BI {
 
         $months = isset( $_GET['months'] ) ? max( 1, min( 24, absint( $_GET['months'] ) ) ) : 6;
         $chart  = isset( $_GET['chart'] ) ? sanitize_key( $_GET['chart'] ) : 'all';
+        $compare = ! empty( $_GET['compare'] );
         $start  = gmdate( 'Y-m-01 00:00:00', strtotime( "-$months months" ) );
+        $prev_start = gmdate( 'Y-m-01 00:00:00', strtotime( "-$months months", strtotime( $start ) ) );
 
         $data = [];
 
@@ -35,24 +37,29 @@ class TTA_Ajax_BI {
 
         if ( 'all' === $chart || 'signups' === $chart ) {
             $signup_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
-            $data['signups'] = array_map( function( $r ) {
-                return [ 'label' => $r['m'], 'count' => (int) $r['c'] ];
-            }, $signup_rows );
+            $data['signups'] = array_map( function( $r ) { return [ 'label' => $r['m'], 'count' => (int) $r['c'] ]; }, $signup_rows );
+            if ( $compare ) {
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(joined_at,'%Y-%m') m, COUNT(*) c FROM {$members} WHERE joined_at >= %s AND joined_at < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
+                $data['signups_prev'] = array_map( function( $r ){ return [ 'label'=>$r['m'], 'count'=>(int)$r['c'] ]; }, $prev_rows );
+            }
         }
 
         if ( 'all' === $chart || 'revenue' === $chart || 'prediction' === $chart || 'cumulative' === $chart ) {
             $rev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
-            $data['revenue'] = array_map( function( $r ) {
-                return [ 'label' => $r['m'], 'amount' => (float) $r['total'] ];
-            }, $rev_rows );
+            $data['revenue'] = array_map( function( $r ) { return [ 'label' => $r['m'], 'amount' => (float) $r['total'] ]; }, $rev_rows );
+            if ( $compare ) {
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(created_at,'%Y-%m') as m, SUM(amount - refunded) as total FROM {$tx} WHERE created_at >= %s AND created_at < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
+                $data['revenue_prev'] = array_map( function( $r ){ return [ 'label'=>$r['m'], 'amount'=>(float)$r['total'] ]; }, $prev_rows );
+            }
         }
 
         if ( ( 'all' === $chart || 'cumulative' === $chart ) && ! empty( $data['revenue'] ) ) {
             $sum = 0;
-            $data['cumulative'] = array_map( function( $r ) use ( &$sum ) {
-                $sum += $r['amount'];
-                return [ 'label' => $r['label'], 'amount' => $sum ];
-            }, $data['revenue'] );
+            $data['cumulative'] = array_map( function( $r ) use ( &$sum ) { $sum += $r['amount']; return [ 'label' => $r['label'], 'amount' => $sum ]; }, $data['revenue'] );
+            if ( $compare && ! empty( $data['revenue_prev'] ) ) {
+                $sum = 0;
+                $data['cumulative_prev'] = array_map( function( $r ) use ( &$sum ){ $sum += $r['amount']; return [ 'label'=>$r['label'], 'amount'=>$sum ]; }, $data['revenue_prev'] );
+            }
         }
 
         if ( 'all' === $chart || 'ticket_sales' === $chart ) {
@@ -74,10 +81,11 @@ class TTA_Ajax_BI {
         if ( 'all' === $chart || 'churn' === $chart ) {
             $cancel_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s GROUP BY m ORDER BY m", $start ), ARRAY_A );
             $total_members = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$members}" );
-            $data['churn'] = array_map( function( $r ) use ( $total_members ) {
-                $rate = $total_members ? ( $r['c'] / $total_members ) * 100 : 0;
-                return [ 'label' => $r['m'], 'rate' => round( $rate, 2 ) ];
-            }, $cancel_rows );
+            $data['churn'] = array_map( function( $r ) use ( $total_members ) { $rate = $total_members ? ( $r['c'] / $total_members ) * 100 : 0; return [ 'label' => $r['m'], 'rate' => round( $rate, 2 ) ]; }, $cancel_rows );
+            if ( $compare ) {
+                $prev_rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE_FORMAT(action_date,'%Y-%m') m, COUNT(*) c FROM {$hist} WHERE action_type='membership_cancel' AND action_date >= %s AND action_date < %s GROUP BY m ORDER BY m", $prev_start, $start ), ARRAY_A );
+                $data['churn_prev'] = array_map( function( $r ) use ( $total_members ){ $rate = $total_members ? ( $r['c'] / $total_members ) * 100 : 0; return [ 'label'=>$r['m'], 'rate'=>round( $rate, 2 ) ]; }, $prev_rows );
+            }
         }
 
         if ( 'all' === $chart || 'prediction' === $chart ) {

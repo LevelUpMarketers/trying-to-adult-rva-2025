@@ -1,6 +1,6 @@
 # TTA BI Dashboard
 
-The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. Each chart now has its own timeframe selector so you can independently view the last 6, 12 or 24 months. Changing a selector reloads only that chart without a full page refresh.  Charts now include hover tooltips, axis labels and subtle animations to make the data easier to digest.
+The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. Each chart now has its own timeframe selector so you can independently view the last 6, 12 or 24 months. Changing a selector reloads only that chart without a full page refresh. Optional *Compare previous period* checkboxes overlay data from the prior timeframe. Charts include hover tooltips, axis labels and subtle animations with extra padding around axes so labels never overlap.
 
 ## Available Charts
 
@@ -31,6 +31,7 @@ The AJAX response includes arrays for each dataset:
   "prediction": {"label":"2025-08","amount":1500}
 }
 ```
+If a comparison is requested, additional arrays like `revenue_prev` or `signups_prev` contain data for the preceding period.
 
 Charts are drawn asynchronously without page reloads. Additional metrics can be added by extending the AJAX handler and appending new chart containers in the view.
 Each chart features helpful hover tooltips and grid lines. Bar charts animate when loading, line charts show circular markers at each point, and pie charts include a colour-coded legend.
