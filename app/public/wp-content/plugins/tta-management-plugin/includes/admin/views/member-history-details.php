@@ -175,7 +175,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Update the billing details and restart charges for this member.', 'tta' ); ?>">
         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
       </span>
-      <?php esc_html_e( 'Update & Reactivate Membership', 'tta' ); ?>
+      <?php echo esc_html( 'cancelled' === $status ? __( 'Create a New Subscription for This Member', 'tta' ) : __( 'Update & Reactivate Membership', 'tta' ) ); ?>
     </h5>
     <input type="hidden" name="member_id" value="<?php echo esc_attr( $member_id ); ?>">
     <p>
@@ -436,8 +436,9 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
   </form>
   <?php endif; ?>
 
-  <?php endif; ?>
+<?php endif; ?>
 
+<?php if ( 'cancelled' !== $status ) : ?>
   <form id="tta-admin-change-level-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
     <h5>
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Switch the member between Basic and Premium tiers starting on their next bill.', 'tta' ); ?>">
@@ -485,6 +486,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>
     </p>
   </form>
+<?php endif; ?>
 </div>
 <?php else : ?>
   <form id="tta-admin-assign-membership-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">

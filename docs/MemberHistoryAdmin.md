@@ -21,11 +21,15 @@ events are removed.
 Below the summary is a **Manage Subscription** section. The controls are arranged side-by-side for quick access and each heading includes a tooltip describing its purpose. Tooltip icons come before each heading for improved readability. Administrators can:
 
  - Update the stored payment method and billing address for the member's recurring Authorize.Net subscription. Billing fields now include **Address Line 2** just like the public checkout form.
-- Cancel or reactivate the subscription without leaving WordPress. When a plan is
-  cancelled or has a payment problem a single **Update & Reactivate Membership**
-  form is shown. It provides two buttons: **Reactivate & Update Using Info Above**
-  submits any new billing details, while **Attempt Reactivation using Current
-  Authorize.net Subscription Info** simply tries the stored payment method again.
+ - Cancel or reactivate the subscription without leaving WordPress. When a plan is
+    cancelled or has a payment problem a single form is shown. If the status is
+    *cancelled* the heading reads **Create a New Subscription for This Member**
+    and only that form appears. For payment problems the heading remains
+    **Update & Reactivate Membership** and two buttons are available:
+    **Reactivate & Update Using Info Above** to send new billing details and
+    **Attempt Reactivation using Current Authorize.net Subscription Info** to try
+    the stored payment method again. The Change Level and Cancel forms are hidden
+    when the subscription is already cancelled.
 - Change the membership level and specify a custom monthly price. The update attempts to modify the existing subscription via Authorize.Net; on failure a clear error message is returned.
 - Each form displays its own response message directly below the submit button for clearer feedback.
 - Assign a brand new membership to a user who has never subscribed before. The form matches the front-end checkout and charges the first month immediately. When reactivating a cancelled or payment-problem plan the form pre-fills the last monthly amount and billing address from Authorize.Net so usually only a new card number is required.
