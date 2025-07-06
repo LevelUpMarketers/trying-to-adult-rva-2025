@@ -111,6 +111,10 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     if ( ! $react_amount ) {
         $react_amount = tta_get_membership_price( $level );
     }
+    $react_level = $prev_level ? strtolower( $prev_level ) : $level;
+    if ( ! in_array( $react_level, array( 'basic', 'premium' ), true ) ) {
+        $react_level = 'basic';
+    }
     $billing_prefill = $sub_info['billing'] ?? [];
     $exp_prefill     = '';
     if ( ! empty( $sub_info['exp_date'] ) && preg_match( '/^(\d{4})-(\d{2})$/', $sub_info['exp_date'], $m ) ) {
@@ -175,9 +179,27 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Update the billing details and restart charges for this member.', 'tta' ); ?>">
         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
       </span>
-      <?php echo esc_html( 'cancelled' === $status ? __( 'Create a New Subscription for This Member', 'tta' ) : __( 'Update & Reactivate Membership', 'tta' ) ); ?>
+      <?php
+        if ( 'cancelled' === $status ) {
+            echo esc_html__( 'Create a New Subscription for This Member', 'tta' );
+        } elseif ( 'paymentproblem' === $status ) {
+            echo esc_html__( 'Attempt Payment Again or Create a New Subscription', 'tta' );
+        } else {
+            echo esc_html__( 'Update & Reactivate Membership', 'tta' );
+        }
+      ?>
     </h5>
     <input type="hidden" name="member_id" value="<?php echo esc_attr( $member_id ); ?>">
+    <input type="hidden" name="create_new" value="0" />
+    <p>
+      <label>
+        <?php esc_html_e( 'Membership Level', 'tta' ); ?><br />
+        <select name="level">
+          <option value="basic" <?php selected( $react_level, 'basic' ); ?>><?php esc_html_e( 'Basic', 'tta' ); ?></option>
+          <option value="premium" <?php selected( $react_level, 'premium' ); ?>><?php esc_html_e( 'Premium', 'tta' ); ?></option>
+        </select>
+      </label>
+    </p>
     <p>
       <label>
         <?php esc_html_e( 'Monthly Amount', 'tta' ); ?><br />
@@ -252,8 +274,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <input type="hidden" name="use_current" value="0" />
     <p class="submit">
       <div class="tta-submit-history-div">
-        <button type="submit" class="button" data-tooltip="<?php esc_attr_e( 'Use the details entered above to restart billing.', 'tta' ); ?>"><?php esc_html_e( 'Reactivate & Update Using Info Above', 'tta' ); ?></button>
-        <button type="button" id="tta-reactivate-current-btn" class="button" data-tooltip="<?php esc_attr_e( 'Attempt to restart billing using the payment information already on file in Authorize.Net.', 'tta' ); ?>"><?php esc_html_e( 'Attempt Reactivation using Current Authorize.net Subscription Info', 'tta' ); ?></button>
+        <button type="submit" id="tta-create-sub-btn" class="button" data-tooltip="<?php esc_attr_e( 'Use the details entered above to restart billing.', 'tta' ); ?>"><?php esc_html_e( 'Create New Subscription', 'tta' ); ?></button>
+        <button type="button" id="tta-reactivate-current-btn" class="button" data-tooltip="<?php esc_attr_e( 'Attempt to restart billing using the payment information already on file in Authorize.Net.', 'tta' ); ?>"><?php esc_html_e( 'Attempt billing again using current Authorize.net payment & billing info', 'tta' ); ?></button>
         <div class="tta-admin-progress-spinner-div"><img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="" style="display:none;opacity:0"></div>
       </div>
       <div id="tta-subscription-response" class="tta-admin-progress-response-div"><p class="tta-admin-progress-response-p"></p></div>

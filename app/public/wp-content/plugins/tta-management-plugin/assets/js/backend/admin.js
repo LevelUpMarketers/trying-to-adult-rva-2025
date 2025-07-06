@@ -1078,6 +1078,11 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     $form.find('input[name="card_number"],input[name="exp_date"],input[name="card_cvc"]').prop('required',true);
     $form.find('input[name="use_current"]').val('0');
   });
+  $(document).on('click','#tta-create-sub-btn',function(){
+    var $form = $('#tta-admin-reactivate-subscription-form');
+    $form.find('input[name="create_new"]').val('1');
+    setTimeout(function(){ $form.find('input[name="create_new"]').val('0'); }, 500);
+  });
 
   // Auto-fill price fields when membership level changes
   function syncLevelPrice($select){

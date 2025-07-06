@@ -92,11 +92,12 @@ class TTA_Ajax_Membership_Admin {
             wp_send_json_error( [ 'message' => __( 'Member not found.', 'tta' ) ] );
         }
 
-        $level      = $member['membership_level'];
-        $status     = strtolower( $member['subscription_status'] );
-        $sub_id     = $member['subscription_id'];
+        $level       = sanitize_text_field( $_POST['level'] ?? $member['membership_level'] );
+        $status      = strtolower( $member['subscription_status'] );
+        $sub_id      = $member['subscription_id'];
         $use_current = ! empty( $_POST['use_current'] );
-        $amount     = floatval( $_POST['amount'] ?? tta_get_membership_price( $level ) );
+        $create_new  = ! empty( $_POST['create_new'] );
+        $amount      = floatval( $_POST['amount'] ?? tta_get_membership_price( $level ) );
         $card       = $use_current ? '' : preg_replace( '/\D/', '', $_POST['card_number'] ?? '' );
         $exp        = $use_current ? '' : sanitize_text_field( $_POST['exp_date'] ?? '' );
         $cvc        = $use_current ? '' : sanitize_text_field( $_POST['card_cvc'] ?? '' );
@@ -123,6 +124,36 @@ class TTA_Ajax_Membership_Admin {
             } else {
                 wp_send_json_error( [ 'message' => __( 'Subscription cancelled or missing. Provide payment details to create a new subscription.', 'tta' ) ] );
             }
+        } elseif ( $create_new ) {
+            if ( ! $card || ! $exp ) {
+                wp_send_json_error( [ 'message' => __( 'Payment details required.', 'tta' ) ] );
+            }
+            $charge = $api->charge( $amount, $card, $exp, $cvc, $billing );
+            if ( ! $charge['success'] ) {
+                wp_send_json_error( [ 'message' => $charge['error'] ] );
+            }
+            TTA_Transaction_Logger::log(
+                $charge['transaction_id'],
+                $amount,
+                [
+                    [
+                        'membership'  => ucfirst( $level ) . ' Membership',
+                        'quantity'    => 1,
+                        'price'       => $amount,
+                        'final_price' => $amount,
+                    ],
+                ],
+                '',
+                0,
+                intval( $member['wpuserid'] ),
+                substr( $card, -4 )
+            );
+
+            $sub = $api->create_subscription( $amount, $card, $exp, $cvc, $billing, ucfirst( $level ) . ' Membership', '', date( 'Y-m-d', strtotime( '+1 month' ) ) );
+            if ( ! $sub['success'] ) {
+                wp_send_json_error( [ 'message' => $sub['error'] ] );
+            }
+            $new_id = $sub['subscription_id'];
         } elseif ( $sub_id && 'cancelled' !== $status ) {
             if ( $card && $exp ) {
                 $res = $api->update_subscription_payment( $sub_id, $card, $exp, $cvc, $billing );
