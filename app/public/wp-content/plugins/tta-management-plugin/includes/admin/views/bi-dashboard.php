@@ -40,6 +40,19 @@
   </section>
 
   <section class="tta-bi-section">
+    <h2>Cumulative Revenue</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="cumulative">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <p>Total revenue accrued over time.</p>
+    <div id="tta-bi-cumulative" class="tta-bi-chart"></div>
+  </section>
+
+  <section class="tta-bi-section">
     <h2>Ticket Sales Per Year</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="ticket_sales">
@@ -79,6 +92,19 @@
   </section>
 
   <section class="tta-bi-section">
+    <h2>Monthly Churn Rate</h2>
+    <label>Timeframe:
+      <select class="tta-bi-range" data-chart="churn">
+        <option value="6">Last 6 months</option>
+        <option value="12">Last 12 months</option>
+        <option value="24">Last 24 months</option>
+      </select>
+    </label>
+    <p>Percentage of members who cancelled each month.</p>
+    <div id="tta-bi-churn" class="tta-bi-chart"></div>
+  </section>
+
+  <section class="tta-bi-section">
     <h2>Predicted Revenue Next Month</h2>
     <label>Timeframe:
       <select class="tta-bi-range" data-chart="prediction">
@@ -95,7 +121,7 @@
 <script>
 (function(){
   const selects=document.querySelectorAll('.tta-bi-range');
-  const map={subs:'#tta-bi-subscription-chart',signups:'#tta-bi-signups-chart',revenue:'#tta-bi-revenue-chart',ticket_sales:'#tta-bi-ticket-sales',avg_tickets:'#tta-bi-avg-tickets',by_level:'#tta-bi-by-level',prediction:'#tta-bi-prediction'};
+  const map={subs:'#tta-bi-subscription-chart',signups:'#tta-bi-signups-chart',revenue:'#tta-bi-revenue-chart',cumulative:'#tta-bi-cumulative',ticket_sales:'#tta-bi-ticket-sales',avg_tickets:'#tta-bi-avg-tickets',by_level:'#tta-bi-by-level',churn:'#tta-bi-churn',prediction:'#tta-bi-prediction'};
 
   function load(sel){
     const months=sel.value;
@@ -112,9 +138,11 @@
       case 'subs': renderBar(sel, data.subs, 'count'); break;
       case 'signups': renderLine(sel, data.signups,'count'); break;
       case 'revenue': renderLine(sel, data.revenue,'amount'); break;
+      case 'cumulative': renderLine(sel, data.cumulative,'amount'); break;
       case 'ticket_sales': renderBar(sel, data.ticket_sales,'amount'); break;
       case 'avg_tickets': renderLine(sel, data.avg_tickets,'count'); break;
       case 'by_level': renderPie(sel, data.by_level,'count'); break;
+      case 'churn': renderLine(sel, data.churn,'rate'); break;
       case 'prediction': renderBar(sel, [data.prediction],'amount'); break;
     }
   }

@@ -11,8 +11,10 @@ The dashboard now displays multiple sections:
 3. **Monthly Revenue** – line chart of total revenue from all transactions for the chosen period.
 4. **Ticket Sales Per Year** – bar chart summarising yearly event revenue.
 5. **Average Tickets per Event** – monthly average tickets sold per event for the current year.
-6. **Membership Levels** – pie chart of members by current level.
-7. **Predicted Revenue** – simple forecast for next month based on the recent average.
+6. **Cumulative Revenue** – running total of all revenue for the selected period.
+7. **Membership Levels** – pie chart of members by current level.
+8. **Monthly Churn Rate** – percentage of members who cancelled each month.
+9. **Predicted Revenue** – simple forecast for next month based on the recent average.
 
 The AJAX response includes arrays for each dataset:
 
@@ -24,6 +26,8 @@ The AJAX response includes arrays for each dataset:
   "ticket_sales": [{"label":"2025","amount":5000}],
   "avg_tickets": [{"label":"01","count":15}],
   "by_level": [{"label":"premium","count":50}],
+  "cumulative": [{"label":"2025-01","amount":1200}],
+  "churn": [{"label":"2025-02","rate":2.3}],
   "prediction": {"label":"2025-08","amount":1500}
 }
 ```
