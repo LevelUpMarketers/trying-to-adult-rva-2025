@@ -312,7 +312,7 @@ class TTA_AuthorizeNet_API {
      * @param string $description  Optional subscription description.
      * @return array { success:bool, subscription_id?:string, error?:string }
      */
-    public function create_subscription( $amount, $card_number, $exp_date, $card_code, array $billing = [], $name = 'Membership Subscription', $description = '' ) {
+    public function create_subscription( $amount, $card_number, $exp_date, $card_code, array $billing = [], $name = 'Membership Subscription', $description = '', $start_date = null ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
         }
@@ -334,9 +334,11 @@ class TTA_AuthorizeNet_API {
         $interval->setLength( 1 );
         $interval->setUnit( 'months' );
         $schedule->setInterval( $interval );
-        $start_date = date( 'Y-m-d' );
-        if ( $this->environment === ANetEnvironment::SANDBOX ) {
-            $start_date = date( 'Y-m-d', strtotime( '-1 day' ) );
+        if ( null === $start_date ) {
+            $start_date = date( 'Y-m-d' );
+            if ( $this->environment === ANetEnvironment::SANDBOX ) {
+                $start_date = date( 'Y-m-d', strtotime( '-1 day' ) );
+            }
         }
         $schedule->setStartDate( new DateTime( $start_date ) );
         $schedule->setTotalOccurrences( 9999 );
@@ -464,22 +466,57 @@ class TTA_AuthorizeNet_API {
         $this->log_response( 'get_subscription_details', $response );
 
         if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
-            $sub    = $response->getSubscription();
-            $card   = $sub->getPayment()->getCreditCard();
-            $masked = $card ? $card->getCardNumber() : '';
-            $last4  = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
+            $sub      = $response->getSubscription();
+            $status   = $sub && method_exists( $sub, 'getStatus' ) ? strtolower( $sub->getStatus() ) : '';
+            $profile  = $sub ? $sub->getProfile() : null;
+            $pay_prof = $profile ? $profile->getPaymentProfile() : null;
+            $payment  = $pay_prof ? $pay_prof->getPayment() : null;
+            $card     = $payment ? $payment->getCreditCard() : null;
+            $masked   = $card ? $card->getCardNumber() : '';
+            $last4    = preg_match( '/(\d{4})$/', $masked, $m ) ? $m[1] : '';
+            $exp      = $card && method_exists( $card, 'getExpirationDate' ) ? $card->getExpirationDate() : '';
+            $amount   = $sub && method_exists( $sub, 'getAmount' ) ? floatval( $sub->getAmount() ) : 0.0;
+            $bill     = $pay_prof && method_exists( $pay_prof, 'getBillTo' ) ? $pay_prof->getBillTo() : null;
+            $billing  = [];
+            if ( $bill ) {
+                $billing = [
+                    'first_name' => $bill->getFirstName(),
+                    'last_name'  => $bill->getLastName(),
+                    'address'    => $bill->getAddress(),
+                    'city'       => $bill->getCity(),
+                    'state'      => $bill->getState(),
+                    'zip'        => $bill->getZip(),
+                ];
+            }
 
-            $data = [ 'success' => true, 'card_last4' => $last4 ];
+            $data = [
+                'success'   => true,
+                'card_last4'=> $last4,
+                'status'    => $status,
+                'amount'    => $amount,
+                'exp_date'  => $exp,
+                'billing'   => $billing,
+            ];
 
             if ( $include_transactions ) {
                 $amount   = $sub->getAmount();
                 $txn_list = [];
                 $txns     = $sub->getArbTransactions();
                 if ( $txns ) {
-                    foreach ( $txns->getArbTransaction() as $tx ) {
+                    $tx_list = [];
+                    if ( is_array( $txns ) ) {
+                        $tx_list = $txns;
+                    } elseif ( is_object( $txns ) && method_exists( $txns, 'getArbTransaction' ) ) {
+                        $tx_list = $txns->getArbTransaction();
+                    }
+                    foreach ( $tx_list as $tx ) {
+                        $ts = $tx->getSubmitTimeUTC();
+                        if ( $ts instanceof \DateTime ) {
+                            $ts = $ts->format( 'Y-m-d H:i:s' );
+                        }
                         $txn_list[] = [
                             'id'    => $tx->getTransId(),
-                            'date'  => $tx->getSubmitTimeUTC(),
+                            'date'  => $ts,
                             'amount'=> $amount,
                         ];
                     }
@@ -505,7 +542,7 @@ class TTA_AuthorizeNet_API {
      * @param string $card_code        Card code/CVV.
      * @return array { success:bool, error?:string }
      */
-    public function update_subscription_payment( $subscription_id, $card_number, $exp_date, $card_code, array $billing = [] ) {
+    public function update_subscription_payment( $subscription_id, $card_number = '', $exp_date = '', $card_code = '', array $billing = [] ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
         }
@@ -514,16 +551,18 @@ class TTA_AuthorizeNet_API {
         $merchantAuthentication->setName( $this->login_id );
         $merchantAuthentication->setTransactionKey( $this->transaction_key );
 
-        $card = new AnetAPI\CreditCardType();
-        $card->setCardNumber( $card_number );
-        $card->setExpirationDate( $exp_date );
-        $card->setCardCode( $card_code );
-
-        $payment = new AnetAPI\PaymentType();
-        $payment->setCreditCard( $card );
-
         $subscription = new AnetAPI\ARBSubscriptionType();
-        $subscription->setPayment( $payment );
+        if ( $card_number && $exp_date ) {
+            $card = new AnetAPI\CreditCardType();
+            $card->setCardNumber( $card_number );
+            $card->setExpirationDate( $exp_date );
+            if ( $card_code ) {
+                $card->setCardCode( $card_code );
+            }
+            $payment = new AnetAPI\PaymentType();
+            $payment->setCreditCard( $card );
+            $subscription->setPayment( $payment );
+        }
 
         if ( $billing ) {
             $bill = new AnetAPI\NameAndAddressType();

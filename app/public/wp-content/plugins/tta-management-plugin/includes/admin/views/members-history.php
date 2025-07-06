@@ -127,6 +127,7 @@ $total_pages = ceil( $total_members / $per_page );
                     <td><?php echo esc_html( $readable_date ); ?></td>
                     <td>
                         <a href="#" class="tta-edit-link">View History</a>
+                        <img class="tta-row-spinner" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" style="display:none;width:16px;height:16px;margin-left:4px;vertical-align:middle;opacity:0" />
                     </td>
                 </tr>
             <?php endforeach; ?>

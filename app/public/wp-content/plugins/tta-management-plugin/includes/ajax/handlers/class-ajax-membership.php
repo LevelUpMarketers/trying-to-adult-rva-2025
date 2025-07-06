@@ -58,6 +58,9 @@ class TTA_Ajax_Membership {
             wp_send_json_error( [ 'message' => __( 'No active subscription found.', 'tta' ) ] );
         }
 
+        $context = tta_get_current_user_context();
+        $level   = strtolower( $context['membership_level'] ?? 'free' );
+
         $api   = new TTA_AuthorizeNet_API();
         $res   = $api->cancel_subscription( $sub_id );
         if ( ! $res['success'] ) {
@@ -66,6 +69,7 @@ class TTA_Ajax_Membership {
 
         tta_update_user_membership_level( $user_id, 'free', null, 'cancelled' );
         tta_update_user_subscription_status( $user_id, 'cancelled' );
+        tta_log_membership_cancellation( $user_id, $level, 'member' );
         TTA_Cache::flush();
 
         wp_send_json_success( [ 'message' => __( 'Subscription cancelled.', 'tta' ), 'status' => 'cancelled' ] );
