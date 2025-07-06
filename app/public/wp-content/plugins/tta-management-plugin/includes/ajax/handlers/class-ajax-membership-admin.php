@@ -180,7 +180,13 @@ class TTA_Ajax_Membership_Admin {
         tta_update_user_membership_level( $member['wpuserid'], $level, $new_id, 'active' );
         TTA_Cache::flush();
 
-        $msg = $use_current ? __( 'Reactivation attempted using stored info.', 'tta' ) : __( 'Subscription reactivated.', 'tta' );
+        if ( $create_new ) {
+            $msg = __( 'Existing subscription cancelled and new subscription created.', 'tta' );
+        } elseif ( $use_current ) {
+            $msg = __( 'Reactivation attempted using stored info.', 'tta' );
+        } else {
+            $msg = __( 'Subscription reactivated.', 'tta' );
+        }
         wp_send_json_success( [
             'message'        => $msg,
             'subscriptionId' => $new_id,

@@ -314,7 +314,9 @@ jQuery(function($){
     $('.tta-toggle-arrow').removeClass('open');
     $arrow.addClass('open');
 
+    var $spinner = $row.find('.tta-row-spinner').css({display:'inline-block',opacity:0}).fadeTo(200,1);
     $.post(TTA_Ajax.ajax_url, { action:'tta_get_member_history', member_id:id, get_member_nonce:TTA_Ajax.get_member_nonce }, function(res){
+      $spinner.fadeTo(200,0,function(){ $(this).hide(); });
       if(!res.success) return;
       var $new = $('<tr class="tta-inline-row"><td colspan="'+colsp+'"><div class="tta-inline-container"></div></td></tr>');
       $row.after($new);
@@ -323,7 +325,7 @@ jQuery(function($){
       $container.find('select[name="level"]').each(function(){
         syncLevelPrice($(this));
       });
-    }, 'json');
+    }, 'json').fail(function(){ $spinner.fadeTo(200,0,function(){ $(this).hide(); }); });
   });
 
   //
@@ -1078,9 +1080,14 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     $form.find('input[name="card_number"],input[name="exp_date"],input[name="card_cvc"]').prop('required',true);
     $form.find('input[name="use_current"]').val('0');
   });
-  $(document).on('click','#tta-create-sub-btn',function(){
+  $(document).on('click','#tta-create-sub-btn',function(e){
+    e.preventDefault();
+    if(!confirm('This will cancel the member\'s existing subscription and create a new one in Authorize.net. Are you sure you want to proceed?')){
+      return;
+    }
     var $form = $('#tta-admin-reactivate-subscription-form');
     $form.find('input[name="create_new"]').val('1');
+    $form.trigger('submit');
     setTimeout(function(){ $form.find('input[name="create_new"]').val('0'); }, 500);
   });
 
