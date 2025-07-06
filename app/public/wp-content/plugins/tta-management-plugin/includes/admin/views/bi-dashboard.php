@@ -122,6 +122,7 @@
 (function(){
   const selects=document.querySelectorAll('.tta-bi-range');
   const map={subs:'#tta-bi-subscription-chart',signups:'#tta-bi-signups-chart',revenue:'#tta-bi-revenue-chart',cumulative:'#tta-bi-cumulative',ticket_sales:'#tta-bi-ticket-sales',avg_tickets:'#tta-bi-avg-tickets',by_level:'#tta-bi-by-level',churn:'#tta-bi-churn',prediction:'#tta-bi-prediction'};
+  const tooltip=d3.select('body').append('div').attr('class','tta-bi-tooltip').style('visibility','hidden');
 
   function load(sel){
     const months=sel.value;
@@ -135,37 +136,60 @@
     if(!sel)return;
     document.querySelector(sel).innerHTML='';
     switch(chart){
-      case 'subs': renderBar(sel, data.subs, 'count'); break;
-      case 'signups': renderLine(sel, data.signups,'count'); break;
-      case 'revenue': renderLine(sel, data.revenue,'amount'); break;
-      case 'cumulative': renderLine(sel, data.cumulative,'amount'); break;
-      case 'ticket_sales': renderBar(sel, data.ticket_sales,'amount'); break;
-      case 'avg_tickets': renderLine(sel, data.avg_tickets,'count'); break;
+      case 'subs': renderBar(sel, data.subs, 'count','Subscriptions'); break;
+      case 'signups': renderLine(sel, data.signups,'count','Signups'); break;
+      case 'revenue': renderLine(sel, data.revenue,'amount','Revenue'); break;
+      case 'cumulative': renderLine(sel, data.cumulative,'amount','Revenue'); break;
+      case 'ticket_sales': renderBar(sel, data.ticket_sales,'amount','Sales'); break;
+      case 'avg_tickets': renderLine(sel, data.avg_tickets,'count','Tickets'); break;
       case 'by_level': renderPie(sel, data.by_level,'count'); break;
-      case 'churn': renderLine(sel, data.churn,'rate'); break;
-      case 'prediction': renderBar(sel, [data.prediction],'amount'); break;
+      case 'churn': renderLine(sel, data.churn,'rate','% Churn'); break;
+      case 'prediction': renderBar(sel, [data.prediction],'amount','Revenue'); break;
     }
   }
 
   selects.forEach(s=>{s.addEventListener('change',()=>load(s)); load(s);});
 
-  function renderBar(sel,d,val){
+  function renderBar(sel,d,val,label){
     const svg=d3.select(sel).append('svg').attr('width',600).attr('height',300);
-    const x=d3.scaleBand().domain(d.map(s=>s.label)).range([40,560]).padding(0.1);
+    const x=d3.scaleBand().domain(d.map(s=>s.label)).range([50,560]).padding(0.1);
     const y=d3.scaleLinear().domain([0,d3.max(d,s=>+s[val])]).nice().range([260,20]);
     svg.append('g').attr('transform','translate(0,260)').call(d3.axisBottom(x));
-    svg.append('g').attr('transform','translate(40,0)').call(d3.axisLeft(y));
-    svg.selectAll('rect').data(d).enter().append('rect').attr('x',s=>x(s.label)).attr('y',s=>y(+s[val])).attr('width',x.bandwidth()).attr('height',s=>260-y(+s[val])).attr('fill','#21759b');
+    svg.append('g').attr('transform','translate(50,0)').call(d3.axisLeft(y));
+    svg.append('text').attr('x',10).attr('y',15).text(label);
+    svg.append('g').attr('class','grid').attr('transform','translate(50,0)')
+      .call(d3.axisLeft(y).ticks(5).tickSize(-510).tickFormat(''));
+    svg.selectAll('rect').data(d).enter().append('rect')
+      .attr('x',s=>x(s.label))
+      .attr('y',260)
+      .attr('width',x.bandwidth())
+      .attr('height',0)
+      .attr('fill','#21759b')
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+s[val]))
+      .on('mouseout',()=>tooltip.style('visibility','hidden'))
+      .transition().duration(600)
+      .attr('y',s=>y(+s[val]))
+      .attr('height',s=>260-y(+s[val]));
   }
 
-  function renderLine(sel,d,val){
+  function renderLine(sel,d,val,label){
     const svg=d3.select(sel).append('svg').attr('width',600).attr('height',300);
-    const x=d3.scaleBand().domain(d.map(s=>s.label)).range([40,560]).padding(0.1);
+    const x=d3.scaleBand().domain(d.map(s=>s.label)).range([50,560]).padding(0.1);
     const y=d3.scaleLinear().domain([0,d3.max(d,s=>+s[val])]).nice().range([260,20]);
     svg.append('g').attr('transform','translate(0,260)').call(d3.axisBottom(x));
-    svg.append('g').attr('transform','translate(40,0)').call(d3.axisLeft(y));
+    svg.append('g').attr('transform','translate(50,0)').call(d3.axisLeft(y));
+    svg.append('text').attr('x',10).attr('y',15).text(label);
+    svg.append('g').attr('class','grid').attr('transform','translate(50,0)')
+      .call(d3.axisLeft(y).ticks(5).tickSize(-510).tickFormat(''));
     const line=d3.line().x(s=>x(s.label)+x.bandwidth()/2).y(s=>y(+s[val]));
     svg.append('path').datum(d).attr('fill','none').attr('stroke','#d54e21').attr('stroke-width',2).attr('d',line);
+    svg.selectAll('circle').data(d).enter().append('circle')
+      .attr('cx',s=>x(s.label)+x.bandwidth()/2)
+      .attr('cy',s=>y(+s[val]))
+      .attr('r',3)
+      .attr('fill','#d54e21')
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+s[val]))
+      .on('mouseout',()=>tooltip.style('visibility','hidden'));
   }
 
   function renderPie(sel,d,val){
@@ -175,8 +199,12 @@
     const arc=d3.arc().innerRadius(0).outerRadius(r);
     const color=d3.scaleOrdinal(d3.schemeCategory10);
     const arcs=svg.selectAll('arc').data(pie(d)).enter().append('g');
-    arcs.append('path').attr('d',arc).attr('fill',(d,i)=>color(i));
+    arcs.append('path').attr('d',arc).attr('fill',(d,i)=>color(i))
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.data.label+': '+s.data[val]))
+      .on('mouseout',()=>tooltip.style('visibility','hidden'));
     arcs.append('text').attr('transform',d=>`translate(${arc.centroid(d)})`).attr('dy','0.35em').attr('text-anchor','middle').text(d=>d.data.label);
+    const legend=d3.select(sel).append('div').attr('class','tta-bi-legend');
+    d.forEach((s,i)=>{legend.append('span').style('color',color(i)).text('■ '+s.label+' ');});
   }
 })();
 </script>
