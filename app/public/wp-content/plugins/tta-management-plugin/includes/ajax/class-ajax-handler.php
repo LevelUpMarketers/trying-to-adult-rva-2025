@@ -17,6 +17,7 @@ require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-attendance.php'
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-calendar.php';
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-venues.php';
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-authnet-test.php';
+require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-bi.php';
 
 
 // Initialize them
@@ -33,3 +34,4 @@ TTA_Ajax_Calendar::init();
 TTA_Ajax_Venues::init();
 TTA_Ajax_Authnet_Test::init();
 TTA_Ajax_Auth::init();
+TTA_Ajax_BI::init();

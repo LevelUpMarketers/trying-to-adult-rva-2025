@@ -75,65 +75,85 @@ class TTA_Transaction_Logger {
             }
         }
 
-        // Record a single history row for this transaction
-        $event_id = 0;
-        if ( ! empty( $items[0]['event_ute_id'] ) ) {
+        // Group items by event so each event gets its own history entry
+        $by_event = [];
+        foreach ( $items as $item ) {
+            if ( empty( $item['event_ute_id'] ) ) {
+                continue;
+            }
+            $by_event[ $item['event_ute_id'] ][] = $item;
+        }
+
+        foreach ( $by_event as $ute_id => $event_items ) {
             $event_id = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s LIMIT 1",
-                    $items[0]['event_ute_id']
+                    $ute_id
                 )
             );
-        }
 
-        $wpdb->insert(
-            $history_table,
-            [
-                'member_id'   => $member_id ?: 0,
-                'wpuserid'    => $user_id,
-                'event_id'    => intval( $event_id ),
-                'action_type' => 'purchase',
-                'action_data' => wp_json_encode([
-                    'items'          => $items,
-                    'transaction_id' => $transaction_id,
-                    'discount_code'  => $discount_code,
-                    'discount_saved' => $discount_saved,
-                    'amount'         => $amount,
-                ]),
-            ],
-            [ '%d', '%d', '%d', '%s', '%s' ]
-        );
+            // Calculate the total amount for these items
+            $event_amount = 0;
+            foreach ( $event_items as $it ) {
+                $price  = isset( $it['final_price'] ) ? floatval( $it['final_price'] ) : floatval( $it['price'] );
+                $qty    = intval( $it['quantity'] ?? 1 );
+                $event_amount += $price * $qty;
+            }
 
-        // Record history for any additional attendees who are members
-        foreach ( $items as $it ) {
-            foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) {
-                $email = sanitize_email( $att['email'] ?? '' );
-                $member_row = $wpdb->get_row(
-                    $wpdb->prepare(
-                        "SELECT id, wpuserid FROM {$members_table} WHERE email = %s LIMIT 1",
-                        $email
-                    ),
-                    ARRAY_A
-                );
-                if ( $member_row && intval( $member_row['wpuserid'] ) !== $user_id ) {
-                    $wpdb->insert(
-                        $history_table,
-                        [
-                            'member_id'   => intval( $member_row['id'] ),
-                            'wpuserid'    => intval( $member_row['wpuserid'] ),
-                            'event_id'    => intval( $event_id ),
-                            'action_type' => 'purchase',
-                            'action_data' => wp_json_encode([
-                                'items'          => $items,
-                                'transaction_id' => $transaction_id,
-                                'discount_code'  => $discount_code,
-                                'discount_saved' => $discount_saved,
-                                'amount'         => $amount,
-                            ]),
-                        ],
-                        [ '%d', '%d', '%d', '%s', '%s' ]
+            $history_data = [
+                'items'          => $event_items,
+                'transaction_id' => $transaction_id,
+                'discount_code'  => $discount_code,
+                'discount_saved' => $discount_saved,
+                'amount'         => $event_amount,
+            ];
+
+            // Record purchase for the logged in member
+            $wpdb->insert(
+                $history_table,
+                [
+                    'member_id'   => $member_id ?: 0,
+                    'wpuserid'    => $user_id,
+                    'event_id'    => intval( $event_id ),
+                    'action_type' => 'purchase',
+                    'action_data' => wp_json_encode( $history_data ),
+                ],
+                [ '%d', '%d', '%d', '%s', '%s' ]
+            );
+
+            // Record history for any additional attendees who are members
+            $unique_members = [];
+            foreach ( $event_items as $it ) {
+                foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) {
+                    $email = sanitize_email( $att['email'] ?? '' );
+                    if ( ! $email ) {
+                        continue;
+                    }
+                    $member_row = $wpdb->get_row(
+                        $wpdb->prepare(
+                            "SELECT id, wpuserid FROM {$members_table} WHERE email = %s LIMIT 1",
+                            $email
+                        ),
+                        ARRAY_A
                     );
+                    if ( $member_row && intval( $member_row['wpuserid'] ) !== $user_id ) {
+                        $unique_members[ $member_row['wpuserid'] ] = $member_row;
+                    }
                 }
+            }
+
+            foreach ( $unique_members as $m ) {
+                $wpdb->insert(
+                    $history_table,
+                    [
+                        'member_id'   => intval( $m['id'] ),
+                        'wpuserid'    => intval( $m['wpuserid'] ),
+                        'event_id'    => intval( $event_id ),
+                        'action_type' => 'purchase',
+                        'action_data' => wp_json_encode( $history_data ),
+                    ],
+                    [ '%d', '%d', '%d', '%s', '%s' ]
+                );
             }
         }
     }

@@ -121,24 +121,6 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
-
-    foreach ( $refund_rows as $row ) {
-        $data   = json_decode( $row['action_data'], true );
-        $amount = -floatval( $data['amount'] ?? 0 );
-        $eid    = intval( $row['event_id'] );
-        $name   = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
-        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
-        $url    = '';
-        if ( $page_id && function_exists( 'get_permalink' ) ) {
-            $url = get_permalink( $page_id );
-        }
-        $history[] = [
-            'date'        => $row['action_date'],
-            'description' => sanitize_text_field( $name ),
-            'amount'      => $amount,
-            'url'         => $url,
-        ];
-    }
     return array_values( array_unique( $emails ) );
 }
 
@@ -654,6 +636,20 @@ function tta_get_membership_price( $level ) {
 }
 
 /**
+ * Fetch a member's current membership level by user ID.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return string free, basic or premium.
+ */
+function tta_get_user_membership_level( $wp_user_id ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $level = $wpdb->get_var( $wpdb->prepare( "SELECT membership_level FROM {$members_table} WHERE wpuserid = %d LIMIT 1", intval( $wp_user_id ) ) );
+    $level = $level ? strtolower( $level ) : 'free';
+    return in_array( $level, [ 'free', 'basic', 'premium' ], true ) ? $level : 'free';
+}
+
+/**
  * Update a member's subscription level.
  *
  * @param int    $wp_user_id WordPress user ID.
@@ -748,6 +744,101 @@ function tta_update_user_subscription_status( $wp_user_id, $status ) {
 }
 
 /**
+ * Verify a member's subscription status at login.
+ *
+ * @param string  $user_login Username.
+ * @param WP_User $user       Logged in user object.
+ */
+function tta_check_subscription_on_login( $user_login, $user ) {
+    $wp_user_id = intval( $user->ID );
+    if ( ! $wp_user_id ) {
+        return;
+    }
+
+    $cache_key = 'login_sub_check_' . $wp_user_id;
+    if ( TTA_Cache::get( $cache_key ) ) {
+        return;
+    }
+    TTA_Cache::set( $cache_key, 1, HOUR_IN_SECONDS );
+
+    $level = tta_get_user_membership_level( $wp_user_id );
+    if ( 'free' === $level ) {
+        return;
+    }
+
+    $sub_id = tta_get_user_subscription_id( $wp_user_id );
+    if ( ! $sub_id ) {
+        return;
+    }
+
+    $info = tta_get_subscription_status_info( $sub_id );
+    $status = $info['status'] ?? '';
+
+    if ( 'active' !== $status ) {
+        update_user_meta( $wp_user_id, 'tta_prev_level', $level );
+        tta_update_user_membership_level( $wp_user_id, 'free', null, 'paymentproblem' );
+    } else {
+        $current = tta_get_user_subscription_status( $wp_user_id );
+        if ( 'paymentproblem' === $current ) {
+            $prev = get_user_meta( $wp_user_id, 'tta_prev_level', true );
+            if ( ! in_array( $prev, [ 'basic', 'premium' ], true ) ) {
+                $prev = 'basic';
+            }
+            tta_update_user_membership_level( $wp_user_id, $prev, null, 'active' );
+            delete_user_meta( $wp_user_id, 'tta_prev_level' );
+        }
+    }
+}
+
+/**
+ * Record a membership cancellation in the member history table.
+ *
+ * @param int    $wp_user_id WordPress user ID.
+ * @param string $level      Membership level that was cancelled.
+ * @param string $actor      Who cancelled (member or admin).
+ */
+function tta_log_membership_cancellation( $wp_user_id, $level, $actor = 'member' ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $hist_table    = $wpdb->prefix . 'tta_memberhistory';
+
+    $member_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$members_table} WHERE wpuserid = %d LIMIT 1",
+            intval( $wp_user_id )
+        )
+    );
+    if ( ! $member_id ) {
+        return;
+    }
+
+    $sub_id = tta_get_user_subscription_id( $wp_user_id );
+    $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
+
+    $data = [
+        'by'            => sanitize_text_field( $actor ),
+        'previous_level'=> sanitize_text_field( $level ),
+        'card_last4'    => sanitize_text_field( $last4 ),
+        'subscription_id' => sanitize_text_field( $sub_id ),
+    ];
+
+    $wpdb->insert(
+        $hist_table,
+        [
+            'member_id'   => intval( $member_id ),
+            'wpuserid'    => intval( $wp_user_id ),
+            'event_id'    => 0,
+            'action_type' => 'membership_cancel',
+            'action_data' => wp_json_encode( $data ),
+        ],
+        [ '%d', '%d', '%d', '%s', '%s' ]
+    );
+
+    TTA_Cache::delete( 'billing_hist_' . $wp_user_id );
+    TTA_Cache::delete( 'mem_cancel_' . $wp_user_id );
+}
+
+/**
  * Get the timestamp until which a user is banned.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -794,11 +885,11 @@ function tta_get_subscription_card_last4( $subscription_id ) {
     if ( false !== $cached ) {
         return $cached;
     }
-    $api  = new TTA_AuthorizeNet_API();
-    $info = $api->get_subscription_details( $subscription_id );
-    if ( $info['success'] ) {
-        TTA_Cache::set( $cache_key, $info['card_last4'], 600 );
-        return $info['card_last4'];
+
+    $info = tta_get_subscription_status_info( $subscription_id );
+    if ( $info ) {
+        TTA_Cache::set( $cache_key, $info['last4'], 600 );
+        return $info['last4'];
     }
     return '';
 }
@@ -827,6 +918,122 @@ function tta_get_subscription_transactions( $subscription_id ) {
     $txns = $info['transactions'] ?? [];
     TTA_Cache::set( $cache_key, $txns, 600 );
     return $txns;
+}
+
+/**
+ * Retrieve the status and last four digits for a subscription.
+ *
+ * @param string $subscription_id Authorize.Net subscription ID.
+ * @return array{status:string,last4:string}|array
+ */
+function tta_get_subscription_status_info( $subscription_id ) {
+    if ( ! $subscription_id ) {
+        return [];
+    }
+
+    $cache_key = 'sub_status_' . $subscription_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $api  = new TTA_AuthorizeNet_API();
+    $info = $api->get_subscription_details( $subscription_id );
+    if ( $info['success'] ) {
+        $data = [
+            'status'  => strtolower( $info['status'] ?? '' ),
+            'last4'   => $info['card_last4'] ?? '',
+            'amount'  => isset( $info['amount'] ) ? floatval( $info['amount'] ) : 0,
+            'exp_date'=> $info['exp_date'] ?? '',
+            'billing' => $info['billing'] ?? [],
+        ];
+        TTA_Cache::set( $cache_key, $data, 600 );
+        return $data;
+    }
+
+    return [];
+}
+
+/**
+ * Fetch the most recent membership cancellation record for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array|null { date:string, by:string, level:string, card_last4:string }
+ */
+function tta_get_last_membership_cancellation( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return null;
+    }
+    $cache_key = 'mem_cancel_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT action_data, action_date FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'membership_cancel' ORDER BY action_date DESC LIMIT 1",
+            $wp_user_id
+        ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        TTA_Cache::set( $cache_key, null, 300 );
+        return null;
+    }
+
+    $data = json_decode( $row['action_data'], true );
+    $info = [
+        'date'       => $row['action_date'],
+        'by'         => sanitize_text_field( $data['by'] ?? '' ),
+        'level'      => sanitize_text_field( $data['previous_level'] ?? '' ),
+        'card_last4' => sanitize_text_field( $data['card_last4'] ?? '' ),
+    ];
+
+    TTA_Cache::set( $cache_key, $info, 300 );
+    return $info;
+}
+
+/**
+ * Determine if a user has ever purchased a membership.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return bool
+ */
+function tta_user_had_membership( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return false;
+    }
+
+    $cache_key = 'mem_had_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return (bool) $cached;
+    }
+
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $hist_table    = $wpdb->prefix . 'tta_memberhistory';
+
+    $row = $wpdb->get_row( $wpdb->prepare( "SELECT membership_level, subscription_id FROM {$members_table} WHERE wpuserid = %d", $wp_user_id ), ARRAY_A );
+
+    $has = false;
+    if ( $row ) {
+        $level = strtolower( $row['membership_level'] );
+        $has   = in_array( $level, array( 'basic', 'premium' ), true ) || ! empty( $row['subscription_id'] );
+    }
+
+    if ( ! $has ) {
+        $count = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'membership_cancel'", $wp_user_id ) );
+        $has   = $count > 0;
+    }
+
+    TTA_Cache::set( $cache_key, $has ? 1 : 0, 300 );
+    return $has;
 }
 
 /**
@@ -1011,6 +1218,39 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 }
             );
             $events = array_values( $events );
+
+            // Refresh attendee lists using the current database state
+            foreach ( $events as &$ev ) {
+                $gateway_tx = $ev['transaction_id'] ?? '';
+                if ( ! isset( $tx_ids[ $gateway_tx ] ) ) {
+                    continue;
+                }
+                $internal_tx = $tx_ids[ $gateway_tx ];
+                $new_items   = [];
+                foreach ( $ev['items'] as $item ) {
+                    $tid = intval( $item['ticket_id'] ?? 0 );
+                    if ( ! $tid ) {
+                        continue;
+                    }
+                    $attendees = array_filter(
+                        tta_get_ticket_attendees( $tid ),
+                        static function ( $a ) use ( $internal_tx ) {
+                            return intval( $a['transaction_id'] ) === $internal_tx;
+                        }
+                    );
+                    $item['attendees'] = array_values( $attendees );
+                    $item['quantity']  = count( $item['attendees'] );
+                    if ( $item['quantity'] > 0 ) {
+                        $new_items[] = $item;
+                    }
+                }
+                $ev['items'] = $new_items;
+            }
+            unset( $ev );
+            $events = array_filter( $events, static function ( $e ) {
+                return ! empty( $e['items'] );
+            } );
+            $events = array_values( $events );
         }
     }
 
@@ -1127,6 +1367,7 @@ function tta_get_member_history_summary( $member_id ) {
     $archive_table = $wpdb->prefix . 'tta_events_archive';
     $tx_table      = $wpdb->prefix . 'tta_transactions';
     $att_table     = $wpdb->prefix . 'tta_attendees';
+    $members_table = $wpdb->prefix . 'tta_members';
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
@@ -1202,6 +1443,48 @@ function tta_get_member_history_summary( $member_id ) {
         $member_id
     ) );
 
+    // Include membership purchases in the total spent calculation
+    $wp_user_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT wpuserid FROM {$members_table} WHERE id = %d LIMIT 1",
+            $member_id
+        )
+    );
+    if ( $wp_user_id ) {
+        $tx_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT details FROM {$tx_table} WHERE wpuserid = %d",
+                $wp_user_id
+            ),
+            ARRAY_A
+        );
+        $membership_total = 0;
+        foreach ( $tx_rows as $tx_row ) {
+            $items = json_decode( $tx_row['details'], true );
+            if ( ! is_array( $items ) ) {
+                continue;
+            }
+            foreach ( $items as $it ) {
+                if ( empty( $it['membership'] ) ) {
+                    continue;
+                }
+                $price = isset( $it['final_price'] ) ? floatval( $it['final_price'] ) : floatval( $it['price'] );
+                $qty   = intval( $it['quantity'] ?? 1 );
+                $membership_total += $price * $qty;
+            }
+        }
+
+        // Include recurring subscription charges from Authorize.Net
+        $sub_id = tta_get_user_subscription_id( $wp_user_id );
+        if ( $sub_id ) {
+            foreach ( tta_get_subscription_transactions( $sub_id ) as $sub_tx ) {
+                $membership_total += floatval( $sub_tx['amount'] );
+            }
+        }
+
+        $summary['total_spent'] += $membership_total;
+    }
+
     TTA_Cache::set( $cache_key, $summary, 300 );
     return $summary;
 }
@@ -1210,7 +1493,14 @@ function tta_get_member_history_summary( $member_id ) {
  * Retrieve a member's full billing history including subscription charges.
  *
  * @param int $wp_user_id WordPress user ID.
- * @return array[] { date:string, description:string, amount:float, url?:string }
+ * @return array[] {
+ *     @type string $date   Transaction date.
+ *     @type string $description Description of the item.
+ *     @type float  $amount Amount charged or refunded.
+ *     @type string $url    Optional link to the item.
+ *     @type string $type   Transaction type.
+ *     @type string $method Payment method description.
+ * }
  */
 function tta_get_member_billing_history( $wp_user_id ) {
     $wp_user_id = intval( $wp_user_id );
@@ -1230,7 +1520,7 @@ function tta_get_member_billing_history( $wp_user_id ) {
 
     $rows = $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT transaction_id, amount, details, created_at FROM {$tx_table} WHERE wpuserid = %d ORDER BY created_at DESC",
+            "SELECT transaction_id, amount, card_last4, details, created_at FROM {$tx_table} WHERE wpuserid = %d ORDER BY created_at DESC",
             $wp_user_id
         ),
         ARRAY_A
@@ -1297,23 +1587,63 @@ function tta_get_member_billing_history( $wp_user_id ) {
                 $url = get_permalink( $page_id );
             }
 
+            $last4  = sanitize_text_field( $row['card_last4'] );
+            $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
+
+            $type = empty( $it['membership'] ) ? 'purchase' : 'membership subscription';
             $history[] = [
                 'date'        => $row['created_at'],
                 'description' => sanitize_text_field( $name ),
                 'amount'      => $price,
                 'url'         => $url,
+                'type'        => $type,
+                'method'      => $method,
             ];
         }
     }
 
+    foreach ( $refund_rows as $row ) {
+        $data = json_decode( $row['action_data'], true );
+        if ( ! is_array( $data ) ) {
+            continue;
+        }
+        $amount  = -floatval( $data['amount'] ?? 0 );
+        $eid     = intval( $row['event_id'] );
+        $name    = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
+        $page_id = $event_map[ $eid ]['page_id'] ?? 0;
+        $url     = '';
+        if ( $page_id && function_exists( 'get_permalink' ) ) {
+            $url = get_permalink( $page_id );
+        }
+        $tx_id  = sanitize_text_field( $data['transaction_id'] ?? '' );
+        $last4  = '';
+        if ( $tx_id ) {
+            $last4 = (string) $wpdb->get_var( $wpdb->prepare( "SELECT card_last4 FROM {$tx_table} WHERE transaction_id = %s LIMIT 1", $tx_id ) );
+        }
+        $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
+
+        $history[] = [
+            'date'        => $row['action_date'],
+            'description' => sanitize_text_field( $name ),
+            'amount'      => $amount,
+            'url'         => $url,
+            'type'        => 'refund',
+            'method'      => $method,
+        ];
+    }
+
     $sub_id = tta_get_user_subscription_id( $wp_user_id );
     if ( $sub_id ) {
+        $last4  = tta_get_subscription_card_last4( $sub_id );
+        $method = $last4 ? sprintf( __( 'Credit Card (**** **** **** %s)', 'tta' ), $last4 ) : __( 'Credit Card', 'tta' );
         foreach ( tta_get_subscription_transactions( $sub_id ) as $sub_tx ) {
             $label = __( 'Membership Charge', 'tta' );
             $history[] = [
                 'date'        => $sub_tx['date'],
                 'description' => $label,
                 'amount'      => floatval( $sub_tx['amount'] ),
+                'type'        => 'membership subscription',
+                'method'      => $method,
             ];
         }
     }
@@ -2257,3 +2587,33 @@ function tta_get_first_event_page_id_for_date( $year, $month, $day ) {
     TTA_Cache::set( $cache_key, $page_id, 300 );
     return $page_id;
 }
+
+/**
+ * Redirect non-admin users away from the dashboard.
+ */
+function tta_block_dashboard_access() {
+    if ( is_admin() && ! wp_doing_ajax() && ! current_user_can( 'manage_options' ) ) {
+        $referer = wp_get_referer();
+        wp_safe_redirect( $referer ? $referer : home_url( '/' ) );
+        exit;
+    }
+}
+add_action( 'admin_init', 'tta_block_dashboard_access' );
+
+/**
+ * Keep non-admins on the same page after logging in.
+ *
+ * @param string       $redirect_to           URL to redirect to.
+ * @param string       $requested_redirect_to Requested redirect.
+ * @param WP_User|WP_Error $user             User object or error.
+ * @return string
+ */
+function tta_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+    if ( $user instanceof WP_User && ! user_can( $user, 'manage_options' ) ) {
+        $referer = wp_get_referer();
+        return $referer ? $referer : home_url( '/' );
+    }
+    return $redirect_to;
+}
+add_filter( 'login_redirect', 'tta_login_redirect', 10, 3 );
+

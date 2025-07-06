@@ -144,6 +144,14 @@
   opacity: 0;
 }
 
+/* Spinner used within table rows when loading details */
+.tta-row-spinner {
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+}
+
 /* Define a simple 0→360° rotation */
 @keyframes spin {
   from   { transform: rotate(0deg); }
