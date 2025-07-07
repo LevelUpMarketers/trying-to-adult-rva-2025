@@ -405,8 +405,14 @@
 
 .tta-tickets-addtocart-button{
   width: 100%;
-  display: inline-block;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 25px;
+}
+
+.tta-upgrade-btn{
+  flex: 0 0 auto;
 }
 
 /* Quantity chooser */

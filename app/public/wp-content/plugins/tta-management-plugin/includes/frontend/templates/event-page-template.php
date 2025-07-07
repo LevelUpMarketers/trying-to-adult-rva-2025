@@ -166,6 +166,8 @@ $tooltip_message = '';
 $disable_controls = false;
 $waitlist_disabled = ! $is_logged_in;
 $waitlist_tooltip  = __( 'You must be logged in to join the waitlist.', 'tta' );
+$show_upgrade_btn  = false;
+$upgrade_label     = '';
 
 if ( ! $is_logged_in ) {
     if ( 'free' === $event_required ) {
@@ -287,6 +289,16 @@ if ( ! $is_logged_in ) {
             $waitlist_disabled = true;
             $waitlist_tooltip  = __( 'You must have a Premium Membership to join the waitlist.', 'tta' );
         }
+    }
+}
+
+if ( ! $qualifies && ! $is_archived ) {
+    if ( 'basic' === $event_required ) {
+        $show_upgrade_btn = true;
+        $upgrade_label    = __( 'Upgrade to Basic', 'tta' );
+    } elseif ( 'premium' === $event_required ) {
+        $show_upgrade_btn = true;
+        $upgrade_label    = __( 'Upgrade to Premium', 'tta' );
     }
 }
 
@@ -654,6 +666,11 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
           <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
+          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
         </div>
         <?php else : ?>
         <a href="<?php echo $is_logged_in ? '#tta-event-buy' : '#tta-login-message'; ?>" class="tta-button tta-button-primary<?php echo $is_logged_in ? '' : ' tta-scroll-login'; ?>">
@@ -826,6 +843,11 @@ echo $form_html . $lost_pw_html;
           <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
+          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
         </div>
         <?php else : ?>
         <div class="tta-tickets-addtocart-button">
@@ -837,6 +859,11 @@ echo $form_html . $lost_pw_html;
           >
             <?php echo $all_sold_out ? esc_html__( 'Sold Out', 'tta' ) : esc_html__( 'Get Tickets', 'tta' ); ?>
           </button>
+          <?php if ( $disable_controls && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       </section>
