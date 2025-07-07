@@ -666,6 +666,11 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
           <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
+          <?php if ( $is_on_waitlist ) : ?>
+          <button type="button" id="tta-leave-waitlist" class="tta-button tta-button-secondary">
+            <?php esc_html_e( 'Leave the Waitlist', 'tta' ); ?>
+          </button>
+          <?php endif; ?>
           <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
           <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
             <?php echo esc_html( $upgrade_label ); ?>
@@ -843,6 +848,11 @@ echo $form_html . $lost_pw_html;
           <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
+          <?php if ( $is_on_waitlist ) : ?>
+          <button type="button" id="tta-leave-waitlist" class="tta-button tta-button-secondary">
+            <?php esc_html_e( 'Leave the Waitlist', 'tta' ); ?>
+          </button>
+          <?php endif; ?>
           <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
           <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
             <?php echo esc_html( $upgrade_label ); ?>

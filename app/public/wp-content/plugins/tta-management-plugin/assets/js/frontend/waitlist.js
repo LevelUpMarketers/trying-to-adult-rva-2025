@@ -81,4 +81,19 @@ jQuery(function($){
         }, delay);
       });
   });
+
+  $(document).on('click', '#tta-leave-waitlist', function(e){
+    e.preventDefault();
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.post(tta_waitlist.ajax_url, {
+      action: 'tta_leave_waitlist',
+      nonce: tta_waitlist.nonce,
+      event_ute_id: tta_waitlist.eventUte
+    }, function(){
+      window.location.reload();
+    }, 'json').fail(function(){
+      window.location.reload();
+    });
+  });
 });
