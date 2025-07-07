@@ -626,9 +626,17 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
       </div>
 
       <?php if ( ! $is_archived ) : ?>
+        <?php if ( $all_sold_out && $has_waitlist && ! $disable_controls ) : ?>
+        <div class="tta-tickets-addtocart-button">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary">
+            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
+          </button>
+        </div>
+        <?php else : ?>
         <a href="<?php echo $is_logged_in ? '#tta-event-buy' : '#tta-login-message'; ?>" class="tta-button tta-button-primary<?php echo $is_logged_in ? '' : ' tta-scroll-login'; ?>">
           <?php echo $is_logged_in ? esc_html__( 'Buy Tickets', 'tta' ) : esc_html__( 'Log in to Buy Tickets', 'tta' ); ?>
         </a>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
     <div class="tta-event-hero-image">
@@ -937,7 +945,7 @@ echo $form_html . $lost_pw_html;
 
     <div id="tta-waitlist-overlay" class="tta-waitlist-overlay" style="display:none;">
       <div class="tta-waitlist-modal">
-        <button type="button" class="tta-waitlist-close" aria-label="Close" style="color: #000;">×</button>
+        <button type="button" class="tta-waitlist-close" aria-label="Close">×</button>
         <h2><?php esc_html_e( 'Join The Waitlist', 'tta' ); ?></h2>
         <p class="tta-waitlist-description"><?php esc_html_e( 'We\'ll notify you if a spot opens up.', 'tta' ); ?></p>
         <form id="tta-waitlist-form">

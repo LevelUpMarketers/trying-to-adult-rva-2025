@@ -8,7 +8,7 @@ jQuery(function($){
     $("#tta-waitlist-overlay").fadeOut(200);
   }
 
-  $('#tta-join-waitlist').on('click', function(e){
+  $(document).on('click', '#tta-join-waitlist', function(e){
     e.preventDefault();
     var d = window.tta_waitlist || {};
     $('#tta-waitlist-form input[name="first_name"]').val(d.firstName||'');
@@ -53,17 +53,21 @@ jQuery(function($){
       opt_email: $form.find("input[name=opt_email]").is(":checked") ? 1 : 0,
       opt_sms: $form.find("input[name=opt_sms]").is(":checked") ? 1 : 0
     };
+    var respClass = "";
+    var respText = "";
     $.ajax({url: tta_waitlist.ajax_url, method:"POST", data:data, dataType:"json"})
       .done(function(res){
         if(res.success){
-          $resp.addClass("updated").text("Added to waitlist!");
+          respClass = "updated";
+          respText = "Added to waitlist!";
         }else{
-          var m = res.data && res.data.message ? res.data.message : "Failed to join waitlist";
-          $resp.addClass("error").text(m);
+          respClass = "error";
+          respText = res.data && res.data.message ? res.data.message : "Failed to join waitlist";
         }
       })
       .fail(function(){
-        $resp.addClass("error").text("Request failed.");
+        respClass = "error";
+        respText = "Request failed.";
       })
       .always(function(){
         var elapsed = Date.now() - start;
@@ -71,6 +75,9 @@ jQuery(function($){
         setTimeout(function(){
           $spin.fadeTo(200,0,function(){ $spin.hide(); });
           $btn.prop("disabled", false);
+          if(respText){
+            $resp.addClass(respClass).text(respText);
+          }
         }, delay);
       });
   });

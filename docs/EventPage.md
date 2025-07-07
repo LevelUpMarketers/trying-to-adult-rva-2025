@@ -35,7 +35,7 @@ The **Event Details** sidebar now lists the event type (Open Event, Basic Member
 
 ## Waitlist Popup
 
-When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged-in members see their info pre-filled. A spinner shows while the form submits and stays visible for at least three seconds so the progress is obvious. The result message appears below the button. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
+When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
 
 ## Social Sharing
 
