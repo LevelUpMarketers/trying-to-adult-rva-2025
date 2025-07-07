@@ -58,6 +58,8 @@ if ( ! $event ) {
     }
 }
 
+$has_waitlist = ( '1' === (string) ( $event['waitlistavailable'] ?? '0' ) );
+
 // ───────────────
 // 3) Fetch this event’s ticket types
 // ───────────────
@@ -113,6 +115,31 @@ $member_row       = $context['member'] ?? [];
 $membership_level = $context['membership_level'];
 $is_on_waitlist   = false;
 $member_history   = [];
+
+// Load waitlist assets with event/user context
+wp_enqueue_script(
+    'tta-waitlist-js',
+    TTA_PLUGIN_URL . 'assets/js/frontend/waitlist.js',
+    [ 'jquery' ],
+    TTA_PLUGIN_VERSION,
+    true
+);
+wp_localize_script(
+    'tta-waitlist-js',
+    'tta_waitlist',
+    [
+        'ajax_url'   => admin_url( 'admin-ajax.php' ),
+        'nonce'      => wp_create_nonce( 'tta_frontend_nonce' ),
+        'eventUte'   => $event['ute_id'],
+        'ticketId'   => $event['ticket_id'],
+        'ticketName' => $tickets[0]['ticket_name'] ?? 'General Admission',
+        'eventName'  => $event['name'],
+        'firstName'  => $member_row['first_name'] ?? '',
+        'lastName'   => $member_row['last_name'] ?? '',
+        'email'      => $member_row['email'] ?? '',
+        'phone'      => $member_row['phone'] ?? '',
+    ]
+);
 
 // Map event type to display label and required level
 $type_labels = [
@@ -262,20 +289,14 @@ if ( $is_archived ) {
 if ( $is_logged_in ) {
 
     // b) Check waitlist membership for this event
-    $waitlists = $wpdb->get_results(
+    $count = $wpdb->get_var(
         $wpdb->prepare(
-            "SELECT userids FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s",
-            $event['ute_id']
-        ),
-        ARRAY_A
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s AND wp_user_id = %d",
+            $event['ute_id'],
+            $current_user_id
+        )
     );
-    foreach ( $waitlists as $wl ) {
-        $uids = array_filter( array_map( 'intval', explode( ',', $wl['userids'] ) ) );
-        if ( in_array( $current_user_id, $uids, true ) ) {
-            $is_on_waitlist = true;
-            break;
-        }
-    }
+    $is_on_waitlist = intval( $count ) > 0;
 
     // c) Fetch this user’s history for this event
     $member_history = $wpdb->get_results(
@@ -769,6 +790,13 @@ echo $form_html . $lost_pw_html;
           <p><?php esc_html_e( 'No tickets available for this event.', 'tta' ); ?></p>
         <?php endif; ?>
 
+        <?php if ( $all_sold_out && $has_waitlist && ! $disable_controls ) : ?>
+        <div class="tta-tickets-addtocart-button">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary">
+            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
+          </button>
+        </div>
+        <?php else : ?>
         <div class="tta-tickets-addtocart-button">
           <button
             type="button"
@@ -776,9 +804,10 @@ echo $form_html . $lost_pw_html;
             class="tta-button tta-button-primary<?php echo ($all_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>"
             <?php disabled( empty( $tickets ) || $all_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>
           >
-            <?php esc_html_e( 'Get Tickets', 'tta' ); ?>
+            <?php echo $all_sold_out ? esc_html__( 'Sold Out', 'tta' ) : esc_html__( 'Get Tickets', 'tta' ); ?>
           </button>
         </div>
+        <?php endif; ?>
       </section>
 
       <?php
@@ -905,6 +934,31 @@ echo $form_html . $lost_pw_html;
       <?php endif; ?>
 
     </main>
+
+    <div id="tta-waitlist-overlay" class="tta-waitlist-overlay" style="display:none;">
+      <div class="tta-waitlist-modal">
+        <button type="button" class="tta-waitlist-close" aria-label="Close">×</button>
+        <h2><?php esc_html_e( 'Join The Waitlist', 'tta' ); ?></h2>
+        <p class="tta-waitlist-description"><?php esc_html_e( 'We\'ll notify you if a spot opens up.', 'tta' ); ?></p>
+        <form id="tta-waitlist-form">
+          <label><?php esc_html_e( 'First Name', 'tta' ); ?>
+            <input type="text" name="first_name" required>
+          </label>
+          <label><?php esc_html_e( 'Last Name', 'tta' ); ?>
+            <input type="text" name="last_name" required>
+          </label>
+          <label><?php esc_html_e( 'Email', 'tta' ); ?>
+            <input type="email" name="email" required>
+          </label>
+          <label><?php esc_html_e( 'Phone', 'tta' ); ?>
+            <input type="tel" name="phone">
+          </label>
+          <label><input type="checkbox" name="opt_email" checked> <?php esc_html_e( 'email me when a spot becomes available', 'tta' ); ?></label>
+          <label><input type="checkbox" name="opt_sms" checked> <?php esc_html_e( 'text me when a spot becomes available', 'tta' ); ?></label>
+          <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Join Waitlist', 'tta' ); ?></button>
+        </form>
+      </div>
+    </div>
 
     <!-- SIDEBAR -->
     <aside class="tta-event-sidebar">

@@ -243,6 +243,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         $content   = get_post_field( 'post_content', $ev['page_id'] );
         $excerpt   = wp_trim_words( wp_strip_all_tags( $content ), 25, '…' );
         $remaining = tta_get_remaining_ticket_count( $ev['ute_id'] );
+        $has_waitlist = ( '1' === (string) ( $ev['waitlistavailable'] ?? '0' ) );
         $cost      = floatval( $ev['baseeventcost'] ?? 0 );
         $cost_str  = $cost ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $cost, 2 ) ) : esc_html__( 'Free', 'tta' );
         $type_map  = [
@@ -289,8 +290,19 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                         </li>
                     </ul>
                     <p class="tta-event-excerpt"><?php echo esc_html( $excerpt ); ?></p>
+                    <?php if ( $remaining > 0 ) : ?>
                     <p class="tta-event-remaining"><?php printf( esc_html__( '%d tickets remaining', 'tta' ), $remaining ); ?></p>
-                    <a href="<?php echo esc_url( $page_url ); ?>"><span class="tta-event-link"><?php esc_html_e( 'Get Your Tickets', 'tta' ); ?></span></a>
+                    <?php else : ?>
+                    <p class="tta-event-remaining tta-fomo-remaining-styling"><?php esc_html_e( 'Sold Out!', 'tta' ); ?></p>
+                    <?php endif; ?>
+                    <a href="<?php echo esc_url( $page_url ); ?>"><span class="tta-event-link">
+                    <?php
+                    if ( 0 === $remaining ) {
+                        echo $has_waitlist ? esc_html__( 'Join The Waitlist', 'tta' ) : esc_html__( 'Sold Out', 'tta' );
+                    } else {
+                        echo esc_html__( 'Get Your Tickets', 'tta' );
+                    }
+                    ?></span></a>
                 </div>
             </a>
         </li>

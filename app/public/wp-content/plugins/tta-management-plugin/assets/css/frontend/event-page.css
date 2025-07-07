@@ -318,6 +318,44 @@
     font-style: italic;
     text-transform: uppercase;
 }
+
+/* Waitlist popup */
+.tta-waitlist-overlay{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10000;
+  padding:10px;
+  box-sizing:border-box;
+}
+.tta-waitlist-modal{
+  background:#fff;
+  padding:20px;
+  border-radius:4px;
+  max-width:400px;
+  width:100%;
+}
+.tta-waitlist-modal label{
+  display:block;
+  margin-bottom:10px;
+}
+.tta-waitlist-modal input[type="text"],
+.tta-waitlist-modal input[type="email"],
+.tta-waitlist-modal input[type="tel"]{
+  width:100%;
+  padding:6px;
+  box-sizing:border-box;
+}
+.tta-waitlist-close{
+  float:right;
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+}
 .tta-ticket-price {
   margin-left: auto;
   font-size: 14px;
