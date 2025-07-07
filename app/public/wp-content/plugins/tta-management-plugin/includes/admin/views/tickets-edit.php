@@ -163,12 +163,42 @@ $tickets = $wpdb->get_results(
               <table class="tta-wl-info-table">
                 <thead>
                   <tr>
-                    <th><?php esc_html_e( 'Name', 'tta' ); ?></th>
-                    <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
-                    <th><?php esc_html_e( 'Phone', 'tta' ); ?></th>
-                    <th><?php esc_html_e( 'Membership Level', 'tta' ); ?></th>
-                    <th><?php esc_html_e( 'Date & Time Joined', 'tta' ); ?></th>
-                    <th><?php esc_html_e( 'Remove', 'tta' ); ?></th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Waitlist member name.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Name', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Waitlist member email address.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Email', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Phone number provided on the waitlist form.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Phone', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Current membership level.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Membership Level', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'When they joined the waitlist.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Date & Time Joined', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Actions', 'tta' ); ?>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

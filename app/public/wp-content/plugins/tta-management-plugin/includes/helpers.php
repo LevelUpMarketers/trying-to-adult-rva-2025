@@ -2522,6 +2522,128 @@ function tta_get_comm_templates() {
 }
 
 /**
+ * Remove purchased users from any related waitlists.
+ *
+ * @param array $items   Cart items with attendee info.
+ * @param int   $user_id Purchaser WordPress user ID.
+ */
+function tta_remove_purchased_from_waitlists( array $items, $user_id ) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'tta_waitlist';
+    $buyer_email = '';
+    if ( $user_id ) {
+        $u = get_user_by( 'ID', $user_id );
+        if ( $u ) {
+            $buyer_email = sanitize_email( $u->user_email );
+        }
+    }
+    foreach ( $items as $it ) {
+        $tid = intval( $it['ticket_id'] );
+        if ( $user_id ) {
+            $wpdb->delete( $table, [ 'ticket_id' => $tid, 'wp_user_id' => $user_id ], [ '%d', '%d' ] );
+        }
+        if ( $buyer_email ) {
+            $wpdb->delete( $table, [ 'ticket_id' => $tid, 'email' => $buyer_email ], [ '%d', '%s' ] );
+        }
+        foreach ( (array) ( $it['attendees'] ?? [] ) as $a ) {
+            $email = sanitize_email( $a['email'] ?? '' );
+            if ( $email ) {
+                $wpdb->delete( $table, [ 'ticket_id' => $tid, 'email' => $email ], [ '%d', '%s' ] );
+            }
+        }
+    }
+    TTA_Cache::flush();
+}
+
+/**
+ * Notify waitlist members when stock becomes available.
+ *
+ * @param int $ticket_id Ticket ID.
+ */
+function tta_notify_waitlist_ticket_available( $ticket_id ) {
+    global $wpdb;
+    $tickets_table = $wpdb->prefix . 'tta_tickets';
+    $waitlist_table = $wpdb->prefix . 'tta_waitlist';
+    $events_table = $wpdb->prefix . 'tta_events';
+
+    $ticket = $wpdb->get_row(
+        $wpdb->prepare("SELECT event_ute_id, ticket_name FROM {$tickets_table} WHERE id = %d", $ticket_id),
+        ARRAY_A
+    );
+    if ( ! $ticket ) {
+        return;
+    }
+
+    $event = $wpdb->get_row(
+        $wpdb->prepare("SELECT name, waitlistavailable, page_id FROM {$events_table} WHERE ute_id = %s", $ticket['event_ute_id']),
+        ARRAY_A
+    );
+    if ( empty( $event ) || empty( $event['waitlistavailable'] ) ) {
+        return;
+    }
+
+    $entries = $wpdb->get_results(
+        $wpdb->prepare("SELECT * FROM {$waitlist_table} WHERE ticket_id = %d ORDER BY added_at ASC", $ticket_id),
+        ARRAY_A
+    );
+    if ( empty( $entries ) ) {
+        return;
+    }
+
+    $grouped = [ 'premium' => [], 'basic' => [], 'free' => [] ];
+    foreach ( $entries as $e ) {
+        $level = tta_get_user_membership_level( intval( $e['wp_user_id'] ) );
+        $e['membership_level'] = $level;
+        $grouped[ $level ][] = $e;
+    }
+
+    $has_premium = ! empty( $grouped['premium'] );
+    $has_basic   = ! empty( $grouped['basic'] );
+
+    $offsets = [ 'premium' => 0, 'basic' => 600, 'free' => 900 ];
+    if ( ! $has_premium ) {
+        $offsets['basic'] = 0;
+        $offsets['free']  = $has_basic ? 600 : 0;
+    }
+
+    foreach ( $grouped as $level => $rows ) {
+        foreach ( $rows as $row ) {
+            $delay = $offsets[ $level ];
+            wp_schedule_single_event( time() + $delay, 'tta_send_waitlist_notification', [ $row, $event ] );
+        }
+    }
+}
+
+/**
+ * Send a waitlist email notification.
+ *
+ * @param array $entry Waitlist row.
+ * @param array $event Event row.
+ */
+function tta_send_waitlist_notification( $entry, $event ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['waitlist_available'] ) ) {
+        return;
+    }
+    $tpl = $templates['waitlist_available'];
+    $tokens = [
+        '{event_name}' => $event['name'] ?? '',
+        '{event_link}' => get_permalink( intval( $event['page_id'] ) ),
+        '{first_name}' => $entry['first_name'] ?? '',
+    ];
+    $subject = strtr( $tpl['email_subject'], $tokens );
+    $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+    $to      = sanitize_email( $entry['email'] ?? '' );
+    if ( $to ) {
+        wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
+    }
+    // TODO: send SMS/text when service is integrated.
+    // Cron jobs might not work on production environment, so we might have to
+    // schedule these emails via a service like SendGrid if their API allows it.
+}
+add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
+
+/**
  * Retrieve all saved ads.
  *
  * @return array[] List of ads with image_id and url.

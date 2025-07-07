@@ -79,6 +79,13 @@ class TTA_Cart {
       return;
     }
 
+    $current = (int) $this->wpdb->get_var( $this->wpdb->prepare(
+        "SELECT ticketlimit FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d",
+        $ticket_id
+    ) );
+    $after   = $current + $qty_diff;
+    $should_notify = ( $current <= 0 && $after > 0 );
+
     if ( $qty_diff < 0 ) {
       // Reserve stock only if enough tickets remain.
       $this->wpdb->query(
@@ -109,6 +116,10 @@ class TTA_Cart {
     );
     if ( $event_ute_id ) {
       TTA_Cache::delete( 'tickets_' . $event_ute_id );
+    }
+
+    if ( $should_notify ) {
+      tta_notify_waitlist_ticket_available( $ticket_id );
     }
   }
 
@@ -505,6 +516,7 @@ class TTA_Cart {
       $user_id = get_current_user_id();
       TTA_Transaction_Logger::log( $transaction_id, $amount, $items, implode( ',', $discount_codes ), $discount_total, $user_id, $card_last4 );
       TTA_Email_Handler::get_instance()->send_purchase_emails( $items, $user_id );
+      tta_remove_purchased_from_waitlists( $items, $user_id );
     }
 
     $this->empty_cart();

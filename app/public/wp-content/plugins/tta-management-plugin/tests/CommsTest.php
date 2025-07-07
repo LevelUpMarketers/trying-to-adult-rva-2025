@@ -24,6 +24,7 @@ class CommsTest extends TestCase {
         $this->assertSame('Thanks for Registering!', $templates['purchase']['email_subject']);
         $this->assertSame('External', $templates['purchase']['type']);
         $this->assertSame('Event Confirmation', $templates['purchase']['category']);
+        $this->assertArrayHasKey('waitlist_available', $templates);
     }
 
     public function test_saved_values_override_defaults() {
