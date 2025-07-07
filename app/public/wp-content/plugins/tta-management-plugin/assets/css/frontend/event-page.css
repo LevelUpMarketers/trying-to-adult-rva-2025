@@ -205,6 +205,17 @@
   border-radius: 4px;
   min-height: 375px;
 }
+.tta-ticket-waitlist .tta-join-waitlist, .tta-ticket-waitlist .tta-upgrade-btn, .tta-ticket-waitlist .tta-leave-waitlist{
+  padding: 5px 10px;
+  margin-top:10px;
+}
+.tta-ticket-waitlist .tta-upgrade-btn{
+  font-size:.923em;
+}
+.tta-ticket-waitlist .tta-upgrade-btn:hover, .tta-tickets-addtocart-button .tta-upgrade-btn:hover{
+  text-decoration:none;
+  background-color: #2f516a;
+}
 .tta-related-event .tta-event-thumb {
   width: 100%;
   height: 225px;
