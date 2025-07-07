@@ -937,7 +937,7 @@ echo $form_html . $lost_pw_html;
 
     <div id="tta-waitlist-overlay" class="tta-waitlist-overlay" style="display:none;">
       <div class="tta-waitlist-modal">
-        <button type="button" class="tta-waitlist-close" aria-label="Close">×</button>
+        <button type="button" class="tta-waitlist-close" aria-label="Close" style="color: #000;">×</button>
         <h2><?php esc_html_e( 'Join The Waitlist', 'tta' ); ?></h2>
         <p class="tta-waitlist-description"><?php esc_html_e( 'We\'ll notify you if a spot opens up.', 'tta' ); ?></p>
         <form id="tta-waitlist-form">

@@ -34,7 +34,8 @@ jQuery(function($){
     var $form = $(this),
         $btn  = $form.find('button[type="submit"]'),
         $spin = $form.find(".tta-admin-progress-spinner-svg"),
-        $resp = $form.find(".tta-admin-progress-response-p");
+        $resp = $form.find(".tta-admin-progress-response-p"),
+        start = Date.now();
     $resp.removeClass("updated error").text("");
     $btn.prop("disabled", true);
     $spin.stop(true).css({display:"inline-block",opacity:0}).fadeTo(200,1);
@@ -65,8 +66,12 @@ jQuery(function($){
         $resp.addClass("error").text("Request failed.");
       })
       .always(function(){
-        $spin.fadeTo(200,0,function(){ $spin.hide(); });
-        $btn.prop("disabled", false);
+        var elapsed = Date.now() - start;
+        var delay = elapsed < 3000 ? 3000 - elapsed : 0;
+        setTimeout(function(){
+          $spin.fadeTo(200,0,function(){ $spin.hide(); });
+          $btn.prop("disabled", false);
+        }, delay);
       });
   });
 });

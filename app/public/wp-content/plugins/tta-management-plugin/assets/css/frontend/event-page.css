@@ -358,6 +358,12 @@
   border:none;
   font-size:20px;
   cursor:pointer;
+  color:#000;
+  transition:color 0.2s ease;
+}
+.tta-waitlist-close:hover,
+.tta-waitlist-close:focus{
+  color:#fff;
 }
 .tta-admin-progress-spinner-svg {
   display:none;
