@@ -57,7 +57,8 @@ class TTA_Ajax_Waitlist {
             wp_send_json_error( [ 'message' => 'not_logged_in' ] );
         }
         $event_ute = sanitize_text_field( $_POST['event_ute_id'] ?? '' );
-        if ( '' === $event_ute ) {
+        $ticket_id = intval( $_POST['ticket_id'] ?? 0 );
+        if ( '' === $event_ute || ! $ticket_id ) {
             wp_send_json_error( [ 'message' => 'missing_event' ] );
         }
         global $wpdb;
@@ -66,9 +67,10 @@ class TTA_Ajax_Waitlist {
             $table,
             [
                 'event_ute_id' => $event_ute,
+                'ticket_id'    => $ticket_id,
                 'wp_user_id'   => get_current_user_id(),
             ],
-            [ '%s', '%d' ]
+            [ '%s', '%d', '%d' ]
         );
         if ( ! $deleted ) {
             wp_send_json_error( [ 'message' => 'not_found' ] );

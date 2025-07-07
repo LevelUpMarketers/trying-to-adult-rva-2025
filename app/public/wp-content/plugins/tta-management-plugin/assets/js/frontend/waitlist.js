@@ -8,13 +8,17 @@ jQuery(function($){
     $("#tta-waitlist-overlay").fadeOut(200);
   }
 
-  $(document).on('click', '#tta-join-waitlist', function(e){
+  $(document).on('click', '.tta-join-waitlist', function(e){
     e.preventDefault();
     var d = window.tta_waitlist || {};
+    var ticketId = $(this).data('ticket-id') || 0;
+    var ticketName = $(this).data('ticket-name') || '';
     $('#tta-waitlist-form input[name="first_name"]').val(d.firstName||'');
     $('#tta-waitlist-form input[name="last_name"]').val(d.lastName||'');
     $('#tta-waitlist-form input[name="email"]').val(d.email||'');
     $('#tta-waitlist-form input[name="phone"]').val(d.phone||'');
+    $('#tta-waitlist-form input[name="ticket_id"]').val(ticketId);
+    $('#tta-waitlist-form input[name="ticket_name"]').val(ticketName);
     openWL();
   });
 
@@ -43,8 +47,8 @@ jQuery(function($){
       action: "tta_join_waitlist",
       nonce: tta_waitlist.nonce,
       event_ute_id: tta_waitlist.eventUte,
-      ticket_id: tta_waitlist.ticketId,
-      ticket_name: tta_waitlist.ticketName,
+      ticket_id: $form.find('input[name="ticket_id"]').val(),
+      ticket_name: $form.find('input[name="ticket_name"]').val(),
       event_name: tta_waitlist.eventName,
       first_name: $form.find("input[name=first_name]").val(),
       last_name: $form.find("input[name=last_name]").val(),
@@ -82,14 +86,15 @@ jQuery(function($){
       });
   });
 
-  $(document).on('click', '#tta-leave-waitlist', function(e){
+  $(document).on('click', '.tta-leave-waitlist', function(e){
     e.preventDefault();
     var $btn = $(this);
     $btn.prop('disabled', true);
     $.post(tta_waitlist.ajax_url, {
       action: 'tta_leave_waitlist',
       nonce: tta_waitlist.nonce,
-      event_ute_id: tta_waitlist.eventUte
+      event_ute_id: tta_waitlist.eventUte,
+      ticket_id: $btn.data('ticket-id') || 0
     }, function(){
       window.location.reload();
     }, 'json').fail(function(){
