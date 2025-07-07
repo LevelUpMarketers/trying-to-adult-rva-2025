@@ -87,4 +87,8 @@ Admins can assign one or more hosts and volunteers when creating or editing an e
 
 Each event page outputs JSON‑LD Event schema. The markup includes the event name, description, dates, location, main image, and pricing when available. This helps search engines display the event in rich results.
 
+## Related Events
+
+A grid of other upcoming events appears below the main content. Thumbnails are rendered with background images so they remain the same size even when the source photos vary. Each card links to its Event Page and shows the date beneath the title.
+
 

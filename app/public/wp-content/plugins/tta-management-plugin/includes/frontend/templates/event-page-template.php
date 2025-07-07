@@ -1260,16 +1260,12 @@ echo $form_html . $lost_pw_html;
     <h2><?php esc_html_e( 'Other Upcoming Events', 'tta' ); ?></h2>
     <div class="tta-related-events-grid">
       <?php if ( $related ) : ?>
-        <?php foreach ( $related as $re ) : 
+        <?php foreach ( $related as $re ) :
           $url = get_permalink( $re['page_id'] );
           if ( ! empty( $re['mainimageid'] ) ) {
-            $img = wp_get_attachment_image( intval( $re['mainimageid'] ), 'full', false, [
-              'class' => 'tta-related-event-img',
-              'alt'   => esc_attr( $re['name'] )
-            ] );
+            $img_url = wp_get_attachment_image_url( intval( $re['mainimageid'] ), 'full' );
           } else {
-            $default = esc_url( TTA_PLUGIN_URL . 'assets/images/admin/default-event.png' );
-            $img     = '<img src="' . $default . '" alt="' . esc_attr( $re['name'] ) . '" class="tta-related-event-img">';
+            $img_url = TTA_PLUGIN_URL . 'assets/images/admin/default-event.png';
           }
           $time_parts = array_pad( explode( '|', $re['time'] ), 2, '' );
           $rs        = $time_parts[0];
@@ -1278,7 +1274,7 @@ echo $form_html . $lost_pw_html;
           $dt_disp = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $re_ts );
         ?>
           <a class="tta-related-event" href="<?php echo esc_url( $url ); ?>">
-            <div class="thumb"><?php echo $img; ?></div>
+            <div class="tta-event-thumb" style="background-image:url('<?php echo esc_url( $img_url ); ?>');"></div>
             <div class="tta-related-event-info">
               <h3><?php echo esc_html( $re['name'] ); ?></h3>
               <img

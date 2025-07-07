@@ -297,7 +297,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                     <?php endif; ?>
                     <a href="<?php echo esc_url( $page_url ); ?>"><span class="tta-event-link">
                     <?php
-                    if ( 0 === $remaining ) {
+                    if ( $remaining <= 0 ) {
                         echo $has_waitlist ? esc_html__( 'Join The Waitlist', 'tta' ) : esc_html__( 'Sold Out', 'tta' );
                     } else {
                         echo esc_html__( 'Get Your Tickets', 'tta' );
