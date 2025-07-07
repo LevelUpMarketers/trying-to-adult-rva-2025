@@ -188,6 +188,9 @@ if ( ! $is_logged_in ) {
         $tooltip_message  = 'basic' === $event_required
             ? __( 'You must be logged in and have at least a Basic Membership to attend this event.', 'tta' )
             : __( 'You must be logged in and have a Premium Membership to attend this event.', 'tta' );
+        $waitlist_tooltip  = 'basic' === $event_required
+            ? __( 'You must be logged in and have at least a Basic Membership to join the waitlist.', 'tta' )
+            : __( 'You must be logged in and have a Premium Membership to join the waitlist.', 'tta' );
     }
 } else {
     $first = esc_html( $context['first_name'] );
@@ -257,6 +260,8 @@ if ( ! $is_logged_in ) {
             );
             $disable_controls = true;
             $tooltip_message  = __( 'You must have at least a Basic Membership to attend this event.', 'tta' );
+            $waitlist_disabled = true;
+            $waitlist_tooltip  = __( 'You must have at least a Basic Membership to join the waitlist.', 'tta' );
         } else {
             if ( 'basic' === $membership_level ) {
                 $tickets_message .= ' - ' . sprintf(
@@ -279,6 +284,8 @@ if ( ! $is_logged_in ) {
             }
             $disable_controls = true;
             $tooltip_message  = __( 'You must have a Premium Membership to attend this event.', 'tta' );
+            $waitlist_disabled = true;
+            $waitlist_tooltip  = __( 'You must have a Premium Membership to join the waitlist.', 'tta' );
         }
     }
 }
@@ -286,6 +293,8 @@ if ( ! $is_logged_in ) {
 if ( $is_archived ) {
     $disable_controls = true;
     $tooltip_message  = __( 'Ticket sales are closed for this event.', 'tta' );
+    $waitlist_disabled = true;
+    $waitlist_tooltip  = __( 'The waitlist is closed for this event.', 'tta' );
 }
 
 if ( $is_logged_in ) {
@@ -299,6 +308,18 @@ if ( $is_logged_in ) {
         )
     );
     $is_on_waitlist = intval( $count ) > 0;
+    if ( $is_on_waitlist ) {
+        $waitlist_disabled = true;
+        $waitlist_tooltip  = __( 'You are already on the waitlist for this event.', 'tta' );
+    } elseif ( $disable_controls && $waitlist_disabled === false ) {
+        // Mirror the ticket purchase restriction
+        if ( false !== strpos( $tooltip_message, 'attend this event' ) ) {
+            $waitlist_tooltip = str_replace( 'attend this event', 'join the waitlist', $tooltip_message );
+        } elseif ( false !== strpos( $tooltip_message, 'tickets' ) ) {
+            $waitlist_tooltip = str_replace( 'purchase tickets', 'join the waitlist', $tooltip_message );
+        }
+        $waitlist_disabled = true;
+    }
 
     // c) Fetch this user’s history for this event
     $member_history = $wpdb->get_results(
