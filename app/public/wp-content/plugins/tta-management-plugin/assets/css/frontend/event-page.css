@@ -471,6 +471,9 @@ input[disabled]::before {
 #tta-get-tickets:disabled {
   cursor: not-allowed;
 }
+#tta-join-waitlist:disabled {
+  cursor: not-allowed;
+}
 
 /* Tooltip for disabled elements */
 .tta-tooltip-trigger {

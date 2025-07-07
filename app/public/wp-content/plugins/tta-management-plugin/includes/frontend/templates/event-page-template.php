@@ -164,6 +164,8 @@ $qualifies       = (
 );
 $tooltip_message = '';
 $disable_controls = false;
+$waitlist_disabled = ! $is_logged_in;
+$waitlist_tooltip  = __( 'You must be logged in to join the waitlist.', 'tta' );
 
 if ( ! $is_logged_in ) {
     if ( 'free' === $event_required ) {
@@ -626,9 +628,9 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
       </div>
 
       <?php if ( ! $is_archived ) : ?>
-        <?php if ( $all_sold_out && $has_waitlist && ! $disable_controls ) : ?>
+        <?php if ( $all_sold_out && $has_waitlist ) : ?>
         <div class="tta-tickets-addtocart-button">
-          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
         </div>
@@ -798,9 +800,9 @@ echo $form_html . $lost_pw_html;
           <p><?php esc_html_e( 'No tickets available for this event.', 'tta' ); ?></p>
         <?php endif; ?>
 
-        <?php if ( $all_sold_out && $has_waitlist && ! $disable_controls ) : ?>
+        <?php if ( $all_sold_out && $has_waitlist ) : ?>
         <div class="tta-tickets-addtocart-button">
-          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
             <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
           </button>
         </div>
