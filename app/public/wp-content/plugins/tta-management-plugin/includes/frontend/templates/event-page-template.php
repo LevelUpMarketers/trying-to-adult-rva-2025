@@ -956,6 +956,10 @@ echo $form_html . $lost_pw_html;
           <label><input type="checkbox" name="opt_email" checked> <?php esc_html_e( 'email me when a spot becomes available', 'tta' ); ?></label>
           <label><input type="checkbox" name="opt_sms" checked> <?php esc_html_e( 'text me when a spot becomes available', 'tta' ); ?></label>
           <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Join Waitlist', 'tta' ); ?></button>
+          <span class="tta-progress-spinner">
+            <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+          </span>
+          <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
         </form>
       </div>
     </div>

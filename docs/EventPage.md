@@ -33,6 +33,10 @@ The Event Page template includes a **Message Center** block under the “About T
 
 The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status.
 
+## Waitlist Popup
+
+When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged-in members see their info pre-filled. A spinner shows while the form submits and the result message appears below the button. The modal can be closed by the × button or by clicking outside the popup.
+
 ## Social Sharing
 
 Below the event meta information the hero section shows small Facebook and Instagram icons. Clicking either icon opens a share window preloaded with the event title and URL so visitors can quickly post about the event on social media. The behaviour is handled by `event-share.js` which is only loaded on individual Event Pages.

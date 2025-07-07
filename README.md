@@ -44,6 +44,7 @@ If these constants are not defined, checkout will fail and an admin notice will 
 - [Operator Testing Guide](docs/OperatorTestingGuide.md)
 - [Project TODOs](TODO.md)
 - [Events List Page](docs/EventsListPage.md) explains waitlist behavior when events sell out.
+- [Event Page](docs/EventPage.md#waitlist-popup) covers the join waitlist modal.
 
 Old events are automatically moved to an `tta_events_archive` table by a daily cron. The process is transparent to admins and members.
 Whenever the structure of `tta_events` changes, mirror those updates to `tta_events_archive` as well.
