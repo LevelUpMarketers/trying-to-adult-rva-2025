@@ -38,8 +38,11 @@ The **Event Details** sidebar now lists the event type (Open Event, Basic Member
 When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
 
 Logged-in visitors who are already on a ticket's waitlist see the Join button for that ticket disabled with a tooltip and a new **Leave the Waitlist** button beside it. Clicking that second button removes their waitlist entry via AJAX and reloads the page. Waitlists are tracked separately for each ticket so attendees can join or leave specific ticket types.
+If the Join button is disabled because the visitor doesn't meet the membership requirement, an **Upgrade** link appears beside it so they can easily upgrade before joining.
 
 Visitors who do not meet the event's membership requirement—including logged-out guests—still see the Join The Waitlist buttons, but they are disabled with a tooltip explaining why they cannot join.
+
+The standalone **Get Tickets** button below the ticket table only shows when at least one ticket is available. When all tickets are sold out, this call-to-action is omitted and waitlist controls appear on each ticket row instead.
 
 ## Social Sharing
 
