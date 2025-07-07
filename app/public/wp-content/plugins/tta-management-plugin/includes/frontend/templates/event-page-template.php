@@ -662,9 +662,15 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
         </a>
       </div>
 
-      <?php if ( ! $is_archived && ! $all_sold_out ) : ?>
+      <?php if ( ! $is_archived && ( ! $all_sold_out || $has_waitlist ) ) : ?>
         <a href="<?php echo $is_logged_in ? '#tta-event-buy' : '#tta-login-message'; ?>" class="tta-button tta-button-primary<?php echo $is_logged_in ? '' : ' tta-scroll-login'; ?>">
-          <?php echo $is_logged_in ? esc_html__( 'Buy Tickets', 'tta' ) : esc_html__( 'Log in to Buy Tickets', 'tta' ); ?>
+          <?php
+          if ( $all_sold_out && $has_waitlist ) {
+            echo $is_logged_in ? esc_html__( 'Join The Waitlist', 'tta' ) : esc_html__( 'Log in to Join The Waitlist', 'tta' );
+          } else {
+            echo $is_logged_in ? esc_html__( 'Buy Tickets', 'tta' ) : esc_html__( 'Log in to Buy Tickets', 'tta' );
+          }
+          ?>
         </a>
       <?php endif; ?>
     </div>
