@@ -1,6 +1,6 @@
 # TTA BI Dashboard
 
-The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. Charts are organised into **Event Sales & Tickets**, **Membership Metrics** and **Predictive Analytics** tabs. Each chart has a timeframe selector offering last month, last 3 months, 6, 12 or 24 months. Changing a selector reloads only that chart without a full page refresh. Optional *Compare previous period* checkboxes overlay data from the prior timeframe. Charts include hover tooltips, axis labels and subtle animations with extra padding so labels never overlap.
+The **TTA BI Dashboard** appears as its own menu item in the WordPress admin and surfaces business intelligence metrics for managers. Data is fetched via the `tta_bi_data` AJAX action and rendered with D3.js. Charts are organised into **Event Sales & Tickets**, **Membership Metrics** and **Predictive Analytics** tabs. Most charts include timeframe selectors for the last month, last 3 months, 6, 12 or 24 months. The predictive tab instead offers forecasts 1 week, 1 month, 3 months or 6 months into the future. Changing a selector reloads only that chart without a full page refresh. Optional *Compare previous period* checkboxes overlay data from the prior timeframe. Charts feature hover tooltips displaying numbers and dollar amounts with helpful grid lines and animations.
 
 ## Available Charts
 

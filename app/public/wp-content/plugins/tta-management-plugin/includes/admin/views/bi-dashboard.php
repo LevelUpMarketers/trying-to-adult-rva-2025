@@ -129,16 +129,15 @@
 
   <section class="tta-bi-section">
     <h2>Predicted Revenue Next Month</h2>
-    <label>Timeframe:
+    <label>Forecast:
       <select class="tta-bi-range" data-chart="prediction">
-        <option value="1">Last month</option>
-        <option value="3">Last 3 months</option>
-        <option value="6">Last 6 months</option>
-        <option value="12">Last 12 months</option>
-        <option value="24">Last 24 months</option>
+        <option value="0.25">1 Week Out</option>
+        <option value="1">1 Month Out</option>
+        <option value="3">3 Months Out</option>
+        <option value="6">6 Months Out</option>
       </select>
     </label>
-    <p>Simple forecast based on recent months.</p>
+    <p>Forecasted revenue for the selected future period.</p>
     <div id="tta-bi-prediction" class="tta-bi-chart"></div>
   </section>
 <?php endif; ?>
@@ -150,6 +149,7 @@
   const compares=document.querySelectorAll('.tta-bi-compare input');
   const map={subs:'#tta-bi-subscription-chart',signups:'#tta-bi-signups-chart',revenue:'#tta-bi-revenue-chart',cumulative:'#tta-bi-cumulative',ticket_sales:'#tta-bi-ticket-sales',avg_tickets:'#tta-bi-avg-tickets',by_level:'#tta-bi-by-level',churn:'#tta-bi-churn',prediction:'#tta-bi-prediction'};
   const tooltip=d3.select('body').append('div').attr('class','tta-bi-tooltip').style('visibility','hidden');
+  const valFmt=v=>'$'+(+v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
   function load(sel){
     const months=sel.value;
@@ -199,7 +199,7 @@
       .attr('width',x.bandwidth())
       .attr('height',0)
       .attr('fill','#21759b')
-      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+s[val]))
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+(val==='amount'?valFmt(s[val]):s[val])))
       .on('mouseout',()=>tooltip.style('visibility','hidden'))
       .transition().duration(600)
       .attr('y',s=>y(+s[val]))
@@ -222,7 +222,7 @@
       .attr('cy',s=>y(+s[val]))
       .attr('r',3)
       .attr('fill','#d54e21')
-      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+s[val]))
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.label+': '+(val==='amount'?valFmt(s[val]):s[val])))
       .on('mouseout',()=>tooltip.style('visibility','hidden'));
     if(prev){
       const line2=d3.line().x(s=>x(s.label)+x.bandwidth()/2).y(s=>y(+s[val]));
@@ -245,7 +245,7 @@
     const color=d3.scaleOrdinal(d3.schemeCategory10);
     const arcs=svg.selectAll('arc').data(pie(d)).enter().append('g');
     arcs.append('path').attr('d',arc).attr('fill',(d,i)=>color(i))
-      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.data.label+': '+s.data[val]))
+      .on('mousemove',(e,s)=>tooltip.style('left',e.pageX+'px').style('top',(e.pageY-28)+'px').style('visibility','visible').text(s.data.label+': '+(val==='amount'?valFmt(s.data[val]):s.data[val])))
       .on('mouseout',()=>tooltip.style('visibility','hidden'));
     arcs.append('text').attr('transform',d=>`translate(${arc.centroid(d)})`).attr('dy','0.35em').attr('text-anchor','middle').text(d=>d.data.label);
     const legend=d3.select(sel).append('div').attr('class','tta-bi-legend');

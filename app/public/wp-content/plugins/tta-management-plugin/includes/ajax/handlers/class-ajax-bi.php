@@ -133,7 +133,9 @@ class TTA_Ajax_BI {
             if ( $rev_vals ) {
                 $pred = array_sum( array_slice( $rev_vals, -3 ) ) / min( 3, count( $rev_vals ) );
             }
-            $data['prediction'] = [ 'label' => gmdate('Y-m', strtotime('+1 month')), 'amount' => round( $pred, 2 ) ];
+            $future = $months < 1 ? strtotime( '+' . round( $months * 30 ) . ' days' ) : strtotime( '+' . $months . ' months' );
+            $label = $months < 1 ? gmdate( 'Y-m-d', $future ) : gmdate( 'Y-m', $future );
+            $data['prediction'] = [ 'label' => $label, 'amount' => round( $pred * $months, 2 ) ];
         }
 
         wp_send_json( $data );
