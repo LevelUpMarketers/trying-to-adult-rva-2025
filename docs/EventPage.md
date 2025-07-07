@@ -31,13 +31,18 @@ The Event Page template includes a **Message Center** block under the “About T
 
 ## Event Type and Ticket Context
 
-The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status. When the **Get Tickets** or **Join The Waitlist** buttons are disabled due to membership requirements, an adjacent **Upgrade** button appears so visitors can quickly navigate to the membership signup page. The button label changes to “Upgrade to Basic” or “Upgrade to Premium” based on the event.
+The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status. When the **Get Tickets** or **Join The Waitlist** buttons are disabled due to membership requirements, an adjacent **Upgrade** button appears so visitors can quickly navigate to the membership signup page. This link now shows beside each ticket’s waitlist control **and** next to the main “Get Tickets” button. The button label changes to “Upgrade to Basic” or “Upgrade to Premium” based on the event.
 
 ## Waitlist Popup
 
 When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
 
+Logged-in visitors who are already on a ticket's waitlist see the Join button for that ticket disabled with a tooltip and a new **Leave the Waitlist** button beside it. Clicking that second button removes their waitlist entry via AJAX and reloads the page. Waitlists are tracked separately for each ticket so attendees can join or leave specific ticket types.
+If the Join button is disabled because the visitor doesn't meet the membership requirement, an **Upgrade** link appears beside it so they can easily upgrade before joining.
+
 Visitors who do not meet the event's membership requirement—including logged-out guests—still see the Join The Waitlist buttons, but they are disabled with a tooltip explaining why they cannot join.
+
+The standalone **Get Tickets** button below the ticket table only shows when at least one ticket is available. When all tickets are sold out, this call-to-action is omitted and waitlist controls appear on each ticket row instead.
 
 ## Social Sharing
 

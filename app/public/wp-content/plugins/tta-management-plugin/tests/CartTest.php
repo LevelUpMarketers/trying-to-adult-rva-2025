@@ -68,6 +68,8 @@ class CartTest extends TestCase {
         if (!function_exists('esc_html__')) { function esc_html__($s,$d=null){ return $s; } }
         if (!function_exists('esc_attr')) { function esc_attr($v){ return $v; } }
         if (!function_exists('esc_url')) { function esc_url($v){ return $v; } }
+        if (!function_exists('add_action')) { function add_action($t,$c){} }
+        if (!function_exists('add_filter')) { function add_filter($t,$c,$p=10,$a=1){} }
         if (!function_exists('esc_attr__')) { function esc_attr__($s,$d=null){ return $s; } }
         global $wpdb;
         $wpdb = new DummyWpdbCartHelper();

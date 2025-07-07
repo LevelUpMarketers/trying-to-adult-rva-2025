@@ -81,6 +81,14 @@ $tickets        = TTA_Cache::remember( 'tickets_' . $event['ute_id'], function()
 }, 600 );
 $ticket_count = count( $tickets );
 
+$first_sold_out_ticket = null;
+foreach ( $tickets as $t ) {
+    if ( intval( $t['ticketlimit'] ) < 1 ) {
+        $first_sold_out_ticket = $t;
+        break;
+    }
+}
+
 // Build a map of quantities for this event from the cart
 foreach ( $cart_items as $it ) {
     if ( isset( $it['event_ute_id'] ) && $it['event_ute_id'] === $event['ute_id'] ) {
@@ -128,16 +136,14 @@ wp_localize_script(
     'tta-waitlist-js',
     'tta_waitlist',
     [
-        'ajax_url'   => admin_url( 'admin-ajax.php' ),
-        'nonce'      => wp_create_nonce( 'tta_frontend_nonce' ),
-        'eventUte'   => $event['ute_id'],
-        'ticketId'   => $event['ticket_id'],
-        'ticketName' => $tickets[0]['ticket_name'] ?? 'General Admission',
-        'eventName'  => $event['name'],
-        'firstName'  => $member_row['first_name'] ?? '',
-        'lastName'   => $member_row['last_name'] ?? '',
-        'email'      => $member_row['email'] ?? '',
-        'phone'      => $member_row['phone'] ?? '',
+        'ajax_url'  => admin_url( 'admin-ajax.php' ),
+        'nonce'     => wp_create_nonce( 'tta_frontend_nonce' ),
+        'eventUte'  => $event['ute_id'],
+        'eventName' => $event['name'],
+        'firstName' => $member_row['first_name'] ?? '',
+        'lastName'  => $member_row['last_name'] ?? '',
+        'email'     => $member_row['email'] ?? '',
+        'phone'     => $member_row['phone'] ?? '',
     ]
 );
 
@@ -311,15 +317,16 @@ if ( $is_archived ) {
 
 if ( $is_logged_in ) {
 
-    // b) Check waitlist membership for this event
-    $count = $wpdb->get_var(
+    // b) Check waitlist membership for this event (per ticket)
+    $waitlist_ticket_ids = $wpdb->get_col(
         $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s AND wp_user_id = %d",
+            "SELECT ticket_id FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s AND wp_user_id = %d",
             $event['ute_id'],
             $current_user_id
         )
     );
-    $is_on_waitlist = intval( $count ) > 0;
+    $waitlist_ticket_ids = array_map( 'intval', $waitlist_ticket_ids );
+    $is_on_waitlist = ! empty( $waitlist_ticket_ids );
     if ( $is_on_waitlist ) {
         $waitlist_disabled = true;
         $waitlist_tooltip  = __( 'You are already on the waitlist for this event.', 'tta' );
@@ -660,23 +667,10 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
         </a>
       </div>
 
-      <?php if ( ! $is_archived ) : ?>
-        <?php if ( $all_sold_out && $has_waitlist ) : ?>
-        <div class="tta-tickets-addtocart-button">
-          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
-            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
-          </button>
-          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
-          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
-            <?php echo esc_html( $upgrade_label ); ?>
-          </a>
-          <?php endif; ?>
-        </div>
-        <?php else : ?>
+      <?php if ( ! $is_archived && ! $all_sold_out ) : ?>
         <a href="<?php echo $is_logged_in ? '#tta-event-buy' : '#tta-login-message'; ?>" class="tta-button tta-button-primary<?php echo $is_logged_in ? '' : ' tta-scroll-login'; ?>">
           <?php echo $is_logged_in ? esc_html__( 'Buy Tickets', 'tta' ) : esc_html__( 'Log in to Buy Tickets', 'tta' ); ?>
         </a>
-        <?php endif; ?>
       <?php endif; ?>
     </div>
     <div class="tta-event-hero-image">
@@ -832,24 +826,30 @@ echo $form_html . $lost_pw_html;
                 </div>
                 <div class="tta-ticket-notice" aria-live="polite"></div>
               </div>
+              <?php if ( $is_sold_out && $has_waitlist ) : ?>
+              <div class="tta-ticket-waitlist">
+                <button type="button" class="tta-button tta-button-primary tta-join-waitlist<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>" data-ticket-id="<?php echo esc_attr( $ticket['id'] ); ?>" data-ticket-name="<?php echo esc_attr( $ticket['ticket_name'] ); ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
+                  <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
+                </button>
+                <?php if ( in_array( intval( $ticket['id'] ), $waitlist_ticket_ids, true ) ) : ?>
+                <button type="button" class="tta-button tta-button-secondary tta-leave-waitlist" data-ticket-id="<?php echo esc_attr( $ticket['id'] ); ?>">
+                  <?php esc_html_e( 'Leave the Waitlist', 'tta' ); ?>
+                </button>
+                <?php endif; ?>
+                <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
+                <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+                  <?php echo esc_html( $upgrade_label ); ?>
+                </a>
+                <?php endif; ?>
+              </div>
+              <?php endif; ?>
             </div>
           <?php endforeach; ?>
         <?php else : ?>
           <p><?php esc_html_e( 'No tickets available for this event.', 'tta' ); ?></p>
         <?php endif; ?>
 
-        <?php if ( $all_sold_out && $has_waitlist ) : ?>
-        <div class="tta-tickets-addtocart-button">
-          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
-            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
-          </button>
-          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
-          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
-            <?php echo esc_html( $upgrade_label ); ?>
-          </a>
-          <?php endif; ?>
-        </div>
-        <?php else : ?>
+        <?php if ( ! $all_sold_out ) : ?>
         <div class="tta-tickets-addtocart-button">
           <button
             type="button"
@@ -999,6 +999,8 @@ echo $form_html . $lost_pw_html;
         <h2><?php esc_html_e( 'Join The Waitlist', 'tta' ); ?></h2>
         <p class="tta-waitlist-description"><?php esc_html_e( 'We\'ll notify you if a spot opens up.', 'tta' ); ?></p>
         <form id="tta-waitlist-form">
+          <input type="hidden" name="ticket_id" value="">
+          <input type="hidden" name="ticket_name" value="">
           <label><?php esc_html_e( 'First Name', 'tta' ); ?>
             <input type="text" name="first_name" required>
           </label>
