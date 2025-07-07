@@ -1851,6 +1851,7 @@ function tta_get_upcoming_events( $paged = 1, $per_page = 5 ) {
             'all_day_event' => ! empty( $row['all_day_event'] ),
             'venuename'     => sanitize_text_field( $row['venuename'] ),
             'address'       => sanitize_text_field( $row['address'] ),
+            'waitlistavailable' => ! empty( $row['waitlistavailable'] ),
             'page_id'       => intval( $row['page_id'] ),
             'mainimageid'   => intval( $row['mainimageid'] ),
         ];

@@ -338,6 +338,35 @@ class HelpersTest extends TestCase {
         $this->assertStringContainsString('wp_tta_events', $wpdb->last_query);
     }
 
+    public function test_get_upcoming_events_includes_waitlist_flag() {
+        global $wpdb;
+        $wpdb = new class {
+            public $prefix = 'wp_';
+            public $last_query = '';
+            public $rows = [];
+            public function get_results($q, $o = ARRAY_A) { $this->last_query = $q; return $this->rows; }
+            public function get_var($q) { return 1; }
+            public function prepare($q, ...$a) { foreach ($a as $v) { $q = preg_replace('/%s/', $v, $q, 1); $q = preg_replace('/%d/', $v, $q, 1); } return $q; }
+        };
+        $wpdb->rows = [ [
+            'id' => 1,
+            'ute_id' => 'ute1',
+            'name' => 'Soon',
+            'date' => '2030-01-01',
+            'time' => '10:00|12:00',
+            'all_day_event' => 0,
+            'venuename' => 'Venue',
+            'address' => '1 St -  - Town - ST - 00000',
+            'page_id' => 5,
+            'mainimageid' => 0,
+            'waitlistavailable' => 1,
+        ] ];
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $res = tta_get_upcoming_events(1, 5);
+        $this->assertTrue($res['events'][0]['waitlistavailable']);
+    }
+
     public function test_get_event_days_for_month() {
         global $wpdb;
         $wpdb = new class {
