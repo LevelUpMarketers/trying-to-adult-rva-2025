@@ -25,38 +25,17 @@ $tickets = $wpdb->get_results(
     // Pull waitlist entries for this ticket
     $waitlist_entries = $wpdb->get_results(
       $wpdb->prepare(
-        "SELECT * FROM {$waitlist_table} WHERE ticket_id = %d",
+        "SELECT * FROM {$waitlist_table} WHERE ticket_id = %d ORDER BY added_at ASC",
         $tid
       ),
       ARRAY_A
     );
 
-    // Grab the raw CSV string (or empty)
-    $existing_userids = $waitlist_entries[0]['userids'] ?? '';
-
-
-    $existing_userids_for_count = trim( $existing_userids );
-
     // Fetch confirmed attendees for this ticket
     $attendees     = tta_get_ticket_attendees( $tid );
     $att_count     = count( $attendees );
 
-    // 1) Is it empty?
-    $is_empty = ( $existing_userids_for_count === '' );
-
-    // 2) Does it contain a comma?
-    $has_commas = ! $is_empty && strpos( $existing_userids_for_count, ',' ) !== false;
-
-    // 3) Explode, filter, and count
-    if ( $is_empty ) {
-        $waitlist_count = 0;
-    } else {
-        // explode on commas
-        $parts = explode( ',', $existing_userids_for_count );
-        // trim each part and discard any empty strings
-        $ids = array_filter( array_map( 'trim', $parts ), 'strlen' );
-        $waitlist_count = count( $ids );
-    }
+    $waitlist_count = count( $waitlist_entries );
 
   ?>
     <section
@@ -179,79 +158,40 @@ $tickets = $wpdb->get_results(
           (<?php echo $waitlist_count; ?>)
         </summary>
 
-        <?php if ( $waitlist_entries ) : ?>
-          <?php
-          $members_table = $wpdb->prefix . 'tta_members';
-          foreach ( $waitlist_entries as $w ) :
-            $uids = array_filter( array_map( 'intval', explode( ',', $w['userids'] ) ) );
-            foreach ( $uids as $uid ) :
-              $m = $wpdb->get_row(
-                $wpdb->prepare(
-                  "SELECT first_name, last_name, email, membership_level, member_type, phone, profileimgid
-                   FROM {$members_table}
-                   WHERE wpuserid = %d
-                   LIMIT 1",
-                  $uid
-                ),
-                ARRAY_A
-              );
-              $name  = $m
-                ? ucwords( strtolower( trim( $m['first_name'] . ' ' . $m['last_name'] ) ) )
-                : sprintf( '#%d', $uid );
-              $email = $m['email'] ?? '';
-              $level = $m['membership_level']
-                ? ucfirst( strtolower( $m['membership_level'] ) )
-                : '';
-              $type  = $m['member_type']
-                ? ucfirst( strtolower( $m['member_type'] ) )
-                : '';
-              $phone = $m['phone'] ?? '';
-              $thumb = ! empty( $m['profileimgid'] )
-                ? tta_admin_preview_image(
-                    intval( $m['profileimgid'] ),
-                    [50,50],
-                    [ 'class' => 'tta-wl-thumb-img', 'alt' => esc_attr( $name ) ]
-                  )
-                : '<img src="'
-                    . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/placeholder-profile.svg' )
-                    . '" class="tta-wl-thumb-img" alt="">';
-          ?>
-            <div class="tta-wl-entry" data-userid="<?php echo esc_attr( $uid ); ?>">
-              <div class="tta-wl-thumb"><?php echo $thumb; ?></div>
-              <div class="tta-wl-info-wrapper">
-                <table class="tta-wl-info-table">
-                  <thead>
-                    <tr>
-                      <th><?php esc_html_e( 'Name', 'tta' ); ?></th>
-                      <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
-                      <th><?php esc_html_e( 'Phone', 'tta' ); ?></th>
-                      <th><?php esc_html_e( 'Membership Type', 'tta' ); ?></th>
-                      <th><?php esc_html_e( 'Membership Level', 'tta' ); ?></th>
-                      <th><?php esc_html_e( 'Remove', 'tta' ); ?></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><?php echo esc_html( $name ); ?></td>
-                      <td><?php echo esc_html( $email ); ?></td>
-                      <td><?php echo esc_html( $phone ); ?></td>
-                      <td><?php echo esc_html( $type ); ?></td>
-                      <td><?php echo esc_html( $level ); ?></td?>
-                      <td>
-                        <button type="button"
-                                class="tta-remove-waitlist-entry"
-                                data-userid="<?php echo esc_attr( $uid ); ?>">
-                          <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/bin.svg' ); ?>"
-                               alt="<?php esc_attr_e( 'Remove', 'tta' ); ?>">
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          <?php if ( $waitlist_entries ) : ?>
+            <?php $members_table = $wpdb->prefix . 'tta_members'; ?>
+            <div class="tta-wl-info-wrapper">
+              <table class="tta-wl-info-table">
+                <thead>
+                  <tr>
+                    <th><?php esc_html_e( 'Name', 'tta' ); ?></th>
+                    <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
+                    <th><?php esc_html_e( 'Phone', 'tta' ); ?></th>
+                    <th><?php esc_html_e( 'Remove', 'tta' ); ?></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ( $waitlist_entries as $entry ) :
+                    $uid   = intval( $entry['wp_user_id'] );
+                    $name  = trim( $entry['first_name'] . ' ' . $entry['last_name'] );
+                    $email = $entry['email'];
+                    $phone = $entry['phone'];
+                  ?>
+                  <tr data-waitlist-id="<?php echo esc_attr( $entry['id'] ); ?>">
+                    <td><?php echo esc_html( $name ); ?></td>
+                    <td><?php echo esc_html( $email ); ?></td>
+                    <td><?php echo esc_html( $phone ); ?></td>
+                    <td>
+                      <button type="button" class="tta-remove-waitlist-entry" data-waitlist-id="<?php echo esc_attr( $entry['id'] ); ?>">
+                        <?php esc_html_e( 'Remove', 'tta' ); ?>
+                      </button>
+                    </td>
+                  </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
             </div>
-          <?php endforeach; endforeach; ?>
-        <?php else : ?>
+          <?php else : ?>
           <p class="no-waitlist"><?php esc_html_e( 'No waitlist entries.', 'tta' ); ?></p>
         <?php endif; ?>
       </details>
@@ -357,11 +297,7 @@ $tickets = $wpdb->get_results(
         <?php endif; ?>
       </details>
 
-      <!-- preserve the CSV so update_ticket() sees it -->
-      <input type="hidden"
-            class="tta-hidden-waitlist"
-            name="waitlist_userids[<?php echo $tid; ?>]"
-            value="<?php echo esc_attr( $existing_userids ); ?>">
+
 
     </section>
   <?php endforeach; ?>

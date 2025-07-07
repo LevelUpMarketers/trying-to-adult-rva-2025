@@ -7,6 +7,7 @@ class TTA_Ajax_Waitlist {
         add_action( 'wp_ajax_nopriv_tta_join_waitlist', [ __CLASS__, 'join_waitlist' ] );
         add_action( 'wp_ajax_tta_leave_waitlist', [ __CLASS__, 'leave_waitlist' ] );
         add_action( 'wp_ajax_nopriv_tta_leave_waitlist', [ __CLASS__, 'leave_waitlist' ] );
+        add_action( 'wp_ajax_tta_remove_waitlist_entry', [ __CLASS__, 'remove_entry' ] );
     }
 
     public static function join_waitlist() {
@@ -77,6 +78,25 @@ class TTA_Ajax_Waitlist {
         }
         TTA_Cache::flush();
         wp_send_json_success();
+    }
+
+    /**
+     * Remove a waitlist entry via admin.
+     */
+    public static function remove_entry() {
+        check_ajax_referer( 'tta_waitlist_admin_action', 'nonce' );
+        $id = intval( $_POST['waitlist_id'] ?? 0 );
+        if ( ! $id ) {
+            wp_send_json_error( [ 'message' => 'missing_id' ] );
+        }
+        global $wpdb;
+        $table = $wpdb->prefix . 'tta_waitlist';
+        $deleted = $wpdb->delete( $table, [ 'id' => $id ], [ '%d' ] );
+        if ( ! $deleted ) {
+            wp_send_json_error( [ 'message' => 'not_found' ] );
+        }
+        TTA_Cache::flush();
+        wp_send_json_success( [ 'message' => __( 'Waitlist entry removed.', 'tta' ) ] );
     }
 }
 TTA_Ajax_Waitlist::init();
