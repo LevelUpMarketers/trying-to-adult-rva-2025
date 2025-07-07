@@ -31,7 +31,7 @@ The Event Page template includes a **Message Center** block under the “About T
 
 ## Event Type and Ticket Context
 
-The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status. When the **Get Tickets** or **Join The Waitlist** buttons are disabled due to membership requirements, an adjacent **Upgrade** button appears so visitors can quickly navigate to the membership signup page. The button label changes to “Upgrade to Basic” or “Upgrade to Premium” based on the event.
+The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status. When the **Get Tickets** or **Join The Waitlist** buttons are disabled due to membership requirements, an adjacent **Upgrade** button appears so visitors can quickly navigate to the membership signup page. This link now shows beside each ticket’s waitlist control **and** next to the main “Get Tickets” button. The button label changes to “Upgrade to Basic” or “Upgrade to Premium” based on the event.
 
 ## Waitlist Popup
 

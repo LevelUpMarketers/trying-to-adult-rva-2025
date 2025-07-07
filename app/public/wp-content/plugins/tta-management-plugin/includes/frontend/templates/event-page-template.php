@@ -859,6 +859,11 @@ echo $form_html . $lost_pw_html;
           >
             <?php echo $all_sold_out ? esc_html__( 'Sold Out', 'tta' ) : esc_html__( 'Get Tickets', 'tta' ); ?>
           </button>
+          <?php if ( $disable_controls && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       </section>
