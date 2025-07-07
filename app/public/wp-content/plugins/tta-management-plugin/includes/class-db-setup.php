@@ -223,11 +223,18 @@ class TTA_DB_Setup {
             ticket_id    BIGINT UNSIGNED NOT NULL,
             ticket_name  VARCHAR(255)     NOT NULL,
             event_name   VARCHAR(255)     NOT NULL,
-            userids      TEXT             NOT NULL,
+            wp_user_id   BIGINT UNSIGNED DEFAULT 0,
+            first_name   VARCHAR(255)     NOT NULL,
+            last_name    VARCHAR(255)     NOT NULL,
+            email        VARCHAR(255)     NOT NULL,
+            phone        VARCHAR(50)      DEFAULT '',
+            opt_in_email TINYINT(1)       DEFAULT 1,
+            opt_in_sms   TINYINT(1)       DEFAULT 1,
             added_at     DATETIME         DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY   (id),
             KEY event_ute_id_idx (event_ute_id),
-            KEY ticket_id_idx    (ticket_id)
+            KEY ticket_id_idx    (ticket_id),
+            KEY wp_user_id_idx   (wp_user_id)
         ) $charset_collate";
 
         // ─────────────────────────────────────────────────────────────────

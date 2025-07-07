@@ -31,7 +31,13 @@ The Event Page template includes a **Message Center** block under the “About T
 
 ## Event Type and Ticket Context
 
-The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status.
+The **Event Details** sidebar now lists the event type (Open Event, Basic Membership Required, or Premium Membership Required). A short message under the “Get Your Tickets Now” heading communicates the membership requirement and offers login or upgrade links depending on the visitor’s status. When the **Get Tickets** or **Join The Waitlist** buttons are disabled due to membership requirements, an adjacent **Upgrade** button appears so visitors can quickly navigate to the membership signup page. The button label changes to “Upgrade to Basic” or “Upgrade to Premium” based on the event.
+
+## Waitlist Popup
+
+When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
+
+Visitors who do not meet the event's membership requirement—including logged-out guests—still see the Join The Waitlist buttons, but they are disabled with a tooltip explaining why they cannot join.
 
 ## Social Sharing
 
@@ -80,5 +86,9 @@ Admins can assign one or more hosts and volunteers when creating or editing an e
 ## SEO and Schema Markup
 
 Each event page outputs JSON‑LD Event schema. The markup includes the event name, description, dates, location, main image, and pricing when available. This helps search engines display the event in rich results.
+
+## Related Events
+
+A grid of other upcoming events appears below the main content. Thumbnails are rendered with background images so they remain the same size even when the source photos vary. Each card links to its Event Page and shows the date beneath the title.
 
 

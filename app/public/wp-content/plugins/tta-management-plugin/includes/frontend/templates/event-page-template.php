@@ -58,6 +58,8 @@ if ( ! $event ) {
     }
 }
 
+$has_waitlist = ( '1' === (string) ( $event['waitlistavailable'] ?? '0' ) );
+
 // ───────────────
 // 3) Fetch this event’s ticket types
 // ───────────────
@@ -114,6 +116,31 @@ $membership_level = $context['membership_level'];
 $is_on_waitlist   = false;
 $member_history   = [];
 
+// Load waitlist assets with event/user context
+wp_enqueue_script(
+    'tta-waitlist-js',
+    TTA_PLUGIN_URL . 'assets/js/frontend/waitlist.js',
+    [ 'jquery' ],
+    TTA_PLUGIN_VERSION,
+    true
+);
+wp_localize_script(
+    'tta-waitlist-js',
+    'tta_waitlist',
+    [
+        'ajax_url'   => admin_url( 'admin-ajax.php' ),
+        'nonce'      => wp_create_nonce( 'tta_frontend_nonce' ),
+        'eventUte'   => $event['ute_id'],
+        'ticketId'   => $event['ticket_id'],
+        'ticketName' => $tickets[0]['ticket_name'] ?? 'General Admission',
+        'eventName'  => $event['name'],
+        'firstName'  => $member_row['first_name'] ?? '',
+        'lastName'   => $member_row['last_name'] ?? '',
+        'email'      => $member_row['email'] ?? '',
+        'phone'      => $member_row['phone'] ?? '',
+    ]
+);
+
 // Map event type to display label and required level
 $type_labels = [
     'free'       => __( 'Open Event', 'tta' ),
@@ -137,6 +164,10 @@ $qualifies       = (
 );
 $tooltip_message = '';
 $disable_controls = false;
+$waitlist_disabled = ! $is_logged_in;
+$waitlist_tooltip  = __( 'You must be logged in to join the waitlist.', 'tta' );
+$show_upgrade_btn  = false;
+$upgrade_label     = '';
 
 if ( ! $is_logged_in ) {
     if ( 'free' === $event_required ) {
@@ -159,6 +190,9 @@ if ( ! $is_logged_in ) {
         $tooltip_message  = 'basic' === $event_required
             ? __( 'You must be logged in and have at least a Basic Membership to attend this event.', 'tta' )
             : __( 'You must be logged in and have a Premium Membership to attend this event.', 'tta' );
+        $waitlist_tooltip  = 'basic' === $event_required
+            ? __( 'You must be logged in and have at least a Basic Membership to join the waitlist.', 'tta' )
+            : __( 'You must be logged in and have a Premium Membership to join the waitlist.', 'tta' );
     }
 } else {
     $first = esc_html( $context['first_name'] );
@@ -228,6 +262,8 @@ if ( ! $is_logged_in ) {
             );
             $disable_controls = true;
             $tooltip_message  = __( 'You must have at least a Basic Membership to attend this event.', 'tta' );
+            $waitlist_disabled = true;
+            $waitlist_tooltip  = __( 'You must have at least a Basic Membership to join the waitlist.', 'tta' );
         } else {
             if ( 'basic' === $membership_level ) {
                 $tickets_message .= ' - ' . sprintf(
@@ -250,31 +286,51 @@ if ( ! $is_logged_in ) {
             }
             $disable_controls = true;
             $tooltip_message  = __( 'You must have a Premium Membership to attend this event.', 'tta' );
+            $waitlist_disabled = true;
+            $waitlist_tooltip  = __( 'You must have a Premium Membership to join the waitlist.', 'tta' );
         }
+    }
+}
+
+if ( ! $qualifies && ! $is_archived ) {
+    if ( 'basic' === $event_required ) {
+        $show_upgrade_btn = true;
+        $upgrade_label    = __( 'Upgrade to Basic', 'tta' );
+    } elseif ( 'premium' === $event_required ) {
+        $show_upgrade_btn = true;
+        $upgrade_label    = __( 'Upgrade to Premium', 'tta' );
     }
 }
 
 if ( $is_archived ) {
     $disable_controls = true;
     $tooltip_message  = __( 'Ticket sales are closed for this event.', 'tta' );
+    $waitlist_disabled = true;
+    $waitlist_tooltip  = __( 'The waitlist is closed for this event.', 'tta' );
 }
 
 if ( $is_logged_in ) {
 
     // b) Check waitlist membership for this event
-    $waitlists = $wpdb->get_results(
+    $count = $wpdb->get_var(
         $wpdb->prepare(
-            "SELECT userids FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s",
-            $event['ute_id']
-        ),
-        ARRAY_A
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s AND wp_user_id = %d",
+            $event['ute_id'],
+            $current_user_id
+        )
     );
-    foreach ( $waitlists as $wl ) {
-        $uids = array_filter( array_map( 'intval', explode( ',', $wl['userids'] ) ) );
-        if ( in_array( $current_user_id, $uids, true ) ) {
-            $is_on_waitlist = true;
-            break;
+    $is_on_waitlist = intval( $count ) > 0;
+    if ( $is_on_waitlist ) {
+        $waitlist_disabled = true;
+        $waitlist_tooltip  = __( 'You are already on the waitlist for this event.', 'tta' );
+    } elseif ( $disable_controls && $waitlist_disabled === false ) {
+        // Mirror the ticket purchase restriction
+        if ( false !== strpos( $tooltip_message, 'attend this event' ) ) {
+            $waitlist_tooltip = str_replace( 'attend this event', 'join the waitlist', $tooltip_message );
+        } elseif ( false !== strpos( $tooltip_message, 'tickets' ) ) {
+            $waitlist_tooltip = str_replace( 'purchase tickets', 'join the waitlist', $tooltip_message );
         }
+        $waitlist_disabled = true;
     }
 
     // c) Fetch this user’s history for this event
@@ -605,9 +661,22 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
       </div>
 
       <?php if ( ! $is_archived ) : ?>
+        <?php if ( $all_sold_out && $has_waitlist ) : ?>
+        <div class="tta-tickets-addtocart-button">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
+            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
+          </button>
+          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
+        </div>
+        <?php else : ?>
         <a href="<?php echo $is_logged_in ? '#tta-event-buy' : '#tta-login-message'; ?>" class="tta-button tta-button-primary<?php echo $is_logged_in ? '' : ' tta-scroll-login'; ?>">
           <?php echo $is_logged_in ? esc_html__( 'Buy Tickets', 'tta' ) : esc_html__( 'Log in to Buy Tickets', 'tta' ); ?>
         </a>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
     <div class="tta-event-hero-image">
@@ -769,6 +838,18 @@ echo $form_html . $lost_pw_html;
           <p><?php esc_html_e( 'No tickets available for this event.', 'tta' ); ?></p>
         <?php endif; ?>
 
+        <?php if ( $all_sold_out && $has_waitlist ) : ?>
+        <div class="tta-tickets-addtocart-button">
+          <button type="button" id="tta-join-waitlist" class="tta-button tta-button-primary<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
+            <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
+          </button>
+          <?php if ( $waitlist_disabled && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
+        </div>
+        <?php else : ?>
         <div class="tta-tickets-addtocart-button">
           <button
             type="button"
@@ -776,9 +857,15 @@ echo $form_html . $lost_pw_html;
             class="tta-button tta-button-primary<?php echo ($all_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>"
             <?php disabled( empty( $tickets ) || $all_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>
           >
-            <?php esc_html_e( 'Get Tickets', 'tta' ); ?>
+            <?php echo $all_sold_out ? esc_html__( 'Sold Out', 'tta' ) : esc_html__( 'Get Tickets', 'tta' ); ?>
           </button>
+          <?php if ( $disable_controls && $show_upgrade_btn ) : ?>
+          <a href="<?php echo esc_url( home_url( '/become-a-member/' ) ); ?>" class="tta-button tta-button-primary tta-upgrade-btn">
+            <?php echo esc_html( $upgrade_label ); ?>
+          </a>
+          <?php endif; ?>
         </div>
+        <?php endif; ?>
       </section>
 
       <?php
@@ -905,6 +992,35 @@ echo $form_html . $lost_pw_html;
       <?php endif; ?>
 
     </main>
+
+    <div id="tta-waitlist-overlay" class="tta-waitlist-overlay" style="display:none;">
+      <div class="tta-waitlist-modal">
+        <button type="button" class="tta-waitlist-close" aria-label="Close">×</button>
+        <h2><?php esc_html_e( 'Join The Waitlist', 'tta' ); ?></h2>
+        <p class="tta-waitlist-description"><?php esc_html_e( 'We\'ll notify you if a spot opens up.', 'tta' ); ?></p>
+        <form id="tta-waitlist-form">
+          <label><?php esc_html_e( 'First Name', 'tta' ); ?>
+            <input type="text" name="first_name" required>
+          </label>
+          <label><?php esc_html_e( 'Last Name', 'tta' ); ?>
+            <input type="text" name="last_name" required>
+          </label>
+          <label><?php esc_html_e( 'Email', 'tta' ); ?>
+            <input type="email" name="email" required>
+          </label>
+          <label><?php esc_html_e( 'Phone', 'tta' ); ?>
+            <input type="tel" name="phone">
+          </label>
+          <label><input type="checkbox" name="opt_email" checked> <?php esc_html_e( 'email me when a spot becomes available', 'tta' ); ?></label>
+          <label><input type="checkbox" name="opt_sms" checked> <?php esc_html_e( 'text me when a spot becomes available', 'tta' ); ?></label>
+          <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Join Waitlist', 'tta' ); ?></button>
+          <span class="tta-progress-spinner">
+            <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+          </span>
+          <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
+        </form>
+      </div>
+    </div>
 
     <!-- SIDEBAR -->
     <aside class="tta-event-sidebar">
@@ -1144,16 +1260,12 @@ echo $form_html . $lost_pw_html;
     <h2><?php esc_html_e( 'Other Upcoming Events', 'tta' ); ?></h2>
     <div class="tta-related-events-grid">
       <?php if ( $related ) : ?>
-        <?php foreach ( $related as $re ) : 
+        <?php foreach ( $related as $re ) :
           $url = get_permalink( $re['page_id'] );
           if ( ! empty( $re['mainimageid'] ) ) {
-            $img = wp_get_attachment_image( intval( $re['mainimageid'] ), 'full', false, [
-              'class' => 'tta-related-event-img',
-              'alt'   => esc_attr( $re['name'] )
-            ] );
+            $img_url = wp_get_attachment_image_url( intval( $re['mainimageid'] ), 'full' );
           } else {
-            $default = esc_url( TTA_PLUGIN_URL . 'assets/images/admin/default-event.png' );
-            $img     = '<img src="' . $default . '" alt="' . esc_attr( $re['name'] ) . '" class="tta-related-event-img">';
+            $img_url = TTA_PLUGIN_URL . 'assets/images/admin/default-event.png';
           }
           $time_parts = array_pad( explode( '|', $re['time'] ), 2, '' );
           $rs        = $time_parts[0];
@@ -1162,7 +1274,7 @@ echo $form_html . $lost_pw_html;
           $dt_disp = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $re_ts );
         ?>
           <a class="tta-related-event" href="<?php echo esc_url( $url ); ?>">
-            <div class="thumb"><?php echo $img; ?></div>
+            <div class="tta-event-thumb" style="background-image:url('<?php echo esc_url( $img_url ); ?>');"></div>
             <div class="tta-related-event-info">
               <h3><?php echo esc_html( $re['name'] ); ?></h3>
               <img

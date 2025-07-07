@@ -26,6 +26,8 @@ The layout consists of three columns:
   a 150×150&nbsp;px container so every row stays the same size without image
   distortion. They are right aligned.
    Below each event name a list of key details appears with the same icons used on individual Event Pages.
+   When an event sells out the remaining ticket count is replaced with **Sold Out!** in red text.
+   The “Get Your Tickets” button changes to **Join The Waitlist** when a waitlist is available or **Sold Out** when not.
 3. **Right column** – an advertising slot that displays one random ad image from
    the Ads admin page.
 
