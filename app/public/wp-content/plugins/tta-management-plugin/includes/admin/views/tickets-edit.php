@@ -158,8 +158,7 @@ $tickets = $wpdb->get_results(
           (<?php echo $waitlist_count; ?>)
         </summary>
 
-          <?php if ( $waitlist_entries ) : ?>
-            <?php $members_table = $wpdb->prefix . 'tta_members'; ?>
+        <?php if ( $waitlist_entries ) : ?>
             <div class="tta-wl-info-wrapper">
               <table class="tta-wl-info-table">
                 <thead>
@@ -167,6 +166,8 @@ $tickets = $wpdb->get_results(
                     <th><?php esc_html_e( 'Name', 'tta' ); ?></th>
                     <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
                     <th><?php esc_html_e( 'Phone', 'tta' ); ?></th>
+                    <th><?php esc_html_e( 'Membership Level', 'tta' ); ?></th>
+                    <th><?php esc_html_e( 'Date & Time Joined', 'tta' ); ?></th>
                     <th><?php esc_html_e( 'Remove', 'tta' ); ?></th>
                   </tr>
                 </thead>
@@ -176,11 +177,16 @@ $tickets = $wpdb->get_results(
                     $name  = trim( $entry['first_name'] . ' ' . $entry['last_name'] );
                     $email = $entry['email'];
                     $phone = $entry['phone'];
+                    $level_slug  = tta_get_user_membership_level( $uid );
+                    $level_label = tta_get_membership_label( $level_slug );
+                    $joined      = $entry['added_at'] ? mysql2date( 'n/j/Y g:i a', $entry['added_at'] ) : '';
                   ?>
                   <tr data-waitlist-id="<?php echo esc_attr( $entry['id'] ); ?>">
                     <td><?php echo esc_html( $name ); ?></td>
                     <td><?php echo esc_html( $email ); ?></td>
                     <td><?php echo esc_html( $phone ); ?></td>
+                    <td><?php echo esc_html( $level_label ); ?></td>
+                    <td><?php echo esc_html( $joined ); ?></td>
                     <td>
                       <button type="button" class="tta-remove-waitlist-entry" data-waitlist-id="<?php echo esc_attr( $entry['id'] ); ?>">
                         <?php esc_html_e( 'Remove', 'tta' ); ?>

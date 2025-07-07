@@ -22,6 +22,8 @@ that attendee only, not the entire transaction.
 ## Waitlist Entries
 
 Each ticket also shows a **Waitlist Entries** table when people have joined the
-waitlist. Columns include **Name**, **Email**, **Phone** and a single **Remove**
-action. Removing an entry deletes it immediately via AJAX so another person can
+waitlist. The table displays **Name**, **Email**, **Phone**, **Membership Level**,
+and **Date & Time Joined**, followed by a single **Remove** action. Entries are
+ordered from oldest to newest so admins can quickly see who has been waiting the
+longest. Removing an entry deletes it immediately via AJAX so another person can
 take the open spot.
