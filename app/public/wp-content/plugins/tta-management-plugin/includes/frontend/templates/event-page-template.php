@@ -121,7 +121,6 @@ $is_logged_in     = $context['is_logged_in'];
 $current_user_id  = $context['wp_user_id'];
 $member_row       = $context['member'] ?? [];
 $membership_level = $context['membership_level'];
-$is_on_waitlist   = false;
 $member_history   = [];
 
 // Load waitlist assets with event/user context
@@ -326,11 +325,7 @@ if ( $is_logged_in ) {
         )
     );
     $waitlist_ticket_ids = array_map( 'intval', $waitlist_ticket_ids );
-    $is_on_waitlist = ! empty( $waitlist_ticket_ids );
-    if ( $is_on_waitlist ) {
-        $waitlist_disabled = true;
-        $waitlist_tooltip  = __( 'You are already on the waitlist for this event.', 'tta' );
-    } elseif ( $disable_controls && $waitlist_disabled === false ) {
+    if ( $disable_controls && $waitlist_disabled === false ) {
         // Mirror the ticket purchase restriction
         if ( false !== strpos( $tooltip_message, 'attend this event' ) ) {
             $waitlist_tooltip = str_replace( 'attend this event', 'join the waitlist', $tooltip_message );
@@ -827,8 +822,16 @@ echo $form_html . $lost_pw_html;
                 <div class="tta-ticket-notice" aria-live="polite"></div>
               </div>
               <?php if ( $is_sold_out && $has_waitlist ) : ?>
+              <?php
+                $ticket_waitlist_disabled = $waitlist_disabled;
+                $ticket_waitlist_tooltip  = $waitlist_tooltip;
+                if ( in_array( intval( $ticket['id'] ), $waitlist_ticket_ids, true ) ) {
+                    $ticket_waitlist_disabled = true;
+                    $ticket_waitlist_tooltip  = __( 'You are already on the waitlist for this ticket.', 'tta' );
+                }
+              ?>
               <div class="tta-ticket-waitlist">
-                <button type="button" class="tta-button tta-button-primary tta-join-waitlist<?php echo $waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>" data-ticket-id="<?php echo esc_attr( $ticket['id'] ); ?>" data-ticket-name="<?php echo esc_attr( $ticket['ticket_name'] ); ?>"<?php echo $waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $waitlist_tooltip ) . '"' : ''; ?>>
+                <button type="button" class="tta-button tta-button-primary tta-join-waitlist<?php echo $ticket_waitlist_disabled ? ' tta-disabled tta-tooltip-trigger' : ''; ?>" data-ticket-id="<?php echo esc_attr( $ticket['id'] ); ?>" data-ticket-name="<?php echo esc_attr( $ticket['ticket_name'] ); ?>"<?php echo $ticket_waitlist_disabled ? ' disabled data-tooltip="' . esc_attr( $ticket_waitlist_tooltip ) . '"' : ''; ?>>
                   <?php esc_html_e( 'Join The Waitlist', 'tta' ); ?>
                 </button>
                 <?php if ( in_array( intval( $ticket['id'] ), $waitlist_ticket_ids, true ) ) : ?>
