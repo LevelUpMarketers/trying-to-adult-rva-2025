@@ -127,11 +127,6 @@ class TTA_Cart {
     $this->ensure_cart( true );
     $ticket_id = intval( $ticket_id );
     $qty       = intval( $qty );
-    if ( $qty <= 0 ) {
-      $this->remove_item( $ticket_id );
-      return;
-    }
-
     $existing_qty = (int) $this->wpdb->get_var(
       $this->wpdb->prepare(
         "SELECT quantity FROM {$this->items_table} WHERE cart_id = %d AND ticket_id = %d",
@@ -139,6 +134,13 @@ class TTA_Cart {
         $ticket_id
       )
     );
+
+    if ( $qty <= 0 ) {
+      if ( $existing_qty ) {
+        $this->remove_item( $ticket_id );
+      }
+      return 0;
+    }
     $diff = $qty - $existing_qty;
 
     if ( $diff > 0 ) {
@@ -156,6 +158,13 @@ class TTA_Cart {
         $qty  = $existing_qty + $available;
         $diff = $available;
       }
+    }
+
+    if ( $qty <= 0 ) {
+      if ( $existing_qty ) {
+        $this->remove_item( $ticket_id );
+      }
+      return 0;
     }
 
     if ( $diff !== 0 ) {
@@ -183,6 +192,8 @@ class TTA_Cart {
         ['%d','%d','%d','%f','%s']
       );
     }
+
+    return $qty;
   }
 
   public function update_quantity( $ticket_id, $qty ) {
@@ -273,6 +284,10 @@ class TTA_Cart {
   public function remove_item( $ticket_id ) {
     $this->ensure_cart( false );
     $ticket_id = intval( $ticket_id );
+    if ( class_exists( 'TTA_Cart_Cleanup' ) ) {
+      // Purge any expired rows so availability reflects the current database.
+      TTA_Cart_Cleanup::clean_expired_items();
+    }
     $qty = (int) $this->wpdb->get_var(
       $this->wpdb->prepare(
         "SELECT quantity FROM {$this->items_table} WHERE cart_id = %d AND ticket_id = %d",
@@ -485,18 +500,6 @@ class TTA_Cart {
     $total_before   = 0;
     $total_after    = 0;
 
-    // Check availability before attempting updates
-    foreach ( $items as $chk ) {
-      $available = (int) $wpdb->get_var(
-        $wpdb->prepare(
-          "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
-          intval( $chk['ticket_id'] )
-        )
-      );
-      if ( $available < intval( $chk['quantity'] ) ) {
-        return new WP_Error( 'tta_sold_out', __( 'One or more tickets are no longer available.', 'tta' ) );
-      }
-    }
 
     foreach ( $items as &$item ) {
       $before       = $item['quantity'] * $item['price'];

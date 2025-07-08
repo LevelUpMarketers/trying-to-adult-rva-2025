@@ -12,6 +12,8 @@ class TTA_Ajax_Cart {
         add_action( 'wp_ajax_nopriv_tta_add_to_cart',[ __CLASS__, 'ajax_add_to_cart' ] );
         add_action( 'wp_ajax_tta_update_cart',      [ __CLASS__, 'ajax_update_cart' ] );
         add_action( 'wp_ajax_nopriv_tta_update_cart',[ __CLASS__, 'ajax_update_cart' ] );
+        add_action( 'wp_ajax_tta_check_stock',      [ __CLASS__, 'ajax_check_stock' ] );
+        add_action( 'wp_ajax_nopriv_tta_check_stock',[ __CLASS__, 'ajax_check_stock' ] );
     }
 
     public static function ajax_add_to_cart() {
@@ -60,7 +62,7 @@ class TTA_Ajax_Cart {
 
             $ticket = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT event_ute_id, baseeventcost, discountedmembercost, premiummembercost
+                    "SELECT event_ute_id, ticket_name, baseeventcost, discountedmembercost, premiummembercost
                      FROM {$wpdb->prefix}tta_tickets
                      WHERE id = %d",
                     $ticket_id
@@ -98,12 +100,36 @@ class TTA_Ajax_Cart {
             if ( $qty <= 0 ) {
                 $cart->remove_item( $ticket_id );
             } else {
-                $cart->add_item( $ticket_id, $qty, $price );
+                $new_qty = $cart->add_item( $ticket_id, $qty, $price );
                 if ( $diff > 0 ) {
                     $added = true;
+                    if ( $new_qty <= $existing_qty ) {
+                        $event = $wpdb->get_row(
+                            $wpdb->prepare(
+                                "SELECT name, waitlistavailable, page_id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s",
+                                $event_ute
+                            ),
+                            ARRAY_A
+                        );
+                        if ( $event && ! empty( $event['waitlistavailable'] ) ) {
+                            $ctx = tta_get_current_user_context();
+                            tta_set_waitlist_context([
+                                'event_ute_id' => $event_ute,
+                                'event_name'   => $event['name'],
+                                'page_id'      => intval( $event['page_id'] ),
+                                'ticket_id'    => $ticket_id,
+                                'ticket_name'  => $ticket['ticket_name'],
+                                'first_name'   => $ctx['first_name'] ?? '',
+                                'last_name'    => $ctx['last_name'] ?? '',
+                                'email'        => $ctx['user_email'] ?? '',
+                                'phone'        => $ctx['member']['phone'] ?? '',
+                            ]);
+                            $message = __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' );
+                        }
+                    }
                 }
                 $existing_events[ $event_ute ] = ( $existing_events[ $event_ute ] ?? 0 ) + max( 0, $diff );
-                $existing_tickets[ $ticket_id ] = $qty;
+                $existing_tickets[ $ticket_id ] = $new_qty;
             }
         }
 
@@ -116,6 +142,25 @@ class TTA_Ajax_Cart {
         }
 
         wp_send_json_success( $data );
+    }
+
+    /**
+     * Return current ticket availability.
+     */
+    public static function ajax_check_stock() {
+        check_ajax_referer( 'tta_frontend_nonce', 'nonce' );
+        $ticket_id = intval( $_POST['ticket_id'] ?? 0 );
+        if ( ! $ticket_id ) {
+            wp_send_json_error( [ 'message' => 'missing_id' ] );
+        }
+        global $wpdb;
+        $available = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
+                $ticket_id
+            )
+        );
+        wp_send_json_success( [ 'available' => $available ] );
     }
 
     public static function ajax_update_cart() {
