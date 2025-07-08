@@ -240,6 +240,32 @@ function tta_get_cart_notice() {
 }
 
 /**
+ * Store context data for the waitlist join modal.
+ *
+ * @param array $context
+ */
+function tta_set_waitlist_context( array $context ) {
+    if ( ! session_id() ) {
+        session_start();
+    }
+    $_SESSION['tta_waitlist_context'] = $context;
+}
+
+/**
+ * Retrieve and clear any stored waitlist context.
+ *
+ * @return array
+ */
+function tta_get_waitlist_context() {
+    if ( ! session_id() ) {
+        session_start();
+    }
+    $ctx = $_SESSION['tta_waitlist_context'] ?? [];
+    unset( $_SESSION['tta_waitlist_context'] );
+    return is_array( $ctx ) ? $ctx : [];
+}
+
+/**
  * Get count of tickets a user has already purchased for an event.
  *
  * @param int    $user_id

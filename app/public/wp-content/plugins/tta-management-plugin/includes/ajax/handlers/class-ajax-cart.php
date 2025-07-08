@@ -60,7 +60,7 @@ class TTA_Ajax_Cart {
 
             $ticket = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT event_ute_id, baseeventcost, discountedmembercost, premiummembercost
+                    "SELECT event_ute_id, ticket_name, baseeventcost, discountedmembercost, premiummembercost
                      FROM {$wpdb->prefix}tta_tickets
                      WHERE id = %d",
                     $ticket_id
@@ -98,17 +98,41 @@ class TTA_Ajax_Cart {
             if ( $qty <= 0 ) {
                 $cart->remove_item( $ticket_id );
             } else {
-                $cart->add_item( $ticket_id, $qty, $price );
+                $new_qty = $cart->add_item( $ticket_id, $qty, $price );
                 if ( $diff > 0 ) {
                     $added = true;
+                    if ( $new_qty <= $existing_qty ) {
+                        $event = $wpdb->get_row(
+                            $wpdb->prepare(
+                                "SELECT name, waitlistavailable, page_id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s",
+                                $event_ute
+                            ),
+                            ARRAY_A
+                        );
+                        if ( $event && ! empty( $event['waitlistavailable'] ) ) {
+                            $ctx = tta_get_current_user_context();
+                            tta_set_waitlist_context([
+                                'event_ute_id' => $event_ute,
+                                'event_name'   => $event['name'],
+                                'page_id'      => intval( $event['page_id'] ),
+                                'ticket_id'    => $ticket_id,
+                                'ticket_name'  => $ticket['ticket_name'],
+                                'first_name'   => $ctx['first_name'] ?? '',
+                                'last_name'    => $ctx['last_name'] ?? '',
+                                'email'        => $ctx['user_email'] ?? '',
+                                'phone'        => $ctx['member']['phone'] ?? '',
+                            ]);
+                            $message = __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' );
+                        }
+                    }
                 }
                 $existing_events[ $event_ute ] = ( $existing_events[ $event_ute ] ?? 0 ) + max( 0, $diff );
-                $existing_tickets[ $ticket_id ] = $qty;
+                $existing_tickets[ $ticket_id ] = $new_qty;
             }
         }
 
         $data = [];
-        if ( $added ) {
+        if ( $added || $message ) {
             $data['cart_url'] = home_url( '/cart' );
         }
         if ( $message ) {
