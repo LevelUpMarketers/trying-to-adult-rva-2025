@@ -5,7 +5,20 @@ jQuery(function($){
     var $input = $(this).closest('.tta-ticket-quantity').find('.tta-qty-input');
     var max    = parseInt($input.attr('max'), 10) || Infinity;
     var val    = parseInt($input.val(), 10) || 0;
-    if ( val < max ) $input.val(val + 1).trigger('change');
+    if ( val >= max ) return;
+    var desired  = val + 1;
+    var ticketId = $input.attr('name').match(/\d+/)[0];
+    $.post( tta_ajax.ajax_url, {
+      action: 'tta_check_stock',
+      ticket_id: ticketId,
+      nonce: tta_ajax.nonce
+    }, function(res){
+      if(res.success && parseInt(res.data.available,10) >= desired){
+        $input.val(desired).trigger('change');
+      } else if(window.ttaShowNotice){
+        window.ttaShowNotice($input, tta_event.sold_out_msg);
+      }
+    }, 'json');
   });
   $('.tta-qty-decrease').on('click', function(){
     var $input = $(this).closest('.tta-ticket-quantity').find('.tta-qty-input');

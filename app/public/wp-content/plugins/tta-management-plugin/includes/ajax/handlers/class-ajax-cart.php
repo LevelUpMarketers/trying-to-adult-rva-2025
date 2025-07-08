@@ -12,6 +12,8 @@ class TTA_Ajax_Cart {
         add_action( 'wp_ajax_nopriv_tta_add_to_cart',[ __CLASS__, 'ajax_add_to_cart' ] );
         add_action( 'wp_ajax_tta_update_cart',      [ __CLASS__, 'ajax_update_cart' ] );
         add_action( 'wp_ajax_nopriv_tta_update_cart',[ __CLASS__, 'ajax_update_cart' ] );
+        add_action( 'wp_ajax_tta_check_stock',      [ __CLASS__, 'ajax_check_stock' ] );
+        add_action( 'wp_ajax_nopriv_tta_check_stock',[ __CLASS__, 'ajax_check_stock' ] );
     }
 
     public static function ajax_add_to_cart() {
@@ -132,7 +134,7 @@ class TTA_Ajax_Cart {
         }
 
         $data = [];
-        if ( $added || $message ) {
+        if ( $added ) {
             $data['cart_url'] = home_url( '/cart' );
         }
         if ( $message ) {
@@ -140,6 +142,25 @@ class TTA_Ajax_Cart {
         }
 
         wp_send_json_success( $data );
+    }
+
+    /**
+     * Return current ticket availability.
+     */
+    public static function ajax_check_stock() {
+        check_ajax_referer( 'tta_frontend_nonce', 'nonce' );
+        $ticket_id = intval( $_POST['ticket_id'] ?? 0 );
+        if ( ! $ticket_id ) {
+            wp_send_json_error( [ 'message' => 'missing_id' ] );
+        }
+        global $wpdb;
+        $available = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
+                $ticket_id
+            )
+        );
+        wp_send_json_success( [ 'available' => $available ] );
     }
 
     public static function ajax_update_cart() {
