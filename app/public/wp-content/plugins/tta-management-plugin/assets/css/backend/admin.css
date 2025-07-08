@@ -5,6 +5,9 @@
     margin-top: 20px;
     vertical-align: top;
 }
+.tta-wl-info-wrapper .tta-wl-info-table > tbody > tr{
+    display:table-row!important;
+}
 
 #tta-ticket-edit-form .form-table{
     margin-bottom:20px;
@@ -370,6 +373,7 @@ form p.submit{
   width: 100%;
   min-width: 600px; /* ensure scroll on narrow viewports */
   table-layout: fixed;
+  margin-bottom:20px;
 }
 .tta-wl-info-table th,
 .tta-wl-info-table td {
