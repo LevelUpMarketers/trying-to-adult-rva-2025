@@ -81,13 +81,15 @@ class TTA_Ajax_Tickets {
         foreach ( $names as $tid => $raw_name ) {
             $tid         = intval( $tid );
             $ticket_name = tta_sanitize_text_field( $raw_name );
+            $old_limit   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$tickets_table} WHERE id = %d", $tid ) );
+            $new_limit   = intval( $limits[ $tid ] ?? 0 );
 
             // a) Update ticket row
             $wpdb->update(
                 $tickets_table,
                 [
                     'ticket_name'          => $ticket_name,
-                    'ticketlimit'          => intval( $limits[ $tid ] ?? 0 ),
+                    'ticketlimit'          => $new_limit,
                     'baseeventcost'        => floatval( $base_costs[ $tid ] ?? 0 ),
                     'discountedmembercost' => floatval( $member_costs[ $tid ] ?? 0 ),
                     'premiummembercost'    => floatval( $premium_costs[ $tid ] ?? 0 ),
@@ -96,6 +98,10 @@ class TTA_Ajax_Tickets {
                 [ '%s', '%d', '%f', '%f', '%f' ],
                 [ '%d' ]
             );
+
+            if ( $old_limit <= 0 && $new_limit > 0 ) {
+                tta_notify_waitlist_ticket_available( $tid );
+            }
 
             // b) Update or insert waitlist row (with ticket_name)
             $csv    = tta_sanitize_text_field( $waitlist_csv_by_tid[ $tid ] ?? '' );

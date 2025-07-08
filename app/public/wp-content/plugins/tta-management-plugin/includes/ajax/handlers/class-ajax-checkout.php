@@ -15,10 +15,6 @@ class TTA_Ajax_Checkout {
 
         $cart = new TTA_Cart();
         $discount_codes = $_SESSION['tta_discount_codes'] ?? [];
-        $changed = $cart->sync_with_inventory();
-        if ( $changed ) {
-            wp_send_json_error( [ 'message' => __( 'Some tickets in your cart were no longer available and have been removed. Please review the updated cart and try again.', 'tta' ) ] );
-        }
 
         $ticket_total     = $cart->get_total( $discount_codes, false );
         $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
