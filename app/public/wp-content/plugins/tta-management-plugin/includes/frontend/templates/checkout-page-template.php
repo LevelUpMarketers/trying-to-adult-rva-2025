@@ -17,7 +17,6 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
     check_admin_referer( 'tta_checkout_action', 'tta_checkout_nonce' );
 
     $discount_codes   = $_SESSION['tta_discount_codes'] ?? [];
-    $cart_changed     = $cart->sync_with_inventory();
     $ticket_total     = $cart->get_total( $discount_codes, false );
     $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
     $membership_total = $membership_level ? tta_get_membership_price( $membership_level ) : 0;
@@ -29,11 +28,6 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
             wp_safe_redirect( home_url( '/cart' ) );
             exit;
         }
-    }
-    if ( $cart_changed ) {
-        tta_set_cart_notice( __( 'Some tickets in your cart were no longer available and have been removed. Please review the updated cart and try again.', 'tta' ) );
-        wp_safe_redirect( home_url( '/cart' ) );
-        exit;
     }
 
     $exp_input  = tta_sanitize_text_field( $_POST['card_exp'] );

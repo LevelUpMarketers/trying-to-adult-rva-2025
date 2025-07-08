@@ -12,6 +12,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `new_event` | Internal notice when a new event is created. |
 | `refund_requested` | Internal notice when a member requests a refund. |
 | `event_sold_out` | Internal alert when an event reaches capacity. |
+| `waitlist_available` | Sent when a ticket becomes available for someone on the waitlist. |
 | `host_reminder_24hr` | Reminder to event hosts 24 hours before their event. |
 | `host_reminder_2hr` | Reminder to event hosts two hours before their event. |
 | `volunteer_reminder_24hr` | Reminder to volunteers 24 hours before their event. |

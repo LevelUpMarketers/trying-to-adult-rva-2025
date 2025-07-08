@@ -73,6 +73,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('The following event is now sold out.', 'tta'),
                 'sms_text'    => '',
             ],
+            'waitlist_available' => [
+                'label'       => __('Waitlist Spot Available', 'tta'),
+                'type'        => 'External',
+                'category'    => 'Waitlist',
+                'description' => __('Notifies members when a ticket opens up.', 'tta'),
+                'email_subject' => __('A ticket is available!', 'tta'),
+                'email_body'  => __('Good news! A spot has opened for the event below. Grab your ticket before it\'s gone.', 'tta'),
+                'sms_text'    => __('A ticket is available! Visit {event_link}', 'tta'),
+            ],
             'host_reminder_24hr' => [
                 'label'       => __('Host Reminder 24hr', 'tta'),
                 'type'        => 'Internal',

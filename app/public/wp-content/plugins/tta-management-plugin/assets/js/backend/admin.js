@@ -923,8 +923,20 @@ jQuery(function($){
   // ─────────────────────────────────────────────────────────────────────
 $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   e.preventDefault();
-  // simply drop the entire entry block
-  $(this).closest('.tta-wl-entry').remove();
+  var $row = $(this).closest('tr[data-waitlist-id], .tta-wl-entry');
+  var id = $(this).data('waitlist-id');
+  $.post(TTA_Ajax.ajax_url, {
+    action: 'tta_remove_waitlist_entry',
+    waitlist_id: id,
+    nonce: TTA_Ajax.waitlist_admin_nonce
+  }, function(res){
+    if(res.success){
+      $row.remove();
+      alert(res.data && res.data.message ? res.data.message : 'Removed');
+    }else{
+      alert(res.data && res.data.message ? res.data.message : 'Error');
+    }
+  }, 'json');
 });
 
   // ─────────────────────────────────────────────────────────────────────

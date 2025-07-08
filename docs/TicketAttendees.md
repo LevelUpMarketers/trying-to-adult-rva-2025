@@ -18,3 +18,13 @@ attendee registered. For cases where no refund is needed, a **Cancel Attendance
 transaction has not yet settled, the plugin now checks the transaction status
 and automatically voids the original charge. Leaving the **Refund $** field blank refunds the full amount paid for
 that attendee only, not the entire transaction.
+
+## Waitlist Entries
+
+Each ticket also shows a **Waitlist Entries** table when people have joined the
+waitlist. Every heading now includes a tooltip icon like the Attendees table. The
+columns show **Name**, **Email**, **Phone**, **Membership Level**, and **Date & Time
+Joined**, followed by an **Actions** column with a Remove button. Entries are
+ordered from oldest to newest so admins can quickly see who has been waiting the
+longest. Removing an entry deletes it immediately via AJAX so another person can
+take the open spot.
