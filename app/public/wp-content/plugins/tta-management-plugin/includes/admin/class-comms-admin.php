@@ -162,7 +162,7 @@ class TTA_Comms_Admin {
             echo '<td>'.esc_html( $vals['type'] ).'</td>';
             echo '<td>'.esc_html( $vals['category'] ).'</td>';
             echo '<td><a href="#" class="tta-edit-link">'.esc_html__( 'Edit', 'tta' ).'</a></td>';
-            echo '<td class="tta-toggle-cell"><img src="'.esc_url( TTA_PLUGIN_URL.'assets/images/admin/arrow.svg' ).'" class="tta-toggle-arrow" width="16" height="16" alt="Toggle"></td>';
+            echo '<td class="tta-toggle-cell"><img src="'.esc_url( TTA_PLUGIN_URL.'assets/images/admin/arrow.svg' ).'" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>';
             echo '</tr>';
 
             echo '<tr class="tta-inline-row" style="display:none;">';

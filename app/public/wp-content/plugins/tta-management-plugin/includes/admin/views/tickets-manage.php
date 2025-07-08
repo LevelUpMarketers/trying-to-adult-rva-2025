@@ -84,7 +84,7 @@ $events = $wpdb->get_results( $wpdb->prepare($sql, $offset, $per_page), ARRAY_A 
         <td><?php echo intval($count_tix); ?></td>
         <td class="tta-toggle-cell">
           <img src="<?php echo esc_url(TTA_PLUGIN_URL.'assets/images/admin/arrow.svg'); ?>"
-               class="tta-toggle-arrow" width="16" height="16"
+               class="tta-toggle-arrow" width="10" height="10"
                alt="<?php esc_attr_e('Toggle Tickets', 'tta'); ?>">
         </td>
       </tr>

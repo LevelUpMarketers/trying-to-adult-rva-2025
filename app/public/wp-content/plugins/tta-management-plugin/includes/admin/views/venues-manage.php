@@ -18,7 +18,7 @@ $venues = $wpdb->get_results("SELECT * FROM {$table} ORDER BY name", ARRAY_A);
 <td><?php echo esc_html($v['venueurl']); ?></td>
 <td><a href="#" class="tta-edit-link" data-venue-id="<?php echo esc_attr($v['id']); ?>">Edit</a> |
 <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin.php?page=tta-venues&tab=manage&action=delete&venue_id='.$v['id']),'tta_venue_delete_nonce')); ?>" onclick="return confirm('Delete this venue?');">Delete</a></td>
-<td class="tta-toggle-cell"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="16" height="16" alt="Toggle Edit"></td>
+<td class="tta-toggle-cell"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle Edit"></td>
 </tr>
 <?php endforeach; else: ?>
 <tr><td colspan="5">No venues found.</td></tr>
