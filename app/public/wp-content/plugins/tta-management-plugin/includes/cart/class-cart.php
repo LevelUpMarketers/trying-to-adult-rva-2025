@@ -284,6 +284,10 @@ class TTA_Cart {
   public function remove_item( $ticket_id ) {
     $this->ensure_cart( false );
     $ticket_id = intval( $ticket_id );
+    if ( class_exists( 'TTA_Cart_Cleanup' ) ) {
+      // Purge any expired rows so availability reflects the current database.
+      TTA_Cart_Cleanup::clean_expired_items();
+    }
     $qty = (int) $this->wpdb->get_var(
       $this->wpdb->prepare(
         "SELECT quantity FROM {$this->items_table} WHERE cart_id = %d AND ticket_id = %d",

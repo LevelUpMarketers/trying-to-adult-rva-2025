@@ -32,6 +32,7 @@ This document summarizes the current logic around the cart and checkout process 
     - Timers restart after any AJAX update or when the page regains focus.
    - Quantities and discount codes are updated via the `tta_update_cart` AJAX endpoint. This calls `TTA_Cart::update_quantity()` and stores applied codes in the session.
    - When all tickets for an event are removed, any related discount codes are automatically cleared from the session.
+   - Removing an item now also purges expired cart rows and frees its reserved stock immediately so other visitors can purchase the ticket without refreshing the event page.
    - If stock sells out before reaching the cart, the table is replaced with a notice explaining that the last ticket was just reserved. The notice includes a **Join The Waitlist** button and the Checkout button is disabled until another item is added.
    - The ticket quantity buttons on the event page now verify current stock via AJAX. When the last ticket becomes unavailable in another member's cart, clicking the **+** button shows the same notice inline and the quantity does not increase or redirect to the cart.
 
