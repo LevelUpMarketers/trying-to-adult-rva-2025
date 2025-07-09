@@ -1,7 +1,11 @@
 # TTA Refund Requests Page
 
-The **TTA Refund Requests** screen lists all refund requests submitted by members. Each entry displays the date, member name, event, and the reason provided.
+The **TTA Refund Requests** screen lists every refund request submitted by members.
+Each request shows the date, member name, event link and the reason given. Below
+that a full attendee table mirrors the one used on the **Tickets** screen. Admins
+can refund or cancel each attendee directly from this page.
 
-The table updates automatically whenever a member requests a refund from the **Your Upcoming Events** tab of their dashboard. Rows are ordered with the most recent request first.
-
-Navigate to this page from the WordPress admin menu to review and process refund requests as needed.
+For context the member's history summary is displayed, indicating how many times
+they have previously requested refunds, cancelled attendance, or no‑showed. The
+table refreshes automatically whenever a new refund request is submitted from the
+member dashboard.

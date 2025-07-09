@@ -40,6 +40,9 @@ class DummyWpdbHelpers {
         if ( strpos( $query, 'FROM wp_tta_events' ) !== false ) {
             return $this->event_row_data;
         }
+        if ( strpos( $query, 'FROM wp_tta_transactions' ) !== false ) {
+            return [ 'id' => 99, 'details' => json_encode([['event_ute_id'=>'ute1','ticket_id'=>3,'final_price'=>5]]), 'created_at' => '2025-07-01 10:00:00' ];
+        }
         return [
             'wpuserid' => 1,
             'membership_level' => 'premium',
@@ -456,8 +459,9 @@ class HelpersTest extends TestCase {
         $this->wpdb->results_calls = 0;
         $this->wpdb->results_data = [
             [
+                'member_id' => 7,
                 'action_date' => '2025-07-01 10:00:00',
-                'action_data' => json_encode(['reason'=>'Changed plans']),
+                'action_data' => json_encode(['transaction_id'=>'tx99','reason'=>'Changed plans']),
                 'event_id' => 5,
                 'first_name' => 'Ann',
                 'last_name' => 'Bee',
@@ -473,5 +477,38 @@ class HelpersTest extends TestCase {
         $this->assertSame(1, $wpdb->results_calls);
         $cached = tta_get_refund_requests();
         $this->assertSame(1, $wpdb->results_calls);
+    }
+
+    public function test_get_refund_request_attendees_parses_rows() {
+        global $wpdb;
+        $this->wpdb->results_calls = 0;
+        // first query returns transaction row
+        $this->wpdb->row_calls = 0;
+        $this->wpdb->results_data = [
+            [
+                'id' => 55,
+                'ticket_id' => 3,
+                'first_name' => 'Ann',
+                'last_name' => 'Bee',
+                'email' => 'a@example.com',
+                'phone' => '123',
+            ],
+            [
+                'id' => 56,
+                'ticket_id' => 3,
+                'first_name' => 'Carl',
+                'last_name' => 'Dee',
+                'email' => 'c@example.com',
+                'phone' => '555',
+            ]
+        ];
+        $this->wpdb->event_row_data = [ 'ute_id' => 'ute1', 'hosts' => '', 'volunteers' => '' ];
+        $this->wpdb->last_query = '';
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $attendees = tta_get_refund_request_attendees('tx1', 5);
+        $this->assertCount(2, $attendees);
+        $this->assertSame('Ann', $attendees[0]['first_name']);
+        $this->assertSame('tx1', $attendees[0]['gateway_id']);
     }
 }

@@ -1756,7 +1756,7 @@ function tta_get_refund_requests() {
     $events_table = $wpdb->prefix . 'tta_events';
 
     $rows = $wpdb->get_results(
-        "SELECT mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name, e.name AS event_name, e.page_id FROM {$hist_table} mh JOIN {$members_table} m ON mh.member_id = m.id JOIN {$events_table} e ON mh.event_id = e.id WHERE mh.action_type = 'refund_request' ORDER BY mh.action_date DESC",
+        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name, e.name AS event_name, e.page_id FROM {$hist_table} mh JOIN {$members_table} m ON mh.member_id = m.id JOIN {$events_table} e ON mh.event_id = e.id WHERE mh.action_type = 'refund_request' ORDER BY mh.action_date DESC",
         ARRAY_A
     );
 
@@ -1765,15 +1765,96 @@ function tta_get_refund_requests() {
         $data = json_decode( $r['action_data'], true );
         $out[] = [
             'date'        => $r['action_date'],
+            'member_id'   => intval( $r['member_id'] ),
             'member_name' => trim( $r['first_name'] . ' ' . $r['last_name'] ),
+            'event_id'    => intval( $r['event_id'] ),
             'event_name'  => sanitize_text_field( $r['event_name'] ),
             'event_url'   => $r['page_id'] ? get_permalink( $r['page_id'] ) : '',
+            'transaction_id' => sanitize_text_field( $data['transaction_id'] ?? '' ),
             'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
         ];
     }
 
     TTA_Cache::set( $cache_key, $out, 300 );
     return $out;
+}
+
+/**
+ * Retrieve attendee details for a specific refund request.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $event_id      Event ID.
+ * @return array[]
+ */
+function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    $event_id      = intval( $event_id );
+    if ( '' === $gateway_tx_id || ! $event_id ) {
+        return [];
+    }
+
+    $cache_key = 'refund_attendees_' . md5( $gateway_tx_id . '_' . $event_id );
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $tx_table       = $wpdb->prefix . 'tta_transactions';
+    $att_table      = $wpdb->prefix . 'tta_attendees';
+    $att_archive    = $wpdb->prefix . 'tta_attendees_archive';
+    $ticket_table   = $wpdb->prefix . 'tta_tickets';
+    $ticket_archive = $wpdb->prefix . 'tta_tickets_archive';
+    $events_table   = $wpdb->prefix . 'tta_events';
+    $archive_table  = $wpdb->prefix . 'tta_events_archive';
+
+    $tx = $wpdb->get_row( $wpdb->prepare( "SELECT id, details, created_at FROM {$tx_table} WHERE transaction_id = %s", $gateway_tx_id ), ARRAY_A );
+    if ( ! $tx ) {
+        TTA_Cache::set( $cache_key, [], 60 );
+        return [];
+    }
+
+    $ute_id = $wpdb->get_var( $wpdb->prepare( "SELECT ute_id FROM {$events_table} WHERE id = %d UNION SELECT ute_id FROM {$archive_table} WHERE id = %d LIMIT 1", $event_id, $event_id ) );
+    if ( ! $ute_id ) {
+        TTA_Cache::set( $cache_key, [], 60 );
+        return [];
+    }
+
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) ORDER BY last_name, first_name";
+    $rows = $wpdb->get_results( $wpdb->prepare( $sql, $tx['id'], $ute_id, $tx['id'], $ute_id ), ARRAY_A );
+
+    $details = json_decode( $tx['details'], true );
+    $price_map = [];
+    if ( is_array( $details ) ) {
+        foreach ( $details as $item ) {
+            if ( ( $item['event_ute_id'] ?? '' ) !== $ute_id ) {
+                continue;
+            }
+            $tid   = intval( $item['ticket_id'] ?? 0 );
+            $price = floatval( $item['final_price'] ?? ( $item['price'] ?? 0 ) );
+            $price_map[ $tid ] = $price;
+        }
+    }
+
+    $attendees = [];
+    foreach ( $rows as $r ) {
+        $tid = intval( $r['ticket_id'] );
+        $attendees[] = [
+            'id'          => intval( $r['id'] ),
+            'first_name'  => sanitize_text_field( $r['first_name'] ),
+            'last_name'   => sanitize_text_field( $r['last_name'] ),
+            'email'       => sanitize_email( $r['email'] ),
+            'phone'       => sanitize_text_field( $r['phone'] ),
+            'amount_paid' => $price_map[ $tid ] ?? 0,
+            'gateway_id'  => $gateway_tx_id,
+            'created_at'  => $tx['created_at'],
+        ];
+    }
+
+    $ttl = empty( $attendees ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $attendees, $ttl );
+
+    return $attendees;
 }
 
 /**
