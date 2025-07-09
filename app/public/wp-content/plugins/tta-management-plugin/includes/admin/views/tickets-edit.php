@@ -413,13 +413,23 @@ $tickets = $wpdb->get_results(
                   $phone = $a['phone'];
                   $paid  = floatval( $a['amount_paid'] );
                   ?>
-                  <tr>
+                  <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
                     <td><?php echo esc_html( $name ); ?></td>
                     <td><?php echo esc_html( $email ); ?></td>
                     <td><?php echo esc_html( $phone ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
                     <td>&ndash;</td>
-                    <td>&ndash;</td>
+                    <td>
+                      <button type="button" class="tta-refund-request-process" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                        <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
+                      </button>
+                      <button type="button" class="tta-refund-request-process" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                        <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
+                      </button>
+                      <button type="button" class="tta-refund-request-delete" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                        <?php esc_html_e( 'Cancel Attendance (No Refund)', 'tta' ); ?>
+                      </button>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>

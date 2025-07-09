@@ -58,6 +58,7 @@
               <?php endforeach; ?>
               </ul>
               <?php endif; ?>
+              <?php if ( empty( $it['refund_pending'] ) ) : ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
                   <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
@@ -83,6 +84,7 @@
                   <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
                 </form>
               </div>
+              <?php endif; ?>
             </div>
           <?php endforeach; ?>
       <?php endforeach; ?>
