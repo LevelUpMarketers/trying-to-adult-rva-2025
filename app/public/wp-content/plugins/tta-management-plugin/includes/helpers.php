@@ -1753,10 +1753,19 @@ function tta_get_refund_requests() {
     global $wpdb;
     $hist_table   = $wpdb->prefix . 'tta_memberhistory';
     $members_table= $wpdb->prefix . 'tta_members';
-    $events_table = $wpdb->prefix . 'tta_events';
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
 
     $rows = $wpdb->get_results(
-        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name, e.name AS event_name, e.page_id FROM {$hist_table} mh JOIN {$members_table} m ON mh.member_id = m.id JOIN {$events_table} e ON mh.event_id = e.id WHERE mh.action_type = 'refund_request' ORDER BY mh.action_date DESC",
+        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name,
+                COALESCE(e.name, ea.name) AS event_name,
+                COALESCE(e.page_id, ea.page_id) AS page_id
+           FROM {$hist_table} mh
+           JOIN {$members_table} m ON mh.member_id = m.id
+      LEFT JOIN {$events_table} e ON mh.event_id = e.id
+      LEFT JOIN {$archive_table} ea ON mh.event_id = ea.id
+          WHERE mh.action_type = 'refund_request'
+       ORDER BY mh.action_date DESC",
         ARRAY_A
     );
 
