@@ -15,13 +15,13 @@ class TTA_Ads_Admin {
 
     public function register_menu() {
         add_menu_page(
-            'Ads',
-            'Ads',
+            'TTA Ads',
+            'TTA Ads',
             'manage_options',
             'tta-ads',
             [ $this, 'render_page' ],
             'dashicons-megaphone',
-            13
+            5
         );
     }
 
