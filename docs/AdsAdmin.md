@@ -1,6 +1,6 @@
-# Ads Admin Page
+# TTA Ads Admin Page
 
-The **Ads** screen allows administrators to manage sidebar advertisements displayed on the Events List Page.
+The **TTA Ads** screen allows administrators to manage sidebar advertisements displayed on the Events List Page.
 
 - Upload any number of ad images and provide an optional link URL for each.
 - On each page load, the Events List Page picks one ad at random to display in the right‑hand column.

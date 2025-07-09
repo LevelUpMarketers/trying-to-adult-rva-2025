@@ -17,7 +17,7 @@ class TTA_BI_Admin {
             'tta-bi-dashboard',
             [ $this, 'render_page' ],
             'dashicons-chart-bar',
-            56
+            6
         );
     }
     public function render_page() {

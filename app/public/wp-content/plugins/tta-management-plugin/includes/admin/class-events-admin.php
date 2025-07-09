@@ -17,7 +17,7 @@ class TTA_Events_Admin {
             'tta-events',
             [ $this, 'render_page' ],
             'dashicons-calendar',
-            7
+            8
         );
     }
 

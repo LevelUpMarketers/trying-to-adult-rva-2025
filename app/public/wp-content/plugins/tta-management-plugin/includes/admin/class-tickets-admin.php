@@ -13,7 +13,7 @@ class TTA_Tickets_Admin {
             'tta-tickets',
             [ $this, 'render_page' ],
             'dashicons-tickets',
-            11
+            12
         );
     }
 

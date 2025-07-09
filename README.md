@@ -27,6 +27,7 @@ If these constants are not defined, checkout will fail and an admin notice will 
 - [Member Dashboard](docs/MemberDashboard.md)
 - [Member History Admin](docs/MemberHistoryAdmin.md)
 - [TTA Refund Requests Admin](docs/RefundRequestsAdmin.md)
+- [TTA Ads Admin](docs/AdsAdmin.md)
 - [Event Check-In Page](docs/EventCheckInAdmin.md)
 - [Venue Administration](docs/VenuesAdmin.md)
 - [Ticket Attendees](docs/TicketAttendees.md)

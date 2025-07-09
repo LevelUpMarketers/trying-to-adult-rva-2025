@@ -21,7 +21,7 @@ class TTA_Settings_Admin {
             'tta-settings',
             [ $this, 'render_page' ],
             'dashicons-admin-generic',
-            10
+            11
         );
     }
 
