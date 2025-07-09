@@ -70,8 +70,12 @@ class TTA_Refund_Requests_Admin {
                         echo '</tr>';
                     }
 
-                    echo '</tbody></table></div></div></details>';
+                    echo '</tbody></table></div>';
+                } else {
+                    echo '<p>' . esc_html__( 'No attendees found.', 'tta' ) . '</p>';
                 }
+
+                echo '</div></details>';
             }
         } else {
             echo '<p>' . esc_html__( 'No refund requests found.', 'tta' ) . '</p>';
