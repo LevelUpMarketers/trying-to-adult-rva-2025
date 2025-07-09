@@ -1753,25 +1753,41 @@ function tta_get_refund_requests() {
     global $wpdb;
     $hist_table   = $wpdb->prefix . 'tta_memberhistory';
     $members_table= $wpdb->prefix . 'tta_members';
-    $events_table = $wpdb->prefix . 'tta_events';
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
 
     $rows = $wpdb->get_results(
-        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name, e.name AS event_name, e.page_id FROM {$hist_table} mh JOIN {$members_table} m ON mh.member_id = m.id JOIN {$events_table} e ON mh.event_id = e.id WHERE mh.action_type = 'refund_request' ORDER BY mh.action_date DESC",
+        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name,
+                COALESCE(e.name, ea.name) AS event_name,
+                COALESCE(e.page_id, ea.page_id) AS page_id
+           FROM {$hist_table} mh
+           JOIN {$members_table} m ON mh.member_id = m.id
+      LEFT JOIN {$events_table} e ON mh.event_id = e.id
+      LEFT JOIN {$archive_table} ea ON mh.event_id = ea.id
+          WHERE mh.action_type = 'refund_request'
+       ORDER BY mh.action_date DESC",
         ARRAY_A
     );
 
     $out = [];
     foreach ( $rows as $r ) {
         $data = json_decode( $r['action_data'], true );
+        $att = $data['attendee'] ?? [];
         $out[] = [
-            'date'        => $r['action_date'],
-            'member_id'   => intval( $r['member_id'] ),
-            'member_name' => trim( $r['first_name'] . ' ' . $r['last_name'] ),
-            'event_id'    => intval( $r['event_id'] ),
-            'event_name'  => sanitize_text_field( $r['event_name'] ),
-            'event_url'   => $r['page_id'] ? get_permalink( $r['page_id'] ) : '',
-            'transaction_id' => sanitize_text_field( $data['transaction_id'] ?? '' ),
-            'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
+            'date'          => $r['action_date'],
+            'member_id'     => intval( $r['member_id'] ),
+            'member_name'   => trim( $r['first_name'] . ' ' . $r['last_name'] ),
+            'event_id'      => intval( $r['event_id'] ),
+            'event_name'    => sanitize_text_field( $r['event_name'] ),
+            'event_url'     => $r['page_id'] ? get_permalink( $r['page_id'] ) : '',
+            'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
+            'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+            'reason'        => sanitize_text_field( $data['reason'] ?? '' ),
+            'first_name'    => sanitize_text_field( $att['first_name'] ?? '' ),
+            'last_name'     => sanitize_text_field( $att['last_name'] ?? '' ),
+            'email'         => sanitize_email( $att['email'] ?? '' ),
+            'phone'         => sanitize_text_field( $att['phone'] ?? '' ),
+            'amount_paid'   => isset( $att['amount_paid'] ) ? floatval( $att['amount_paid'] ) : 0,
         ];
     }
 
@@ -1786,14 +1802,15 @@ function tta_get_refund_requests() {
  * @param int    $event_id      Event ID.
  * @return array[]
  */
-function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
+function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id = 0 ) {
     $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
     $event_id      = intval( $event_id );
+    $ticket_id     = intval( $ticket_id );
     if ( '' === $gateway_tx_id || ! $event_id ) {
         return [];
     }
 
-    $cache_key = 'refund_attendees_' . md5( $gateway_tx_id . '_' . $event_id );
+    $cache_key = 'refund_attendees_' . md5( $gateway_tx_id . '_' . $event_id . '_' . $ticket_id );
     $cached    = TTA_Cache::get( $cache_key );
     if ( false !== $cached ) {
         return $cached;
@@ -1820,8 +1837,10 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
         return [];
     }
 
-    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) ORDER BY last_name, first_name";
-    $rows = $wpdb->get_results( $wpdb->prepare( $sql, $tx['id'], $ute_id, $tx['id'], $ute_id ), ARRAY_A );
+    $ticket_sql = $ticket_id ? ' AND a.ticket_id = %d' : '';
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
+    $params = $ticket_id ? [ $tx['id'], $ute_id, $ticket_id, $tx['id'], $ute_id, $ticket_id ] : [ $tx['id'], $ute_id, $tx['id'], $ute_id ];
+    $rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
 
     $details = json_decode( $tx['details'], true );
     $price_map = [];
@@ -1855,6 +1874,272 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
     TTA_Cache::set( $cache_key, $attendees, $ttl );
 
     return $attendees;
+}
+
+/**
+ * Delete a pending refund request once processed.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $ticket_id     Ticket ID.
+ */
+function tta_delete_refund_request( $gateway_tx_id, $ticket_id = 0 ) {
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    $ticket_id     = intval( $ticket_id );
+
+    if ( '' === $gateway_tx_id ) {
+        return;
+    }
+
+    $sql    = "DELETE FROM {$hist_table} WHERE action_type = 'refund_request' AND action_data LIKE %s";
+    $params = [ '%' . $wpdb->esc_like( '"transaction_id":"' . $gateway_tx_id . '"' ) . '%' ];
+
+    if ( $ticket_id ) {
+        $sql   .= ' AND action_data LIKE %s';
+        $params[] = '%' . $wpdb->esc_like( '"ticket_id":' . $ticket_id ) . '%';
+    }
+
+    $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
+    TTA_Cache::delete( 'tta_refund_requests' );
+}
+
+/**
+ * Fetch the next pending refund request for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return array|null Request row or null.
+ */
+function tta_get_next_refund_request_for_ticket( $ticket_id ) {
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $ticket_id  = intval( $ticket_id );
+    if ( ! $ticket_id ) {
+        return null;
+    }
+
+    $like = '%' . $wpdb->esc_like( '"ticket_id":' . $ticket_id ) . '%';
+    $row  = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT * FROM {$hist_table} WHERE action_type='refund_request' AND action_data LIKE %s ORDER BY action_date ASC LIMIT 1",
+            $like
+        ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        return null;
+    }
+
+    $data = json_decode( $row['action_data'], true );
+    return [
+        'member_id'     => intval( $row['member_id'] ),
+        'wpuserid'      => intval( $row['wpuserid'] ),
+        'event_id'      => intval( $row['event_id'] ),
+        'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
+        'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+    ];
+}
+
+/**
+ * Fetch a specific refund request by transaction and ticket.
+ *
+ * @param string $gateway_tx_id Gateway ID.
+ * @param int    $ticket_id     Ticket ID.
+ * @return array|null Request row or null.
+ */
+function tta_get_refund_request( $gateway_tx_id, $ticket_id ) {
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    $ticket_id     = intval( $ticket_id );
+    if ( '' === $gateway_tx_id ) {
+        return null;
+    }
+
+    $like_tx = '%' . $wpdb->esc_like( '"transaction_id":"' . $gateway_tx_id . '"' ) . '%';
+    $sql = "SELECT * FROM {$hist_table} WHERE action_type='refund_request' AND action_data LIKE %s";
+    $params = [ $like_tx ];
+    if ( $ticket_id ) {
+        $sql .= " AND action_data LIKE %s";
+        $params[] = '%' . $wpdb->esc_like( '"ticket_id":' . $ticket_id ) . '%';
+    }
+    $sql .= ' LIMIT 1';
+
+    $row = $wpdb->get_row( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
+    if ( ! $row ) {
+        return null;
+    }
+    $data = json_decode( $row['action_data'], true );
+    return [
+        'member_id'     => intval( $row['member_id'] ),
+        'wpuserid'      => intval( $row['wpuserid'] ),
+        'event_id'      => intval( $row['event_id'] ),
+        'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
+        'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+        'attendee'      => $data['attendee'] ?? [],
+    ];
+}
+
+/**
+ * Retrieve a transaction row by gateway transaction ID.
+ *
+ * @param string $gateway_tx_id Gateway ID.
+ * @return array|null Transaction row.
+ */
+function tta_get_transaction_by_gateway_id( $gateway_tx_id ) {
+    global $wpdb;
+    $tx_table = $wpdb->prefix . 'tta_transactions';
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    if ( '' === $gateway_tx_id ) {
+        return null;
+    }
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare( "SELECT * FROM {$tx_table} WHERE transaction_id = %s", $gateway_tx_id ),
+        ARRAY_A
+    );
+    return $row ?: null;
+}
+
+/**
+ * Get the price paid for a ticket within a transaction.
+ *
+ * @param array $tx        Transaction row.
+ * @param int   $ticket_id Ticket ID.
+ * @return float Amount paid.
+ */
+function tta_get_ticket_price_from_transaction( array $tx, $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    $details   = json_decode( $tx['details'] ?? '', true );
+    if ( is_array( $details ) ) {
+        foreach ( $details as $it ) {
+            if ( intval( $it['ticket_id'] ?? 0 ) === $ticket_id ) {
+                return floatval( $it['final_price'] ?? ( $it['price'] ?? 0 ) );
+            }
+        }
+    }
+    return 0.0;
+}
+
+/**
+ * Get the start timestamp for an event ID.
+ *
+ * @param int $event_id Event ID.
+ * @return int Timestamp or 0.
+ */
+function tta_get_event_start_timestamp( $event_id ) {
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return 0;
+    }
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare( "SELECT date, time FROM {$events_table} WHERE id = %d", $event_id ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        $row = $wpdb->get_row(
+            $wpdb->prepare( "SELECT date, time FROM {$archive_table} WHERE id = %d", $event_id ),
+            ARRAY_A
+        );
+    }
+    if ( ! $row ) {
+        return 0;
+    }
+
+    $time = $row['time'] ? explode( '|', $row['time'] )[0] : '00:00';
+    return strtotime( $row['date'] . ' ' . $time );
+}
+
+/**
+ * Lookup an attendee row by gateway transaction ID and ticket ID.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $ticket_id     Ticket ID.
+ * @return array|null Attendee row.
+ */
+function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id ) {
+    global $wpdb;
+    $att_table = $wpdb->prefix . 'tta_attendees';
+    $tx_table  = $wpdb->prefix . 'tta_transactions';
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    $ticket_id = intval( $ticket_id );
+    if ( '' === $gateway_tx_id || ! $ticket_id ) {
+        return null;
+    }
+    $tx_row = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$tx_table} WHERE transaction_id = %s", $gateway_tx_id ), ARRAY_A );
+    if ( ! $tx_row ) {
+        return null;
+    }
+    $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    return $att ?: null;
+}
+
+/**
+ * Cancel an attendee without Ajax context.
+ *
+ * @param int $attendee_id Attendee ID.
+ */
+function tta_cancel_attendance_internal( $attendee_id ) {
+    global $wpdb;
+    $att_table   = $wpdb->prefix . 'tta_attendees';
+    $ticket_table = $wpdb->prefix . 'tta_tickets';
+    $tx_table     = $wpdb->prefix . 'tta_transactions';
+    $hist_table   = $wpdb->prefix . 'tta_memberhistory';
+
+    $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE id = %d", $attendee_id ), ARRAY_A );
+    if ( ! $att ) {
+        return;
+    }
+
+    $ticket = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ), ARRAY_A );
+    $tx     = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$tx_table} WHERE id = %d", intval( $att['transaction_id'] ) ), ARRAY_A );
+
+    $event_id = 0;
+    if ( $ticket && ! empty( $ticket['event_ute_id'] ) ) {
+        $event_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1", $ticket['event_ute_id'], $ticket['event_ute_id'] ) );
+    }
+
+    if ( $tx ) {
+        $wpdb->insert(
+            $hist_table,
+            [
+                'member_id'   => intval( $tx['member_id'] ),
+                'wpuserid'    => intval( $tx['wpuserid'] ),
+                'event_id'    => $event_id,
+                'action_type' => 'refund',
+                'action_data' => wp_json_encode([
+                    'amount'         => 0,
+                    'transaction_id' => $tx['transaction_id'],
+                    'attendee_id'    => $attendee_id,
+                    'cancel'         => 1,
+                ]),
+            ],
+            [ '%d','%d','%d','%s','%s' ]
+        );
+    }
+
+    $wpdb->delete( $att_table, [ 'id' => $attendee_id ], [ '%d' ] );
+    $should_notify = false;
+    if ( $ticket ) {
+        $current = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ) );
+        $after   = $current + 1;
+        $should_notify = ( $current <= 0 && $after > 0 );
+
+        $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
+        if ( ! empty( $ticket['event_ute_id'] ) ) {
+            TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
+        }
+    }
+
+    TTA_Cache::flush();
+
+    if ( $should_notify ) {
+        tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );
+    }
 }
 
 /**
