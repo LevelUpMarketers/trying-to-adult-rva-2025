@@ -1,12 +1,6 @@
 ## Ticket Attendees
 
-The ticket editor displays an **Attendees** section for each ticket. This list
-shows every attendee who purchased that ticket in a single table. The table
-heading contains **Name**, **Email**, **Phone**, **Paid**, **Refund $** and
-**Actions** columns. Each heading includes a tooltip icon explaining the field.
-Each attendee occupies one row beneath the heading. Transactions are grouped by
-their numeric ID with the gateway transaction ID and purchase date displayed in
-the group heading.
+The ticket editor now shows two attendee tables for each ticket. **Verified Attendees** lists everyone who has successfully purchased the ticket. **Attendees With Pending Refund Requests** appears below it and shows members who cancelled and are waiting for another purchase before their refund is issued. Both tables display the same columns: **Name**, **Email**, **Phone**, **Paid**, **Refund $** and **Actions**. Transactions are grouped by their numeric ID with the gateway transaction ID and purchase date displayed in the group heading.
 
 The **Paid** column shows the amount charged for that attendee's ticket. The
 **Refund $** field lets admins specify a partial refund before clicking either

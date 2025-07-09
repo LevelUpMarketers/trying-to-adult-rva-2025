@@ -2055,6 +2055,50 @@ function tta_get_event_start_timestamp( $event_id ) {
 }
 
 /**
+ * Retrieve attendees with pending refund requests for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @param int $event_id  Event ID.
+ * @return array[]
+ */
+function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
+    $ticket_id = intval( $ticket_id );
+    $event_id  = intval( $event_id );
+    if ( ! $ticket_id || ! $event_id ) {
+        return [];
+    }
+
+    $cache_key = 'pending_refund_attendees_' . $ticket_id . '_' . $event_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $requests  = tta_get_refund_requests();
+    $attendees = [];
+    foreach ( $requests as $req ) {
+        if ( intval( $req['ticket_id'] ) !== $ticket_id || intval( $req['event_id'] ) !== $event_id ) {
+            continue;
+        }
+        $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
+        $attendees[] = [
+            'first_name'    => sanitize_text_field( $req['first_name'] ),
+            'last_name'     => sanitize_text_field( $req['last_name'] ),
+            'email'         => sanitize_email( $req['email'] ),
+            'phone'         => sanitize_text_field( $req['phone'] ),
+            'amount_paid'   => floatval( $req['amount_paid'] ),
+            'gateway_id'    => sanitize_text_field( $req['transaction_id'] ),
+            'created_at'    => $tx['created_at'] ?? '',
+        ];
+    }
+
+    $ttl = empty( $attendees ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $attendees, $ttl );
+
+    return $attendees;
+}
+
+/**
  * Lookup an attendee row by gateway transaction ID and ticket ID.
  *
  * @param string $gateway_tx_id Gateway transaction ID.
