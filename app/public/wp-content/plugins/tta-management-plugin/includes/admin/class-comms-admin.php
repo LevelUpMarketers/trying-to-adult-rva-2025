@@ -7,13 +7,13 @@ class TTA_Comms_Admin {
 
     public function register_menu(){
         add_menu_page(
-            'Email & SMS',
-            'Email & SMS',
+            'TTA Email & SMS',
+            'TTA Email & SMS',
             'manage_options',
             'tta-comms',
             [ $this, 'render_page' ],
             'dashicons-email-alt',
-            9
+            6
         );
     }
 

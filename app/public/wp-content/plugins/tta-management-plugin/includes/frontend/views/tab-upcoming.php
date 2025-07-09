@@ -44,23 +44,27 @@
           <?php endforeach; ?>
           <div class="tta-refund-wrapper">
             <?php if ( $ev['amount'] > 0 ) : ?>
-              <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
-                <?php esc_html_e( 'Request a Refund', 'tta' ); ?>
+              <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>">
+                <?php esc_html_e( 'Cancel Attendance & Request a Refund', 'tta' ); ?>
               </a>
             <?php else : ?>
-              <a href="#" class="tta-cancel-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
+              <a href="#" class="tta-cancel-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>">
                 <?php esc_html_e( 'Cancel Attendance', 'tta' ); ?>
               </a>
             <?php endif; ?>
-            <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
+            <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>">
               <label for="refund-<?php echo esc_attr( $ev['transaction_id'] ); ?>">
                 <?php esc_html_e( 'Refund Request Details', 'tta' ); ?>
               </label>
               <span class="description"><?php esc_html_e( 'tell us why you\'re requesting a refund', 'tta' ); ?></span>
               <textarea id="refund-<?php echo esc_attr( $ev['transaction_id'] ); ?>" placeholder="<?php esc_attr_e( 'tell us why you\'re requesting a refund', 'tta' ); ?>"></textarea>
               <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
-                <?php esc_html_e( 'Request Refund', 'tta' ); ?>
+                <?php echo $ev['amount'] > 0 ? esc_html__( 'Cancel Attendance & Request a Refund', 'tta' ) : esc_html__( 'Cancel Attendance', 'tta' ); ?>
               </button>
+              <span class="tta-progress-spinner">
+                <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+              </span>
+              <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
             </form>
           </div>
       <?php endforeach; ?>

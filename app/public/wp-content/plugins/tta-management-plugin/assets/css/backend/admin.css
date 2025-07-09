@@ -541,3 +541,17 @@ form p.submit{
 .tta-bi-legend {font-size:12px; margin-top:10px; padding-top:4px;}
 .tta-bi-legend span{display:inline-block;margin-right:10px;}
 
+
+/* Refund Requests page */
+.tta-refund-request summary {
+  font-weight: 600;
+  color: #1d2327;
+  font-size: 14px;
+  margin-top: 1em;
+  cursor: pointer;
+}
+.tta-refund-details {
+  margin-left: 20px;
+  margin-bottom: 1em;
+}
+

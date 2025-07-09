@@ -28,3 +28,9 @@ Joined**, followed by an **Actions** column with a Remove button. Entries are
 ordered from oldest to newest so admins can quickly see who has been waiting the
 longest. Removing an entry deletes it immediately via AJAX so another person can
 take the open spot.
+
+When a refund or cancellation increases a sold‑out ticket's remaining count from
+zero to one, the waitlist email sequence is triggered automatically. Premium
+members are notified immediately, Basic members after ten minutes and Free
+members after fifteen. If a higher tier has no entries, lower tiers move up so
+available tickets are offered fairly.

@@ -4,12 +4,12 @@ class TTA_Venues_Admin {
     public static function get_instance(){ static $inst; return $inst ?: $inst = new self(); }
     private function __construct(){ add_action('admin_menu',[ $this,'register_menu' ] ); }
     public function register_menu(){
-        add_menu_page('Venues','Venues','manage_options','tta-venues',[ $this,'render_page' ],'dashicons-location-alt',8);
+        add_menu_page('TTA Venues','TTA Venues','manage_options','tta-venues',[ $this,'render_page' ],'dashicons-location-alt',12);
     }
     public function render_page(){
         $tabs = [ 'create'=>'Add Venue','manage'=>'Manage Venues' ];
         $current = isset($_GET['tab']) && isset($tabs[$_GET['tab']]) ? $_GET['tab'] : 'create';
-        echo '<h1>Venues</h1><h2 class="nav-tab-wrapper">';
+        echo '<h1>TTA Venues</h1><h2 class="nav-tab-wrapper">';
         foreach($tabs as $slug=>$label){
             $class = $current===$slug ? ' nav-tab-active':'';
             $url = esc_url(add_query_arg(['page'=>'tta-venues','tab'=>$slug],admin_url('admin.php')));

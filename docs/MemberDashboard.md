@@ -1,7 +1,7 @@
 # Member Dashboard
 
 The Member Dashboard is accessible at `/member-dashboard/` via the shortcode `[tta_member_dashboard]`.
-It presents four tabs: **Profile Info**, **Your Upcoming Events**, **Your Past Events**, and **Billing & Membership Info**. Tooltip icons now appear before each field label for quicker context. The tooltip text is displayed instantly on hover using visibility toggles instead of opacity fades. The dashboard's JavaScript and CSS are enqueued whenever the page is viewed so tab switching works even when not logged in.
+It presents five tabs: **Profile Info**, **Your Upcoming Events**, **Your Waitlist Events**, **Your Past Events**, and **Billing & Membership Info**. Tooltip icons now appear before each field label for quicker context. The tooltip text is displayed instantly on hover using visibility toggles instead of opacity fades. The dashboard's JavaScript and CSS are enqueued whenever the page is viewed so tab switching works even when not logged in.
 
 If a member is banned the dashboard displays a prominent notice at the top explaining the ban duration and purchases are blocked until it expires.
 Non-admin users never see the WordPress dashboard. On login the page simply reloads, and any attempt to access `/wp-admin/` redirects back to the front end.
@@ -19,6 +19,7 @@ shows:
 - The total amount paid for the transaction
 - Each ticket purchased with the attendee names and emails
 - A link to request a refund (paid events) or cancel attendance (free events) which reveals a small form
+- Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. Administrators can review requests on the **TTA Refund Requests** admin page.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the

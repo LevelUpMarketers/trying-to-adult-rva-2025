@@ -74,7 +74,8 @@ class TTA_Member_Dashboard {
                 [
                     'ajax_url'     => admin_url( 'admin-ajax.php' ),
                     'update_nonce' => wp_create_nonce( 'tta_member_front_update' ),
-                    'plugin_url'   => TTA_PLUGIN_URL, // ← so JS can load your bin.svg
+                    'front_nonce'  => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'plugin_url'   => TTA_PLUGIN_URL,
                 ]
             );
         }
@@ -143,6 +144,7 @@ class TTA_Member_Dashboard {
               <ul class="tta-dashboard-tabs">
                 <li data-tab="profile" class="active"><?php esc_html_e( 'Profile Info', 'tta' ); ?></li>
                 <li data-tab="upcoming"><?php esc_html_e( 'Your Upcoming Events', 'tta' ); ?></li>
+                <li data-tab="waitlist"><?php esc_html_e( 'Your Waitlist Events', 'tta' ); ?></li>
                 <li data-tab="past"><?php esc_html_e( 'Your Past Events', 'tta' ); ?></li>
                 <li data-tab="billing"><?php esc_html_e( 'Billing & Membership Info', 'tta' ); ?></li>
               </ul>
@@ -153,6 +155,8 @@ class TTA_Member_Dashboard {
               <?php include plugin_dir_path( __FILE__ ) . 'views/tab-profile.php'; ?>
 
               <?php include plugin_dir_path( __FILE__ ) . 'views/tab-upcoming.php'; ?>
+
+              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-waitlist.php'; ?>
 
               <?php include plugin_dir_path( __FILE__ ) . 'views/tab-past-events.php'; ?>
 
