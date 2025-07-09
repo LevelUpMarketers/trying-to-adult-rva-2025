@@ -58,8 +58,23 @@ class TTA_Refund_Processor {
             $amount = floatval( $tx['amount'] );
         }
 
-        $api = new TTA_AuthorizeNet_API();
-        $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
+        $api         = new TTA_AuthorizeNet_API();
+        $status_res  = $api->get_transaction_status( $tx['transaction_id'] );
+        $status_str  = strtolower( $status_res['status'] ?? '' );
+        $should_void = ( false !== strpos( $status_str, 'pending' ) );
+
+        if ( $should_void ) {
+            $res = $api->void( $tx['transaction_id'] );
+        } else {
+            $res = $api->refund( $amount, $tx['transaction_id'], $tx['card_last4'] );
+            if ( ! $res['success'] ) {
+                $msg = strtolower( $res['error'] );
+                if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) ) {
+                    $res = $api->void( $tx['transaction_id'] );
+                }
+            }
+        }
+
         if ( ! $res['success'] ) {
             return;
         }
@@ -94,6 +109,7 @@ class TTA_Refund_Processor {
         );
 
         tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
+        TTA_Cache::flush();
     }
 
     /** Expire refund requests less than two hours before the event. */
