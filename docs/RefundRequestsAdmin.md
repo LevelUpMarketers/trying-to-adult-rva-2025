@@ -1,14 +1,5 @@
 # TTA Refund Requests Page
 
-The **TTA Refund Requests** screen lists every refund request submitted by members.
-Each request shows the date, member name, event link and the reason given. Below
-that a full attendee table mirrors the one used on the **Tickets** screen. Admins
-can refund or cancel each attendee directly from this page.
+The **TTA Refund Requests** admin screen lists every refund submitted from a member's dashboard. Entries appear in a simple table showing when the request was made, the attendee name, the event and the amount paid for that ticket. Each row includes a **Cancel Attendance and Issue Refund** button which both refunds the payment and removes the attendee from the event.
 
-For context the member's history summary is displayed, indicating how many times
-they have previously requested refunds, cancelled attendance, or no‑showed. The
-table refreshes automatically whenever a new refund request is submitted from the
-member dashboard.
-Each refund request is displayed as a collapsible section. Click the summary line to reveal the attendee table and action buttons.
-If no attendees exist for the transaction a notice is displayed in place of the table.
-Archived events are also supported, ensuring past refund requests still show the associated event name and page link.
+After a refund and cancellation the ticket inventory is increased automatically so other members may purchase the newly available spot.
