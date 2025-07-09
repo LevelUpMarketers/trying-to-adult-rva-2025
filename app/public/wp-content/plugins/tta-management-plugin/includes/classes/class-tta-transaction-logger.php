@@ -142,19 +142,21 @@ class TTA_Transaction_Logger {
                 }
             }
 
-            foreach ( $unique_members as $m ) {
-                $wpdb->insert(
-                    $history_table,
-                    [
-                        'member_id'   => intval( $m['id'] ),
+        foreach ( $unique_members as $m ) {
+            $wpdb->insert(
+                $history_table,
+                [
+                    'member_id'   => intval( $m['id'] ),
                         'wpuserid'    => intval( $m['wpuserid'] ),
                         'event_id'    => intval( $event_id ),
                         'action_type' => 'purchase',
                         'action_data' => wp_json_encode( $history_data ),
                     ],
-                    [ '%d', '%d', '%d', '%s', '%s' ]
-                );
-            }
+                [ '%d', '%d', '%d', '%s', '%s' ]
+            );
         }
+        }
+
+        do_action( 'tta_after_purchase_logged', $items, $user_id );
     }
 }

@@ -24,6 +24,12 @@ class TTA_Ajax_Refund {
         if ( ! $member_id ) {
             wp_send_json_error( [ 'message' => 'not_found' ] );
         }
+
+        // Cancel the attendee immediately so the seat becomes available.
+        $att = tta_get_attendee_by_tx_ticket( $tx_id, $ticket_id );
+        if ( $att ) {
+            tta_cancel_attendance_internal( intval( $att['id'] ) );
+        }
         $wpdb->insert( $hist_table, [
             'member_id'   => $member_id,
             'wpuserid'    => get_current_user_id(),

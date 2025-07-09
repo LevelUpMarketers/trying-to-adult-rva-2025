@@ -111,6 +111,7 @@ require_once TTA_PLUGIN_DIR . 'includes/frontend/class-become-member-page.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart-cleanup.php';
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-event-archiver.php';
+require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-refund-processor.php';
 require_once TTA_PLUGIN_DIR . 'includes/database-testing/class-tta-sample-data.php';
 
 
@@ -119,9 +120,11 @@ require_once TTA_PLUGIN_DIR . 'includes/database-testing/class-tta-sample-data.p
 register_activation_hook( __FILE__, array( 'TTA_DB_Setup', 'install' ) );
 register_activation_hook( __FILE__, array( 'TTA_Cart_Cleanup', 'schedule_event' ) );
 register_activation_hook( __FILE__, array( 'TTA_Event_Archiver', 'schedule_event' ) );
+register_activation_hook( __FILE__, array( 'TTA_Refund_Processor', 'schedule_event' ) );
 register_deactivation_hook( __FILE__, array( 'TTA_DB_Setup', 'uninstall' ) );
 register_deactivation_hook( __FILE__, array( 'TTA_Cart_Cleanup', 'clear_event' ) );
 register_deactivation_hook( __FILE__, array( 'TTA_Event_Archiver', 'clear_event' ) );
+register_deactivation_hook( __FILE__, array( 'TTA_Refund_Processor', 'clear_event' ) );
 
 // Initialize plugin
 add_action( 'plugins_loaded', array( 'TTA_Plugin', 'init' ) );
@@ -158,6 +161,7 @@ class TTA_Plugin {
         // Expired cart cleanup
         TTA_Cart_Cleanup::init();
         TTA_Event_Archiver::init();
+        TTA_Refund_Processor::init();
 
         // Clear plugin caches after a successful checkout
         add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );

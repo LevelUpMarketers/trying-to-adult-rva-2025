@@ -6,3 +6,5 @@ If a member purchased multiple tickets in the same transaction the request speci
 
 After a refund and cancellation the ticket inventory is increased automatically so other members may purchase the newly available spot.
 Processed requests are removed from the table immediately after any action button succeeds so admins only see outstanding requests.
+
+When a refund request is made the attendee is cancelled right away. The request remains pending until another member purchases that ticket. At that point the refund is issued automatically. Any requests still pending within two hours of the event are removed with no refund.
