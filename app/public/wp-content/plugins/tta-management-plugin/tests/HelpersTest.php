@@ -461,7 +461,18 @@ class HelpersTest extends TestCase {
             [
                 'member_id' => 7,
                 'action_date' => '2025-07-01 10:00:00',
-                'action_data' => json_encode(['transaction_id'=>'tx99','reason'=>'Changed plans']),
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx99',
+                    'ticket_id' => 3,
+                    'reason' => 'Changed plans',
+                    'attendee' => [
+                        'first_name'  => 'Ann',
+                        'last_name'   => 'Bee',
+                        'email'       => 'a@example.com',
+                        'phone'       => '123',
+                        'amount_paid' => 10.00,
+                    ],
+                ]),
                 'event_id' => 5,
                 'first_name' => 'Ann',
                 'last_name' => 'Bee',
@@ -474,6 +485,9 @@ class HelpersTest extends TestCase {
         $rows = tta_get_refund_requests();
         $this->assertCount(1, $rows);
         $this->assertSame('Ann Bee', $rows[0]['member_name']);
+        $this->assertSame('Ann', $rows[0]['first_name']);
+        $this->assertSame('a@example.com', $rows[0]['email']);
+        $this->assertSame(10.0, $rows[0]['amount_paid']);
         $this->assertSame(1, $wpdb->results_calls);
         $cached = tta_get_refund_requests();
         $this->assertSame(1, $wpdb->results_calls);

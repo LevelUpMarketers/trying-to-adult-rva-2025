@@ -25,21 +25,37 @@ class TTA_Ajax_Refund {
             wp_send_json_error( [ 'message' => 'not_found' ] );
         }
 
-        // Cancel the attendee immediately so the seat becomes available.
-        $att = tta_get_attendee_by_tx_ticket( $tx_id, $ticket_id );
+        // Gather attendee details before cancelling.
+        $att         = tta_get_attendee_by_tx_ticket( $tx_id, $ticket_id );
+        $att_details = [];
+        $amount      = 0;
         if ( $att ) {
+            $att_details = [
+                'first_name'  => $att['first_name'],
+                'last_name'   => $att['last_name'],
+                'email'       => $att['email'],
+                'phone'       => $att['phone'],
+            ];
+            $tx_row  = tta_get_transaction_by_gateway_id( $tx_id );
+            if ( $tx_row ) {
+                $amount = tta_get_ticket_price_from_transaction( $tx_row, $ticket_id );
+            }
             tta_cancel_attendance_internal( intval( $att['id'] ) );
         }
+
+        $action_data = [
+            'transaction_id' => $tx_id,
+            'ticket_id'     => $ticket_id,
+            'reason'        => $reason,
+            'attendee'      => array_merge( $att_details, [ 'amount_paid' => $amount ] ),
+        ];
+
         $wpdb->insert( $hist_table, [
             'member_id'   => $member_id,
             'wpuserid'    => get_current_user_id(),
             'event_id'    => $event_id,
             'action_type' => 'refund_request',
-            'action_data' => wp_json_encode( [
-                'transaction_id' => $tx_id,
-                'ticket_id'     => $ticket_id,
-                'reason'        => $reason,
-            ] ),
+            'action_data' => wp_json_encode( $action_data ),
         ], [ '%d','%d','%d','%s','%s' ] );
         TTA_Cache::delete( 'tta_refund_requests' );
         wp_send_json_success( [ 'message' => __( 'Refund request submitted.', 'tta' ) ] );
