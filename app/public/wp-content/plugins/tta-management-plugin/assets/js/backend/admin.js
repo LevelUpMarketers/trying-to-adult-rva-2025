@@ -996,6 +996,37 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
 
   $(document).on('click', '.tta-cancel-attendee', handleCancel);
 
+  function handleRefundRequest(e, mode){
+    e.preventDefault();
+    var $row = $(e.currentTarget).closest('tr[data-request]');
+    var tx  = $(e.currentTarget).data('tx');
+    var ticket = $(e.currentTarget).data('ticket');
+    var action = (mode === 'delete') ? 'tta_delete_refund_request' : 'tta_process_refund_request';
+    var data = {
+      action: action,
+      tx: tx,
+      ticket: ticket,
+      nonce: TTA_Ajax.attendee_admin_nonce
+    };
+    $.post(TTA_Ajax.ajax_url, data, function(res){
+      if(res.success){
+        $row.remove();
+        alert(res.data && res.data.message ? res.data.message : 'OK');
+      }else{
+        alert(res.data && res.data.message ? res.data.message : 'Error');
+      }
+    }, 'json');
+  }
+
+  $(document).on('click', '.tta-refund-request-process', function(e){
+    var mode = $(this).data('mode');
+    handleRefundRequest(e, mode);
+  });
+
+  $(document).on('click', '.tta-refund-request-delete', function(e){
+    handleRefundRequest(e, 'delete');
+  });
+
   // Inline edit toggle for Email & SMS templates
   $(document).on('click', '.widefat tbody tr[data-comms-key]', function(e){
     if ( $(e.target).is('a, button, input, textarea, select') ) return;
