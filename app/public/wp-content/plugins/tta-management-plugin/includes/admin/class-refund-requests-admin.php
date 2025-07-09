@@ -70,7 +70,7 @@ class TTA_Refund_Requests_Admin {
                         echo '</tr>';
                     }
 
-                    echo '</tbody></table></div></details>';
+                    echo '</tbody></table></div></div></details>';
                 }
             }
         } else {
