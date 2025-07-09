@@ -116,6 +116,8 @@ class TTA_Ajax_Attendance {
 
         TTA_Cache::flush();
 
+        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
+
         if ( $should_notify ) {
             tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );
         }
@@ -237,6 +239,8 @@ class TTA_Ajax_Attendance {
         }
 
         TTA_Cache::flush();
+
+        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
 
         wp_send_json_success( [ 'message' => __( 'Refund processed.', 'tta' ) ] );
     }

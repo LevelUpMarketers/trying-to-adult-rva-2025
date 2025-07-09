@@ -52,7 +52,12 @@ class TTA_Refund_Requests_Admin {
                     echo '<td>' . $name . '</td>';
                     echo '<td>' . $event_link . '</td>';
                     echo '<td>' . $paid . '</td>';
-                    echo '<td><button type="button" class="tta-refund-cancel-attendee" data-attendee="' . esc_attr( $att['id'] ) . '">' . esc_html__( 'Cancel Attendance and Issue Refund', 'tta' ) . '</button></td>';
+                    echo '<td>';
+                    echo '<input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="' . esc_attr__( 'Full', 'tta' ) . '"> ';
+                    echo '<button type="button" class="tta-refund-cancel-attendee" data-attendee="' . esc_attr( $att['id'] ) . '">' . esc_html__( 'Refund & Cancel Attendance', 'tta' ) . '</button> ';
+                    echo '<button type="button" class="tta-refund-keep-attendee" data-attendee="' . esc_attr( $att['id'] ) . '">' . esc_html__( 'Refund & Keep Attendance', 'tta' ) . '</button> ';
+                    echo '<button type="button" class="tta-cancel-attendee" data-attendee="' . esc_attr( $att['id'] ) . '">' . esc_html__( 'Cancel Attendance (No Refund)', 'tta' ) . '</button>';
+                    echo '</td>';
                     echo '</tr>';
                 }
             }

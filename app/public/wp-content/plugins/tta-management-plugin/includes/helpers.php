@@ -1871,6 +1871,34 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id
 }
 
 /**
+ * Delete a pending refund request once processed.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $ticket_id     Ticket ID.
+ */
+function tta_delete_refund_request( $gateway_tx_id, $ticket_id = 0 ) {
+    global $wpdb;
+    $hist_table = $wpdb->prefix . 'tta_memberhistory';
+    $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
+    $ticket_id     = intval( $ticket_id );
+
+    if ( '' === $gateway_tx_id ) {
+        return;
+    }
+
+    $sql    = "DELETE FROM {$hist_table} WHERE action_type = 'refund_request' AND action_data LIKE %s";
+    $params = [ '%' . $wpdb->esc_like( '"transaction_id":"' . $gateway_tx_id . '"' ) . '%' ];
+
+    if ( $ticket_id ) {
+        $sql   .= ' AND action_data LIKE %s';
+        $params[] = '%' . $wpdb->esc_like( '"ticket_id":' . $ticket_id ) . '%';
+    }
+
+    $wpdb->query( $wpdb->prepare( $sql, ...$params ) );
+    TTA_Cache::delete( 'tta_refund_requests' );
+}
+
+/**
  * Retrieve the next upcoming event.
  *
  * @return array|null {
