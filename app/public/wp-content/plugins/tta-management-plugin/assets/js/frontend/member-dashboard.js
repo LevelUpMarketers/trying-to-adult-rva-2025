@@ -291,4 +291,21 @@ jQuery(function($){
       }, delay);
     });
   });
+
+  // Leave waitlist from dashboard
+  $(document).on('click', '.tta-leave-waitlist', function(e){
+    e.preventDefault();
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_leave_waitlist',
+      nonce: TTA_MemberDashboard.front_nonce,
+      event_ute_id: $btn.data('event'),
+      ticket_id: $btn.data('ticket')
+    }, function(){
+      window.location.reload();
+    }, 'json').fail(function(){
+      window.location.reload();
+    });
+  });
 });

@@ -1287,6 +1287,59 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
 }
 
 /**
+ * Retrieve waitlist events for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array[] List of waitlist entries.
+ */
+function tta_get_member_waitlist_events( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return [];
+    }
+
+    $cache_key = 'waitlist_events_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $waitlist_table = $wpdb->prefix . 'tta_waitlist';
+    $events_table   = $wpdb->prefix . 'tta_events';
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT w.ticket_id, w.ticket_name, w.event_name, w.event_ute_id, w.added_at, e.id AS event_id, e.page_id, e.mainimageid, e.date, e.time, e.address FROM {$waitlist_table} w JOIN {$events_table} e ON w.event_ute_id = e.ute_id WHERE w.wp_user_id = %d ORDER BY w.added_at ASC",
+            $wp_user_id
+        ),
+        ARRAY_A
+    );
+
+    $events = [];
+    foreach ( $rows as $r ) {
+        $events[] = [
+            'event_id'     => intval( $r['event_id'] ),
+            'event_ute_id' => sanitize_text_field( $r['event_ute_id'] ),
+            'name'         => sanitize_text_field( $r['event_name'] ),
+            'page_id'      => intval( $r['page_id'] ),
+            'image_id'     => intval( $r['mainimageid'] ),
+            'date'         => $r['date'],
+            'time'         => $r['time'],
+            'address'      => sanitize_text_field( $r['address'] ),
+            'ticket_id'    => intval( $r['ticket_id'] ),
+            'ticket_name'  => sanitize_text_field( $r['ticket_name'] ),
+            'added_at'     => $r['added_at'],
+        ];
+    }
+
+    $ttl = empty( $events ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $events, $ttl );
+
+    return $events;
+}
+
+/**
  * Retrieve past events purchased by a user.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -1633,6 +1686,9 @@ function tta_get_member_billing_history( $wp_user_id ) {
         if ( ! is_array( $data ) ) {
             continue;
         }
+        if ( empty( $data['amount'] ) && ! empty( $data['cancel'] ) ) {
+            continue; // skip cancel without refund
+        }
         $amount  = -floatval( $data['amount'] ?? 0 );
         $eid     = intval( $row['event_id'] );
         $name    = $event_map[ $eid ]['name'] ?? __( 'Refund', 'tta' );
@@ -1680,6 +1736,44 @@ function tta_get_member_billing_history( $wp_user_id ) {
 
     TTA_Cache::set( $cache_key, $history, 300 );
     return $history;
+}
+
+/**
+ * Retrieve all refund requests submitted by members.
+ *
+ * @return array[] List of refund requests.
+ */
+function tta_get_refund_requests() {
+    $cache_key = 'tta_refund_requests';
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $hist_table   = $wpdb->prefix . 'tta_memberhistory';
+    $members_table= $wpdb->prefix . 'tta_members';
+    $events_table = $wpdb->prefix . 'tta_events';
+
+    $rows = $wpdb->get_results(
+        "SELECT mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name, e.name AS event_name, e.page_id FROM {$hist_table} mh JOIN {$members_table} m ON mh.member_id = m.id JOIN {$events_table} e ON mh.event_id = e.id WHERE mh.action_type = 'refund_request' ORDER BY mh.action_date DESC",
+        ARRAY_A
+    );
+
+    $out = [];
+    foreach ( $rows as $r ) {
+        $data = json_decode( $r['action_data'], true );
+        $out[] = [
+            'date'        => $r['action_date'],
+            'member_name' => trim( $r['first_name'] . ' ' . $r['last_name'] ),
+            'event_name'  => sanitize_text_field( $r['event_name'] ),
+            'event_url'   => $r['page_id'] ? get_permalink( $r['page_id'] ) : '',
+            'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
+        ];
+    }
+
+    TTA_Cache::set( $cache_key, $out, 300 );
+    return $out;
 }
 
 /**

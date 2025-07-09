@@ -957,6 +957,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
       if(res.success){
         if(mode === 'cancel'){
           $row.remove();
+          alert(res.data && res.data.message ? res.data.message : 'Refund processed');
+          window.location.reload();
+          return;
         }
         alert(res.data && res.data.message ? res.data.message : 'Refund processed');
       }else{
