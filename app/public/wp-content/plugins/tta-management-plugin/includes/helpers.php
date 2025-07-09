@@ -1178,8 +1178,9 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
         ARRAY_A
     );
 
-    $events = [];
+    $events  = [];
     $txn_map = [];
+    $refunds = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
@@ -1200,6 +1201,24 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             'amount'         => floatval( $data['amount'] ?? 0 ),
             'items'          => $data['items'] ?? [],
         ];
+    }
+
+    // Load refund requests for this member and merge counts
+    $member_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_members WHERE wpuserid = %d", $wp_user_id ) );
+    if ( $member_id ) {
+        foreach ( tta_get_refund_requests() as $req ) {
+            if ( intval( $req['member_id'] ) !== $member_id ) {
+                continue;
+            }
+            $tx  = $req['transaction_id'];
+            $tid = intval( $req['ticket_id'] );
+            $refunds[ $tx ][ $tid ] = $req;
+            if ( isset( $txn_map[ $tx ] ) ) {
+                $txn_map[ $tx ] += 1;
+            } else {
+                $txn_map[ $tx ] = 1;
+            }
+        }
     }
 
     if ( $txn_map && ! property_exists( $wpdb, 'results_data' ) ) {
@@ -1266,7 +1285,20 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     );
                     $item['attendees'] = array_values( $attendees );
                     $item['quantity']  = count( $item['attendees'] );
-                    if ( $item['quantity'] > 0 ) {
+                    $item['refund_pending'] = false;
+                    if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
+                        $req  = $refunds[ $gateway_tx ][ $tid ];
+                        $item['refund_pending'] = true;
+                        $item['refund_attendee'] = [
+                            'first_name' => $req['first_name'],
+                            'last_name'  => $req['last_name'],
+                            'email'      => $req['email'],
+                        ];
+                        if ( 0 === $item['quantity'] ) {
+                            $item['quantity'] = 1;
+                        }
+                        $new_items[] = $item;
+                    } elseif ( $item['quantity'] > 0 ) {
                         $new_items[] = $item;
                     }
                 }

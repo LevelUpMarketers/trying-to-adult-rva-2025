@@ -27,7 +27,7 @@ Attendee details are pulled from the transaction history and stored in the
 When a single checkout includes tickets for multiple events each event now
 receives its own history record so it appears individually in this list.
 Event thumbnails use the medium image size and are scaled to a consistent width so nothing is cropped.
-Attendee lists now reflect the database in real time. Individual refunds or cancellations remove the person from the list, and an event disappears entirely once all of its attendees are gone.
+Attendee lists now reflect the database in real time. When a member requests a refund the attendee is removed from the list but the ticket entry remains with a "refund request pending" note until someone else buys the ticket. Events only disappear once no attendees or pending requests remain.
 
 ## Past Events Tab
 

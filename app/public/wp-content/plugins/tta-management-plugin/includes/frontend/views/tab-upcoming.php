@@ -38,11 +38,26 @@
               <?php if ( isset( $it['final_price'] ) ) : ?>
                 <span class="tta-ticket-price"><?php printf( esc_html__( '$%s', 'tta' ), number_format_i18n( floatval( $it['final_price'] ), 2 ) ); ?></span>
               <?php endif; ?>
+              <?php if ( ! empty( $it['refund_pending'] ) ) : ?>
+                <p class="tta-refund-pending">
+                  <?php
+                  $ra = $it['refund_attendee'] ?? [];
+                  $name = trim( ( $ra['first_name'] ?? '' ) . ' ' . ( $ra['last_name'] ?? '' ) );
+                  $email = $ra['email'] ?? '';
+                  if ( $name || $email ) {
+                      printf( esc_html__( '%1$s (%2$s) - refund request pending', 'tta' ), esc_html( $name ), esc_html( $email ) );
+                  } else {
+                      esc_html_e( 'Refund request pending', 'tta' );
+                  }
+                  ?>
+                </p>
+              <?php else : ?>
               <ul class="tta-attendees">
               <?php foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) : ?>
                 <li><?php echo esc_html( trim( $att['first_name'] . ' ' . $att['last_name'] ) . ' (' . $att['email'] . ')' ); ?></li>
               <?php endforeach; ?>
               </ul>
+              <?php endif; ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
                   <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
