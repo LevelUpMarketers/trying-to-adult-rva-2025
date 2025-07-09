@@ -144,6 +144,7 @@ class TTA_Plugin {
             TTA_Settings_Admin::get_instance();
             TTA_Comms_Admin::get_instance();
             TTA_Ads_Admin::get_instance();
+            TTA_Refund_Requests_Admin::get_instance();
         } else {
             // Frontend shortcodes
             TTA_Events_Shortcode::get_instance();
