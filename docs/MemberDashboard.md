@@ -19,6 +19,7 @@ shows:
 - The total amount paid for the transaction
 - Each ticket purchased with the attendee names and emails
 - A link to request a refund (paid events) or cancel attendance (free events) which reveals a small form
+- Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. Administrators can review requests on the **TTA Refund Requests** admin page.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the

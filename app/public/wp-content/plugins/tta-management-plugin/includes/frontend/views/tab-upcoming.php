@@ -52,7 +52,7 @@
                 <?php esc_html_e( 'Cancel Attendance', 'tta' ); ?>
               </a>
             <?php endif; ?>
-            <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
+            <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>">
               <label for="refund-<?php echo esc_attr( $ev['transaction_id'] ); ?>">
                 <?php esc_html_e( 'Refund Request Details', 'tta' ); ?>
               </label>
@@ -61,6 +61,10 @@
               <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>">
                 <?php echo $ev['amount'] > 0 ? esc_html__( 'Cancel Attendance & Request a Refund', 'tta' ) : esc_html__( 'Cancel Attendance', 'tta' ); ?>
               </button>
+              <span class="tta-progress-spinner">
+                <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+              </span>
+              <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
             </form>
           </div>
       <?php endforeach; ?>

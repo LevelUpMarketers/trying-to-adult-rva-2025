@@ -21,7 +21,7 @@ class TTA_Members_Admin {
             'tta-members',
             [ $this, 'render_list' ],
             'dashicons-groups',
-            6
+            8
         );
     }
 

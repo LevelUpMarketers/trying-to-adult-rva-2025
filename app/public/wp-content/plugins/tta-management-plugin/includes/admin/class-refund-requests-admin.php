@@ -4,7 +4,7 @@ class TTA_Refund_Requests_Admin {
     public static function get_instance(){ static $inst; return $inst ?: $inst = new self(); }
     private function __construct(){ add_action('admin_menu',[ $this,'register_menu' ]); }
     public function register_menu(){
-        add_menu_page('TTA Refund Requests','TTA Refund Requests','manage_options','tta-refund-requests',[ $this,'render_page' ],'dashicons-money-alt',12);
+        add_menu_page('TTA Refund Requests','TTA Refund Requests','manage_options','tta-refund-requests',[ $this,'render_page' ],'dashicons-money-alt',9);
     }
     public function render_page(){
         echo '<div class="wrap"><h1>' . esc_html__( 'Refund Requests', 'tta' ) . '</h1>';
