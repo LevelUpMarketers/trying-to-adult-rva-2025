@@ -9,3 +9,4 @@ For context the member's history summary is displayed, indicating how many times
 they have previously requested refunds, cancelled attendance, or no‑showed. The
 table refreshes automatically whenever a new refund request is submitted from the
 member dashboard.
+Each refund request is displayed as a collapsible section. Click the summary line to reveal the attendee table and action buttons.

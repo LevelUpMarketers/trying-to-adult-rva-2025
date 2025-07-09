@@ -18,10 +18,11 @@ class TTA_Refund_Requests_Admin {
                 $event  = esc_html( $r['event_name'] );
                 $url    = $r['event_url'] ? '<a href="' . esc_url( $r['event_url'] ) . '">' . $event . '</a>' : $event;
 
-                echo '<h2 style="margin-top:1.5em;">' . esc_html( date_i18n( 'F j, Y g:i a', strtotime( $r['date'] ) ) ) . ' - ' . $member . '</h2>';
+                echo '<details class="tta-refund-request"><summary>' . esc_html( date_i18n( 'F j, Y g:i a', strtotime( $r['date'] ) ) ) . ' - ' . $member . '</summary>';
+                echo '<div class="tta-refund-details">';
                 echo '<p><strong>' . esc_html__( 'Event:', 'tta' ) . '</strong> ' . $url . '</p>';
                 echo '<p><strong>' . esc_html__( 'Reason:', 'tta' ) . '</strong> ' . esc_html( $r['reason'] ) . '</p>';
-                echo '<p><em>' . sprintf( esc_html__( 'Past refund requests: %d &nbsp;|&nbsp; Cancellations: %d &nbsp;|&nbsp; No-shows: %d', 'tta' ), $summary['refunds'], $summary['cancellations'], $summary['no_show'] ) . '</em></p>';
+                echo '<p><em>' . sprintf( esc_html__( 'Past refund requests: %d&nbsp;|&nbsp; Cancellations: %d &nbsp;|&nbsp; No-shows: %d', 'tta' ), $summary['refunds'], $summary['cancellations'], $summary['no_show'] ) . '</em></p>';
 
                 if ( $attendees ) {
                     echo '<div class="tta-wl-info-wrapper">';
@@ -53,10 +54,7 @@ class TTA_Refund_Requests_Admin {
                         echo '</tr>';
                     }
 
-                    echo '</tbody></table></div>';
-                } else {
-                    echo '<p>' . esc_html__( 'No attendees found.', 'tta' ) . '</p>';
-                }
+                    echo '</tbody></table></div></details>';
             }
         } else {
             echo '<p>' . esc_html__( 'No refund requests found.', 'tta' ) . '</p>';
