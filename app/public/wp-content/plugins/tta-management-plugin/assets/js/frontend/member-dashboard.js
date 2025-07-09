@@ -212,9 +212,8 @@ jQuery(function($){
   // Refund/cancel form toggle
   $(document).on('click', '.tta-refund-link, .tta-cancel-link', function(e){
     e.preventDefault();
-    var tx = $(this).data('tx');
-    var $form = $('.tta-refund-form[data-tx="'+tx+'"]');
-    $form.slideToggle(200);
+    var $wrap = $(this).closest('.tta-refund-wrapper');
+    $wrap.find('.tta-refund-form').slideToggle(200);
   });
 
   // Submit refund request
@@ -223,6 +222,7 @@ jQuery(function($){
     var $btn  = $(this),
         $form = $btn.closest('.tta-refund-form'),
         tx    = $btn.data('tx'),
+        ticket = $btn.data('ticket'),
         reason= $form.find('textarea').val(),
         eventId = $form.data('event'),
         $spin = $form.find('.tta-admin-progress-spinner-svg'),
@@ -238,6 +238,7 @@ jQuery(function($){
       nonce: TTA_MemberDashboard.front_nonce,
       transaction_id: tx,
       event_id: eventId,
+      ticket_id: ticket,
       reason: reason
     }, function(res){
       var delay = Math.max(0, 5000 - (Date.now()-start));

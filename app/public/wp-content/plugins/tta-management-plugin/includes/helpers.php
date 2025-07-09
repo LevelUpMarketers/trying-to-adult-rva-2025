@@ -1780,6 +1780,7 @@ function tta_get_refund_requests() {
             'event_name'  => sanitize_text_field( $r['event_name'] ),
             'event_url'   => $r['page_id'] ? get_permalink( $r['page_id'] ) : '',
             'transaction_id' => sanitize_text_field( $data['transaction_id'] ?? '' ),
+            'ticket_id'   => intval( $data['ticket_id'] ?? 0 ),
             'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
         ];
     }
@@ -1795,14 +1796,15 @@ function tta_get_refund_requests() {
  * @param int    $event_id      Event ID.
  * @return array[]
  */
-function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
+function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id = 0 ) {
     $gateway_tx_id = sanitize_text_field( $gateway_tx_id );
     $event_id      = intval( $event_id );
+    $ticket_id     = intval( $ticket_id );
     if ( '' === $gateway_tx_id || ! $event_id ) {
         return [];
     }
 
-    $cache_key = 'refund_attendees_' . md5( $gateway_tx_id . '_' . $event_id );
+    $cache_key = 'refund_attendees_' . md5( $gateway_tx_id . '_' . $event_id . '_' . $ticket_id );
     $cached    = TTA_Cache::get( $cache_key );
     if ( false !== $cached ) {
         return $cached;
@@ -1829,8 +1831,10 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id ) {
         return [];
     }
 
-    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s) ORDER BY last_name, first_name";
-    $rows = $wpdb->get_results( $wpdb->prepare( $sql, $tx['id'], $ute_id, $tx['id'], $ute_id ), ARRAY_A );
+    $ticket_sql = $ticket_id ? ' AND a.ticket_id = %d' : '';
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
+    $params = $ticket_id ? [ $tx['id'], $ute_id, $ticket_id, $tx['id'], $ute_id, $ticket_id ] : [ $tx['id'], $ute_id, $tx['id'], $ute_id ];
+    $rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
 
     $details = json_decode( $tx['details'], true );
     $price_map = [];

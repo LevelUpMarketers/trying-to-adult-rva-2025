@@ -35,7 +35,7 @@ class TTA_Refund_Requests_Admin {
             echo '</tr></thead><tbody>';
 
             foreach ( $requests as $req ) {
-                $attendees = tta_get_refund_request_attendees( $req['transaction_id'], $req['event_id'] );
+                $attendees = tta_get_refund_request_attendees( $req['transaction_id'], $req['event_id'], $req['ticket_id'] );
                 if ( ! $attendees ) {
                     continue;
                 }
