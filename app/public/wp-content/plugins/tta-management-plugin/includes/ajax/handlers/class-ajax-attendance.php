@@ -102,7 +102,12 @@ class TTA_Ajax_Attendance {
         }
 
         $wpdb->delete( $att_table, [ 'id' => $id ], [ '%d' ] );
+        $should_notify = false;
         if ( $ticket ) {
+            $current = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ) );
+            $after   = $current + 1;
+            $should_notify = ( $current <= 0 && $after > 0 );
+
             $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
             if ( ! empty( $ticket['event_ute_id'] ) ) {
                 TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
@@ -110,6 +115,11 @@ class TTA_Ajax_Attendance {
         }
 
         TTA_Cache::flush();
+
+        if ( $should_notify ) {
+            tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );
+        }
+
         wp_send_json_success( [ 'message' => __( 'Attendance cancelled.', 'tta' ) ] );
     }
 
@@ -210,11 +220,19 @@ class TTA_Ajax_Attendance {
 
         if ( 'cancel' === $mode ) {
             $wpdb->delete( $att_table, [ 'id' => $id ], [ '%d' ] );
+            $should_notify = false;
             if ( $ticket ) {
+                $current = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ) );
+                $after   = $current + 1;
+                $should_notify = ( $current <= 0 && $after > 0 );
+
                 $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
                 if ( ! empty( $ticket['event_ute_id'] ) ) {
                     TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
                 }
+            }
+            if ( $should_notify ) {
+                tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );
             }
         }
 

@@ -7,13 +7,13 @@ class TTA_Tickets_Admin {
 
     public function register_menu() {
         add_menu_page(
-            'Tickets',
-            'Tickets',
+            'TTA Tickets',
+            'TTA Tickets',
             'manage_options',
             'tta-tickets',
             [ $this, 'render_page' ],
             'dashicons-tickets',
-            8
+            11
         );
     }
 

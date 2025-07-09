@@ -217,6 +217,50 @@ jQuery(function($){
     $form.slideToggle(200);
   });
 
+  // Submit refund request
+  $(document).on('click', '.tta-refund-submit', function(e){
+    e.preventDefault();
+    var $btn  = $(this),
+        $form = $btn.closest('.tta-refund-form'),
+        tx    = $btn.data('tx'),
+        reason= $form.find('textarea').val(),
+        eventId = $form.data('event'),
+        $spin = $form.find('.tta-admin-progress-spinner-svg'),
+        $resp = $form.find('.tta-admin-progress-response-p'),
+        start = Date.now();
+
+    $resp.removeClass('updated error').text('');
+    $btn.prop('disabled', true);
+    $spin.show().css({opacity:0}).fadeTo(200,1);
+
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_request_refund',
+      nonce: TTA_MemberDashboard.front_nonce,
+      transaction_id: tx,
+      event_id: eventId,
+      reason: reason
+    }, function(res){
+      var delay = Math.max(0, 5000 - (Date.now()-start));
+      setTimeout(function(){
+        $spin.fadeOut(200);
+        $btn.prop('disabled', false);
+        if(res.success){
+          $resp.addClass('updated').text(res.data.message);
+          setTimeout(function(){ window.location.reload(); }, 1000);
+        }else{
+          $resp.addClass('error').text(res.data.message||'Error');
+        }
+      }, delay);
+    }, 'json').fail(function(){
+      var delay = Math.max(0, 5000 - (Date.now()-start));
+      setTimeout(function(){
+        $spin.fadeOut(200);
+        $btn.prop('disabled', false);
+        $resp.addClass('error').text('Request failed. Please try again.');
+      }, delay);
+    });
+  });
+
   // Cancel membership form
   $(document).on('submit', '#tta-cancel-membership-form', function(e){
     e.preventDefault();
@@ -289,6 +333,23 @@ jQuery(function($){
         $btn.prop('disabled', false);
         $resp.addClass('error').text('Request failed. Please try again.');
       }, delay);
+    });
+  });
+
+  // Leave waitlist from dashboard
+  $(document).on('click', '.tta-leave-waitlist', function(e){
+    e.preventDefault();
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_leave_waitlist',
+      nonce: TTA_MemberDashboard.front_nonce,
+      event_ute_id: $btn.data('event'),
+      ticket_id: $btn.data('ticket')
+    }, function(){
+      window.location.reload();
+    }, 'json').fail(function(){
+      window.location.reload();
     });
   });
 });

@@ -40,6 +40,9 @@ class DummyWpdbHelpers {
         if ( strpos( $query, 'FROM wp_tta_events' ) !== false ) {
             return $this->event_row_data;
         }
+        if ( strpos( $query, 'FROM wp_tta_transactions' ) !== false ) {
+            return [ 'id' => 99, 'details' => json_encode([['event_ute_id'=>'ute1','ticket_id'=>3,'final_price'=>5]]), 'created_at' => '2025-07-01 10:00:00' ];
+        }
         return [
             'wpuserid' => 1,
             'membership_level' => 'premium',
@@ -422,5 +425,90 @@ class HelpersTest extends TestCase {
     public function test_format_event_time_formats_range() {
         require_once __DIR__ . '/../includes/helpers.php';
         $this->assertSame('6:00 pm - 8:00 pm', tta_format_event_time('18:00|20:00'));
+    }
+    public function test_get_member_waitlist_events_returns_entries() {
+        global $wpdb;
+        $this->wpdb->results_calls = 0;
+        $this->wpdb->results_data = [
+            [
+                'ticket_id' => 1,
+                'ticket_name' => 'General',
+                'event_name' => 'Big Event',
+                'event_ute_id' => 'ute1',
+                'added_at' => '2024-01-01 00:00:00',
+                'event_id' => 5,
+                'page_id' => 10,
+                'mainimageid' => 3,
+                'date' => '2030-01-01',
+                'time' => '18:00|20:00',
+                'address' => '1 St -  - City - ST - 12345'
+            ]
+        ];
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $events = tta_get_member_waitlist_events(1);
+        $this->assertCount(1, $events);
+        $this->assertSame('Big Event', $events[0]['name']);
+        $this->assertSame(1, $wpdb->results_calls);
+        $cached = tta_get_member_waitlist_events(1);
+        $this->assertSame(1, $wpdb->results_calls);
+    }
+
+    public function test_get_refund_requests_returns_rows() {
+        global $wpdb;
+        $this->wpdb->results_calls = 0;
+        $this->wpdb->results_data = [
+            [
+                'member_id' => 7,
+                'action_date' => '2025-07-01 10:00:00',
+                'action_data' => json_encode(['transaction_id'=>'tx99','reason'=>'Changed plans']),
+                'event_id' => 5,
+                'first_name' => 'Ann',
+                'last_name' => 'Bee',
+                'event_name' => 'Fun Event',
+                'page_id' => 2
+            ]
+        ];
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $rows = tta_get_refund_requests();
+        $this->assertCount(1, $rows);
+        $this->assertSame('Ann Bee', $rows[0]['member_name']);
+        $this->assertSame(1, $wpdb->results_calls);
+        $cached = tta_get_refund_requests();
+        $this->assertSame(1, $wpdb->results_calls);
+    }
+
+    public function test_get_refund_request_attendees_parses_rows() {
+        global $wpdb;
+        $this->wpdb->results_calls = 0;
+        // first query returns transaction row
+        $this->wpdb->row_calls = 0;
+        $this->wpdb->results_data = [
+            [
+                'id' => 55,
+                'ticket_id' => 3,
+                'first_name' => 'Ann',
+                'last_name' => 'Bee',
+                'email' => 'a@example.com',
+                'phone' => '123',
+            ],
+            [
+                'id' => 56,
+                'ticket_id' => 3,
+                'first_name' => 'Carl',
+                'last_name' => 'Dee',
+                'email' => 'c@example.com',
+                'phone' => '555',
+            ]
+        ];
+        $this->wpdb->event_row_data = [ 'ute_id' => 'ute1', 'hosts' => '', 'volunteers' => '' ];
+        $this->wpdb->last_query = '';
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $attendees = tta_get_refund_request_attendees('tx1', 5);
+        $this->assertCount(2, $attendees);
+        $this->assertSame('Ann', $attendees[0]['first_name']);
+        $this->assertSame('tx1', $attendees[0]['gateway_id']);
     }
 }

@@ -102,6 +102,7 @@ require_once TTA_PLUGIN_DIR . 'includes/admin/class-settings-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-comms-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-ads-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-bi-admin.php';
+require_once TTA_PLUGIN_DIR . 'includes/admin/class-refund-requests-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-events-shortcode.php';
 require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-members-shortcode.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-member-dashboard.php';
@@ -143,6 +144,7 @@ class TTA_Plugin {
             TTA_Settings_Admin::get_instance();
             TTA_Comms_Admin::get_instance();
             TTA_Ads_Admin::get_instance();
+            TTA_Refund_Requests_Admin::get_instance();
         } else {
             // Frontend shortcodes
             TTA_Events_Shortcode::get_instance();
