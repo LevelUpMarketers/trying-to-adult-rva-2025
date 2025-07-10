@@ -56,6 +56,7 @@ class TTA_Email_Handler {
             if ( empty( $event ) ) {
                 continue;
             }
+
             $attendees = [];
             foreach ( $ev_items as $it ) {
                 foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) {
@@ -63,15 +64,34 @@ class TTA_Email_Handler {
                 }
             }
 
-            $tokens = $this->build_tokens( $event, $context, $attendees );
-            $subject = strtr( $tpl['email_subject'], $tokens );
-            $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+            $headers   = [ 'Content-Type: text/html; charset=UTF-8' ];
+            $tokens    = $this->build_tokens( $event, $context, $attendees );
 
-            $recipients = array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) );
-            $recipients = array_values( array_unique( array_filter( array_map( 'sanitize_email', $recipients ) ) ) );
-            $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
-            foreach ( $recipients as $to ) {
-                wp_mail( $to, $subject, $body, $headers );
+            $member_email = sanitize_email( $context['user_email'] );
+            if ( $member_email ) {
+                $subject = strtr( $tpl['email_subject'], $tokens );
+                $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+                wp_mail( $member_email, $subject, $body, $headers );
+            }
+
+            $sent = $member_email ? [ $member_email => true ] : [];
+            foreach ( $attendees as $att ) {
+                $email = sanitize_email( $att['email'] ?? '' );
+                if ( ! $email || isset( $sent[ $email ] ) ) {
+                    continue;
+                }
+
+                $sent[ $email ] = true;
+
+                $per_tokens = $tokens;
+                $per_tokens['{attendee_first_name}'] = sanitize_text_field( $att['first_name'] ?? '' );
+                $per_tokens['{attendee_last_name}']  = sanitize_text_field( $att['last_name'] ?? '' );
+                $per_tokens['{attendee_email}']      = $email;
+                $per_tokens['{attendee_phone}']      = sanitize_text_field( $att['phone'] ?? '' );
+
+                $subject = strtr( $tpl['email_subject'], $per_tokens );
+                $body    = nl2br( strtr( $tpl['email_body'], $per_tokens ) );
+                wp_mail( $email, $subject, $body, $headers );
             }
         }
     }
