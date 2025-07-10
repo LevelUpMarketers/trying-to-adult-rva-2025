@@ -19,6 +19,7 @@ shows:
 - The total amount paid for the transaction
 - Each ticket purchased with the attendee names and emails and its individual price
 - A separate link for each ticket to request a refund (paid events) or cancel attendance (free events) which reveals a small form. When multiple of the same ticket type are purchased they appear as individual entries so refunds can be requested per attendee
+- If a refund is pending for one attendee the entry remains with a pending note while any remaining attendees still appear separately with their own refund links
 - Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. The attendee is removed immediately. The refund is processed automatically once another member buys that ticket, otherwise the request expires two hours before the event. Administrators can review pending requests on the **TTA Refund Requests** admin page where they remain listed until processed.
 
 Events are loaded chronologically and the layout supports any number of events.

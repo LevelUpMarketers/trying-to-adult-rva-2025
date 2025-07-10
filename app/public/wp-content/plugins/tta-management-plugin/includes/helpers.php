@@ -1316,24 +1316,39 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     foreach ( $events as &$ev ) {
         $split_items = [];
         foreach ( $ev['items'] as $item ) {
+            $attendees = $item['attendees'] ?? [];
             if ( ! empty( $item['refund_pending'] ) ) {
-                $split_items[] = $item;
+                // keep a row for the pending refund attendee
+                $pending            = $item;
+                $pending['quantity'] = 1;
+                $pending['attendees'] = [];
+                $split_items[]      = $pending;
+
+                // show remaining attendees separately with refund links
+                foreach ( $attendees as $att ) {
+                    $clone                     = $item;
+                    $clone['refund_pending']   = false;
+                    unset( $clone['refund_attendee'] );
+                    $clone['attendees']        = [ $att ];
+                    $clone['quantity']         = 1;
+                    $split_items[]             = $clone;
+                }
                 continue;
             }
-            $attendees = $item['attendees'] ?? [];
-            $qty       = intval( $item['quantity'] ?? count( $attendees ) );
+
+            $qty = intval( $item['quantity'] ?? count( $attendees ) );
             if ( $attendees ) {
                 foreach ( $attendees as $att ) {
-                    $clone = $item;
+                    $clone              = $item;
                     $clone['attendees'] = [ $att ];
                     $clone['quantity']  = 1;
-                    $split_items[] = $clone;
+                    $split_items[]      = $clone;
                 }
             } elseif ( $qty > 1 ) {
                 for ( $i = 0; $i < $qty; $i++ ) {
-                    $clone = $item;
-                    $clone['quantity'] = 1;
-                    $split_items[] = $clone;
+                    $clone              = $item;
+                    $clone['quantity']  = 1;
+                    $split_items[]      = $clone;
                 }
             } else {
                 $split_items[] = $item;
