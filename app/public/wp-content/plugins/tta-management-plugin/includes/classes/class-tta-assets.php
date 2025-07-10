@@ -132,6 +132,7 @@ class TTA_Assets {
                         $e['page_url']              = get_permalink( $e['page_id'] );
                         $e['dashboard_profile_url'] = home_url( '/member-dashboard/?tab=profile', 'relative' );
                         $e['dashboard_upcoming_url'] = home_url( '/member-dashboard/?tab=upcoming', 'relative' );
+                        $e['dashboard_waitlist_url'] = home_url( '/member-dashboard/?tab=waitlist', 'relative' );
                         $e['dashboard_past_url']    = home_url( '/member-dashboard/?tab=past', 'relative' );
                         $e['dashboard_billing_url'] = home_url( '/member-dashboard/?tab=billing', 'relative' );
                         $e['date']                  = $e['date_formatted'];

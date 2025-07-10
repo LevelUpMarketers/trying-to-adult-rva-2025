@@ -194,6 +194,7 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{event_link}">{event_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_profile_url}">{dashboard_profile_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_upcoming_url}">{dashboard_upcoming_url}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_waitlist_url}">{dashboard_waitlist_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_past_url}">{dashboard_past_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_billing_url}">{dashboard_billing_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_date}">{event_date}</button> ';

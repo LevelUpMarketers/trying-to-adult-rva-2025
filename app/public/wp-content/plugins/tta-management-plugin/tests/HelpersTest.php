@@ -611,4 +611,11 @@ class HelpersTest extends TestCase {
         $this->assertSame('Ann', $attendees[0]['first_name']);
         $this->assertSame('tx1', $attendees[0]['gateway_id']);
     }
+
+    public function test_convert_links_transforms_markdown() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';
+        $out = 'Check <a href="/member-dashboard/?tab=profile">your profile</a> today.';
+        $this->assertSame( $out, tta_convert_links( $in ) );
+    }
 }

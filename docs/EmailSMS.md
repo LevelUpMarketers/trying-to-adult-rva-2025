@@ -39,7 +39,7 @@ Default values are provided on initial install:
 - **Admin Notifications**: emails are sent when new events are created, refunds are requested or events sell out.
 - **Host and Volunteer Reminders**: internal messages mirror attendee reminders at 24 and 2 hours before the event.
 
-Links to the member dashboard are relative URLs so they work on any domain. Tokens include direct links to each dashboard tab.
+Links to the member dashboard are relative URLs so they work on any domain. Tokens include direct links to each dashboard tab including the waitlist view.
 
 ## Previews and Tokens
 
@@ -57,6 +57,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {event_link}
 {dashboard_profile_url}
 {dashboard_upcoming_url}
+{dashboard_waitlist_url}
 {dashboard_past_url}
 {dashboard_billing_url}
 {event_date}
@@ -119,6 +120,10 @@ Each attendee receives a personalized email where these tokens reflect their own
 ```
 
 Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.
+
+### Hyperlinks
+
+Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. This works for any URL, including tokens like `{dashboard_upcoming_url}`.
 
 ### Formatting Helpers
 
