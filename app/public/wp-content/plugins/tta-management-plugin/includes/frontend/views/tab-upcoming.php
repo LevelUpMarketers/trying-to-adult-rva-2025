@@ -52,8 +52,23 @@
                   }
                   ?>
                 </p>
+              <?php elseif ( ! empty( $it['refund_approved'] ) ) : ?>
+                <p class="tta-refund-approved">
+                  <?php
+                  $ra = $it['refund_attendee'] ?? [];
+                  $name = trim( ( $ra['first_name'] ?? '' ) . ' ' . ( $ra['last_name'] ?? '' ) );
+                  $email = $ra['email'] ?? '';
+                  $amt = $it['refund_amount'] ?? 0;
+                  $amount = sprintf( '$%s', number_format_i18n( floatval( $amt ), 2 ) );
+                  if ( $name || $email ) {
+                      printf( esc_html__( '%1$s (%2$s) - %3$s refund request approved & attendance cancelled', 'tta' ), esc_html( $name ), esc_html( $email ), esc_html( $amount ) );
+                  } else {
+                      printf( esc_html__( '%s refund request approved & attendance cancelled', 'tta' ), esc_html( $amount ) );
+                  }
+                  ?>
+                </p>
               <?php else : ?>
-              <ul class="tta-attendees">
+                <ul class="tta-attendees">
               <?php foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) : ?>
                 <li><?php echo esc_html( trim( $att['first_name'] . ' ' . $att['last_name'] ) . ' (' . $att['email'] . ')' ); ?></li>
               <?php endforeach; ?>

@@ -1181,6 +1181,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     $events  = [];
     $txn_map = [];
     $refunds = [];
+    $approved = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
@@ -1217,6 +1218,41 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 $txn_map[ $tx ] += 1;
             } else {
                 $txn_map[ $tx ] = 1;
+            }
+        }
+
+        if ( $events ) {
+            $ids = array_column( $events, 'event_id' );
+            $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+            $refund_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT event_id, action_data FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' AND event_id IN ($placeholders)",
+                    $wp_user_id,
+                    ...$ids
+                ),
+                ARRAY_A
+            );
+            foreach ( $refund_rows as $r ) {
+                $data = json_decode( $r['action_data'], true );
+                if ( empty( $data['cancel'] ) ) {
+                    continue;
+                }
+                $tx  = $data['transaction_id'] ?? '';
+                $tid = intval( $data['ticket_id'] ?? 0 );
+                if ( ! $tx || ! $tid ) {
+                    continue;
+                }
+                $approved[ $tx ][ $tid ][] = [
+                    'first_name' => $data['attendee']['first_name'] ?? '',
+                    'last_name'  => $data['attendee']['last_name'] ?? '',
+                    'email'      => $data['attendee']['email'] ?? '',
+                    'amount'     => floatval( $data['amount'] ?? 0 ),
+                ];
+                if ( isset( $txn_map[ $tx ] ) ) {
+                    $txn_map[ $tx ] += 1;
+                } else {
+                    $txn_map[ $tx ] = 1;
+                }
             }
         }
     }
@@ -1286,6 +1322,21 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     $item['attendees'] = array_values( $attendees );
                     $item['quantity']  = count( $item['attendees'] );
                     $item['refund_pending'] = false;
+                    if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
+                        foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
+                            $clone = $item;
+                            $clone['refund_approved'] = true;
+                            $clone['refund_amount']   = $ap['amount'];
+                            $clone['refund_attendee'] = [
+                                'first_name' => $ap['first_name'],
+                                'last_name'  => $ap['last_name'],
+                                'email'      => $ap['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
+                        }
+                    }
                     if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
                         $req  = $refunds[ $gateway_tx ][ $tid ];
                         $item['refund_pending'] = true;
@@ -1333,6 +1384,12 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     $clone['quantity']         = 1;
                     $split_items[]             = $clone;
                 }
+                continue;
+            }
+
+            if ( ! empty( $item['refund_approved'] ) ) {
+                $item['quantity'] = 1;
+                $split_items[] = $item;
                 continue;
             }
 
@@ -2015,6 +2072,7 @@ function tta_get_next_refund_request_for_ticket( $ticket_id ) {
         'event_id'      => intval( $row['event_id'] ),
         'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
         'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+        'attendee'      => $data['attendee'] ?? [],
     ];
 }
 
@@ -2241,8 +2299,14 @@ function tta_cancel_attendance_internal( $attendee_id ) {
                 'action_data' => wp_json_encode([
                     'amount'         => 0,
                     'transaction_id' => $tx['transaction_id'],
+                    'ticket_id'      => intval( $att['ticket_id'] ),
                     'attendee_id'    => $attendee_id,
                     'cancel'         => 1,
+                    'attendee'       => [
+                        'first_name' => $att['first_name'],
+                        'last_name'  => $att['last_name'],
+                        'email'      => $att['email'],
+                    ],
                 ]),
             ],
             [ '%d','%d','%d','%s','%s' ]

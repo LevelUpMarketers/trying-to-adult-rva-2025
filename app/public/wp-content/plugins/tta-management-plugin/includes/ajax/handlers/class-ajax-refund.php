@@ -75,6 +75,7 @@ class TTA_Ajax_Refund {
 
         $tx_id     = tta_sanitize_text_field( $_POST['tx'] ?? '' );
         $ticket_id = intval( $_POST['ticket'] ?? 0 );
+        $amount    = isset( $_POST['amount'] ) ? floatval( $_POST['amount'] ) : null;
         if ( ! $tx_id || ! $ticket_id ) {
             wp_send_json_error( [ 'message' => 'missing_data' ] );
         }
@@ -84,7 +85,7 @@ class TTA_Ajax_Refund {
             wp_send_json_error( [ 'message' => 'not_found' ] );
         }
 
-        TTA_Refund_Processor::process_refund_request( $req );
+        TTA_Refund_Processor::process_refund_request( $req, $amount );
         wp_send_json_success( [ 'message' => __( 'Refund processed.', 'tta' ) ] );
     }
 

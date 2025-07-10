@@ -418,7 +418,9 @@ $tickets = $wpdb->get_results(
                     <td><?php echo esc_html( $email ); ?></td>
                     <td><?php echo esc_html( $phone ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
-                    <td>&ndash;</td>
+                    <td>
+                      <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">
+                    </td>
                     <td>
                       <button type="button" class="tta-refund-request-process" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
                         <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>

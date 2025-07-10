@@ -93,8 +93,14 @@ class TTA_Ajax_Attendance {
                     'action_data' => wp_json_encode([
                         'amount'         => 0,
                         'transaction_id' => $tx['transaction_id'],
+                        'ticket_id'      => intval( $att['ticket_id'] ),
                         'attendee_id'    => $id,
                         'cancel'         => 1,
+                        'attendee'       => [
+                            'first_name' => $att['first_name'],
+                            'last_name'  => $att['last_name'],
+                            'email'      => $att['email'],
+                        ],
                     ]),
                 ],
                 [ '%d','%d','%d','%s','%s' ]
@@ -213,8 +219,14 @@ class TTA_Ajax_Attendance {
                 'action_data' => wp_json_encode([
                     'amount'         => $amount,
                     'transaction_id' => $tx['transaction_id'],
+                    'ticket_id'      => intval( $att['ticket_id'] ),
                     'attendee_id'    => $id,
                     'cancel'         => ( 'cancel' === $mode ) ? 1 : 0,
+                    'attendee'       => [
+                        'first_name' => $att['first_name'],
+                        'last_name'  => $att['last_name'],
+                        'email'      => $att['email'],
+                    ],
                 ]),
             ],
             [ '%d','%d','%d','%s','%s' ]

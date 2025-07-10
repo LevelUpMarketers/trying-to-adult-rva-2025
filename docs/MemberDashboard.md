@@ -22,6 +22,7 @@ shows:
 - Each refund link now carries the attendee ID so the correct person is removed when multiple identical tickets exist in one transaction
 - If a refund is pending for one attendee the entry remains with a pending note while any remaining attendees still appear separately with their own refund links
 - Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. The attendee is removed immediately. The refund is processed automatically once another member buys that ticket, otherwise the request expires two hours before the event. Administrators can review pending requests on the **TTA Refund Requests** admin page where they remain listed until processed.
+- Once a refund is approved the entry stays visible until the event date with a note showing the refunded amount and that the attendee has been cancelled.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the
