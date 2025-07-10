@@ -223,6 +223,7 @@ jQuery(function($){
         $form = $btn.closest('.tta-refund-form'),
         tx    = $btn.data('tx'),
         ticket = $btn.data('ticket'),
+        attendee = $btn.data('attendee'),
         reason= $form.find('textarea').val(),
         eventId = $form.data('event'),
         $spin = $form.find('.tta-admin-progress-spinner-svg'),
@@ -239,6 +240,7 @@ jQuery(function($){
       transaction_id: tx,
       event_id: eventId,
       ticket_id: ticket,
+      attendee_id: attendee,
       reason: reason
     }, function(res){
       var delay = Math.max(0, 5000 - (Date.now()-start));

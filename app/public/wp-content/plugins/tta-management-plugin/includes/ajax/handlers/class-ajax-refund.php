@@ -12,11 +12,12 @@ class TTA_Ajax_Refund {
         if ( ! is_user_logged_in() ) {
             wp_send_json_error( [ 'message' => __( 'You must be logged in.', 'tta' ) ] );
         }
-        $tx_id    = tta_sanitize_text_field( $_POST['transaction_id'] ?? '' );
-        $event_id = intval( $_POST['event_id'] ?? 0 );
-        $ticket_id= intval( $_POST['ticket_id'] ?? 0 );
+        $tx_id     = tta_sanitize_text_field( $_POST['transaction_id'] ?? '' );
+        $event_id  = intval( $_POST['event_id'] ?? 0 );
+        $ticket_id = intval( $_POST['ticket_id'] ?? 0 );
+        $att_id    = intval( $_POST['attendee_id'] ?? 0 );
         $reason  = tta_sanitize_textarea_field( $_POST['reason'] ?? '' );
-        if ( ! $tx_id || ! $event_id ) {
+        if ( ! $tx_id || ! $event_id || ! $att_id ) {
             wp_send_json_error( [ 'message' => 'missing_data' ] );
         }
         global $wpdb;
@@ -28,7 +29,7 @@ class TTA_Ajax_Refund {
         }
 
         // Gather attendee details before cancelling.
-        $att         = tta_get_attendee_by_tx_ticket( $tx_id, $ticket_id );
+        $att         = tta_get_attendee_by_tx_ticket( $tx_id, $ticket_id, $att_id );
         $att_details = [];
         $amount      = 0;
         if ( $att ) {

@@ -2181,9 +2181,10 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
  *
  * @param string $gateway_tx_id Gateway transaction ID.
  * @param int    $ticket_id     Ticket ID.
+ * @param int    $attendee_id   Optional attendee ID for transactions with multiple of the same ticket.
  * @return array|null Attendee row.
- */
-function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id ) {
+*/
+function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id, $attendee_id = 0 ) {
     global $wpdb;
     $att_table = $wpdb->prefix . 'tta_attendees';
     $tx_table  = $wpdb->prefix . 'tta_transactions';
@@ -2196,7 +2197,11 @@ function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id ) {
     if ( ! $tx_row ) {
         return null;
     }
-    $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    if ( $attendee_id ) {
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE id = %d AND transaction_id = %d AND ticket_id = %d LIMIT 1", $attendee_id, intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    } else {
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    }
     return $att ?: null;
 }
 

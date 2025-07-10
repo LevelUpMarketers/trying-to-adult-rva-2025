@@ -33,6 +33,7 @@
             </div>
           </div>
           <?php foreach ( $ev['items'] as $it ) : ?>
+            <?php $first_att = reset( $it['attendees'] ); ?>
             <div class="tta-ticket-details">
               <strong><?php echo esc_html( $it['ticket_name'] ); ?> (<?php echo intval( $it['quantity'] ); ?>)</strong>
               <?php if ( isset( $it['final_price'] ) ) : ?>
@@ -61,7 +62,7 @@
               <?php if ( empty( $it['refund_pending'] ) ) : ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
-                  <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
+                  <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
                     <?php esc_html_e( 'Cancel Attendance & Request a Refund', 'tta' ); ?>
                   </a>
                 <?php else : ?>
@@ -69,13 +70,13 @@
                     <?php esc_html_e( 'Cancel Attendance', 'tta' ); ?>
                   </a>
                 <?php endif; ?>
-                <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
+                <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
                   <label for="refund-<?php echo esc_attr( $ev['transaction_id'] . '-' . $it['ticket_id'] ); ?>">
                     <?php esc_html_e( 'Refund Request Details', 'tta' ); ?>
                   </label>
                   <span class="description"><?php esc_html_e( 'tell us why you\'re requesting a refund', 'tta' ); ?></span>
                   <textarea id="refund-<?php echo esc_attr( $ev['transaction_id'] . '-' . $it['ticket_id'] ); ?>" placeholder="<?php esc_attr_e( 'tell us why you\'re requesting a refund', 'tta' ); ?>"></textarea>
-                  <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
+                  <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
                     <?php echo $ev['amount'] > 0 ? esc_html__( 'Cancel Attendance & Request a Refund', 'tta' ) : esc_html__( 'Cancel Attendance', 'tta' ); ?>
                   </button>
                   <span class="tta-progress-spinner">
