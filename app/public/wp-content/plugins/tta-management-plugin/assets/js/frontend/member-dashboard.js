@@ -249,7 +249,10 @@ jQuery(function($){
         $btn.prop('disabled', false);
         if(res.success){
           $resp.addClass('updated').text(res.data.message);
-          setTimeout(function(){ window.location.reload(); }, 1000);
+          // prevent repeat submissions so the message can be read
+          $form.find('textarea').prop('disabled', true);
+          $btn.prop('disabled', true);
+          $form.closest('.tta-refund-wrapper').find('.tta-refund-link, .tta-cancel-link').remove();
         }else{
           $resp.addClass('error').text(res.data.message||'Error');
         }

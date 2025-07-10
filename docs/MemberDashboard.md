@@ -24,6 +24,7 @@ shows:
 - Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. The attendee is removed immediately. The refund is processed automatically once another member buys that ticket, otherwise the request expires two hours before the event. Administrators can review pending requests on the **TTA Refund Requests** admin page where they remain listed until processed.
 - Once a refund is approved the entry stays visible until the event date with a note showing the refunded amount and that the attendee has been cancelled. The refund link and form are removed so no further requests can be made.
 - Successful submission displays the message "Your refund request has been submitted! Per our Refund Policy, you will be automatically refunded when another attendee purchases your ticket. There's nothing else for you to do! Check back here periodically to see the status of your refund request."
+- After submitting, the page no longer reloads automatically; the refund button and link are disabled so the confirmation message stays visible.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the
