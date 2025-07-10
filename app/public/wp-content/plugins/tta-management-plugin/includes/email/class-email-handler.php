@@ -63,17 +63,35 @@ class TTA_Email_Handler {
                 }
             }
 
-            $tokens = $this->build_tokens( $event, $context, $attendees );
-            $subject = strtr( $tpl['email_subject'], $tokens );
-            $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+            $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-            $recipients = array_unique( array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) ) );
-            $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
-            foreach ( $recipients as $to ) {
-                $to = sanitize_email( $to );
-                if ( $to ) {
-                    wp_mail( $to, $subject, $body, $headers );
+            // Send email to purchasing member using default attendee order.
+            $base_tokens = $this->build_tokens( $event, $context, $attendees );
+            $subject     = strtr( $tpl['email_subject'], $base_tokens );
+            $body        = nl2br( strtr( $tpl['email_body'], $base_tokens ) );
+            $to          = sanitize_email( $context['user_email'] );
+            if ( $to ) {
+                wp_mail( $to, $subject, $body, $headers );
+            }
+
+            // Send personalized email to each attendee.
+            foreach ( $attendees as $index => $att ) {
+                $recipient = sanitize_email( $att['email'] ?? '' );
+                if ( ! $recipient ) {
+                    continue;
                 }
+
+                // Place this attendee first in the array for token generation.
+                $ordered = $attendees;
+                if ( $index !== 0 ) {
+                    $ordered[ $index ] = $attendees[0];
+                    $ordered[0]       = $att;
+                }
+
+                $tokens  = $this->build_tokens( $event, $context, $ordered );
+                $subject = strtr( $tpl['email_subject'], $tokens );
+                $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+                wp_mail( $recipient, $subject, $body, $headers );
             }
         }
     }

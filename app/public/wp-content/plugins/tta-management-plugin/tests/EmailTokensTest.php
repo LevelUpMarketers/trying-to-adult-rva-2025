@@ -13,6 +13,9 @@ class EmailTokensTest extends TestCase {
         if (!function_exists('home_url')) {
             function home_url($p='', $t='relative'){ return '/'.ltrim($p,'/'); }
         }
+        if (!function_exists('date_i18n')) {
+            function date_i18n($f,$ts){ return date($f,$ts); }
+        }
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/email/class-email-handler.php';
     }
@@ -33,5 +36,27 @@ class EmailTokensTest extends TestCase {
 
         $this->assertArrayHasKey('{refund_event_name}', $tokens);
         $this->assertSame('Sample Event', $tokens['{refund_event_name}']);
+    }
+
+    public function test_tokens_change_with_attendee_order() {
+        $handler = TTA_Email_Handler::get_instance();
+        $ref = new \ReflectionClass($handler);
+        $method = $ref->getMethod('build_tokens');
+        $method->setAccessible(true);
+
+        $event = [ 'name' => 'Event', 'date' => '2025-06-30', 'time' => '18:00|20:00' ];
+        $member = [ 'first_name' => 'Buyer', 'last_name' => 'Name', 'user_email' => 'buyer@example.com',
+                    'member' => [ 'phone' => '' ], 'membership_level' => '' ];
+        $attendees = [
+            [ 'first_name' => 'Tucker', 'last_name' => '', 'email' => 'tucker@example.com', 'phone' => '' ],
+            [ 'first_name' => 'Jill', 'last_name' => '', 'email' => 'jill@example.com', 'phone' => '' ],
+        ];
+
+        $tokens1 = $method->invoke($handler, $event, $member, $attendees);
+        $ordered = array_reverse($attendees);
+        $tokens2 = $method->invoke($handler, $event, $member, $ordered);
+
+        $this->assertSame('Tucker', $tokens1['{attendee_first_name}']);
+        $this->assertSame('Jill', $tokens2['{attendee_first_name}']);
     }
 }
