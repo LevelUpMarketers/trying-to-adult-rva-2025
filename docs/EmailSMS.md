@@ -111,6 +111,8 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {refund_email}
 {refund_amount}
 {refund_ticket}
+{refund_event_date}
+{refund_event_time}
 ```
 
 Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.

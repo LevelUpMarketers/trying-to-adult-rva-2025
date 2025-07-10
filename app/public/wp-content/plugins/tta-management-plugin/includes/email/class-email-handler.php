@@ -120,11 +120,14 @@ class TTA_Email_Handler {
             $tokens[ '{attendee' . $index . '_phone}' ]      = sanitize_text_field( $a['phone'] ?? '' );
         }
 
-        $tokens['{refund_first_name}'] = sanitize_text_field( $refund['first_name'] ?? '' );
-        $tokens['{refund_last_name}']  = sanitize_text_field( $refund['last_name'] ?? '' );
-        $tokens['{refund_email}']      = sanitize_email( $refund['email'] ?? '' );
+        $att_ref = $refund['attendee'] ?? [];
+        $tokens['{refund_first_name}'] = sanitize_text_field( $refund['first_name'] ?? $att_ref['first_name'] ?? '' );
+        $tokens['{refund_last_name}']  = sanitize_text_field( $refund['last_name'] ?? $att_ref['last_name'] ?? '' );
+        $tokens['{refund_email}']      = sanitize_email( $refund['email'] ?? $att_ref['email'] ?? '' );
         $tokens['{refund_amount}']     = isset( $refund['amount'] ) ? number_format( (float) $refund['amount'], 2 ) : '';
         $tokens['{refund_ticket}']     = sanitize_text_field( $refund['ticket_name'] ?? '' );
+        $tokens['{refund_event_date}'] = isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '';
+        $tokens['{refund_event_time}'] = isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '';
 
         return $tokens;
     }

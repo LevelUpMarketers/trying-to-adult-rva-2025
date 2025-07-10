@@ -1239,21 +1239,28 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 }
                 $tx  = $data['transaction_id'] ?? '';
                 $tid = intval( $data['ticket_id'] ?? 0 );
-                if ( ! $tx || ! $tid ) {
+                $email = sanitize_email( $data['attendee']['email'] ?? '' );
+                if ( ! $tx || ! $tid || ! $email ) {
                     continue;
                 }
-                $approved[ $tx ][ $tid ][] = [
+                if ( ! isset( $approved[ $tx ][ $tid ][ $email ] ) ) {
+                    $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
+                }
+                $approved[ $tx ][ $tid ][ $email ] = [
                     'first_name' => $data['attendee']['first_name'] ?? '',
                     'last_name'  => $data['attendee']['last_name'] ?? '',
-                    'email'      => $data['attendee']['email'] ?? '',
+                    'email'      => $email,
                     'amount'     => floatval( $data['amount'] ?? 0 ),
                 ];
-                if ( isset( $txn_map[ $tx ] ) ) {
-                    $txn_map[ $tx ] += 1;
-                } else {
-                    $txn_map[ $tx ] = 1;
-                }
             }
+            // Flatten arrays for easier consumption later
+            foreach ( $approved as $tx_key => &$tids ) {
+                foreach ( $tids as $tid_key => &$ap ) {
+                    $ap = array_values( $ap );
+                }
+                unset( $ap );
+            }
+            unset( $tids );
         }
     }
 

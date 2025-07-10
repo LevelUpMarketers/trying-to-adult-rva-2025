@@ -118,6 +118,9 @@ class TTA_Refund_Processor {
             'ticket_name' => $ticket_info['ticket_name'] ?? '',
             'attendee'    => $attendee,
             'amount'      => $amount,
+            'first_name'  => $attendee['first_name'] ?? '',
+            'last_name'   => $attendee['last_name'] ?? '',
+            'email'       => $attendee['email'] ?? '',
         ];
         TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
 
