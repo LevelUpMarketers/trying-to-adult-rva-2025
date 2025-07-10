@@ -64,34 +64,35 @@ class TTA_Email_Handler {
                 }
             }
 
-            $headers   = [ 'Content-Type: text/html; charset=UTF-8' ];
-            $tokens    = $this->build_tokens( $event, $context, $attendees );
+            $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-            $member_email = sanitize_email( $context['user_email'] );
-            if ( $member_email ) {
-                $subject = strtr( $tpl['email_subject'], $tokens );
-                $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
-                wp_mail( $member_email, $subject, $body, $headers );
+            // Send email to purchasing member using default attendee order.
+            $base_tokens = $this->build_tokens( $event, $context, $attendees );
+            $subject     = strtr( $tpl['email_subject'], $base_tokens );
+            $body        = nl2br( strtr( $tpl['email_body'], $base_tokens ) );
+            $to          = sanitize_email( $context['user_email'] );
+            if ( $to ) {
+                wp_mail( $to, $subject, $body, $headers );
             }
 
-            $sent = $member_email ? [ $member_email => true ] : [];
-            foreach ( $attendees as $att ) {
-                $email = sanitize_email( $att['email'] ?? '' );
-                if ( ! $email || isset( $sent[ $email ] ) ) {
+            // Send personalized email to each attendee.
+            foreach ( $attendees as $index => $att ) {
+                $recipient = sanitize_email( $att['email'] ?? '' );
+                if ( ! $recipient ) {
                     continue;
                 }
 
-                $sent[ $email ] = true;
+                // Place this attendee first in the array for token generation.
+                $ordered = $attendees;
+                if ( $index !== 0 ) {
+                    $ordered[ $index ] = $attendees[0];
+                    $ordered[0]       = $att;
+                }
 
-                $per_tokens = $tokens;
-                $per_tokens['{attendee_first_name}'] = sanitize_text_field( $att['first_name'] ?? '' );
-                $per_tokens['{attendee_last_name}']  = sanitize_text_field( $att['last_name'] ?? '' );
-                $per_tokens['{attendee_email}']      = $email;
-                $per_tokens['{attendee_phone}']      = sanitize_text_field( $att['phone'] ?? '' );
-
-                $subject = strtr( $tpl['email_subject'], $per_tokens );
-                $body    = nl2br( strtr( $tpl['email_body'], $per_tokens ) );
-                wp_mail( $email, $subject, $body, $headers );
+                $tokens  = $this->build_tokens( $event, $context, $ordered );
+                $subject = strtr( $tpl['email_subject'], $tokens );
+                $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+                wp_mail( $recipient, $subject, $body, $headers );
             }
         }
     }
@@ -144,6 +145,7 @@ class TTA_Email_Handler {
         $tokens['{refund_email}']      = sanitize_email( $refund['email'] ?? $att_ref['email'] ?? '' );
         $tokens['{refund_amount}']     = isset( $refund['amount'] ) ? number_format( (float) $refund['amount'], 2 ) : '';
         $tokens['{refund_ticket}']     = sanitize_text_field( $refund['ticket_name'] ?? '' );
+        $tokens['{refund_event_name}'] = $event['name'] ?? '';
         $tokens['{refund_event_date}'] = isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '';
         $tokens['{refund_event_time}'] = isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '';
 
