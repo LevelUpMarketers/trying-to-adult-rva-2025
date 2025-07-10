@@ -254,3 +254,8 @@
   color:#666;
   margin-bottom:4px;
 }
+.tta-refund-wrapper .tta-admin-progress-response-p.updated{
+    max-height: initial;
+    font-size: 20px;
+    margin-top: 20px;
+}
