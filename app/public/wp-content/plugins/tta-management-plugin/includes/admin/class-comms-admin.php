@@ -192,11 +192,6 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{event_name}">{event_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_address}">{event_address}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_link}">{event_link}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_profile_url}">{dashboard_profile_url}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_upcoming_url}">{dashboard_upcoming_url}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_waitlist_url}">{dashboard_waitlist_url}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_past_url}">{dashboard_past_url}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_billing_url}">{dashboard_billing_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_date}">{event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_time}">{event_time}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_type}">{event_type}</button> ';
@@ -212,7 +207,12 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{email}">{email}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{phone}">{phone}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{membership_level}">{membership_level}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{member_type}">{member_type}</button></div>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{member_type}">{member_type}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_profile_url}">{dashboard_profile_url}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_upcoming_url}">{dashboard_upcoming_url}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_waitlist_url}">{dashboard_waitlist_url}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_past_url}">{dashboard_past_url}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_billing_url}">{dashboard_billing_url}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Per-ticket attendee details.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Event Attendee Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee_first_name}">{attendee_first_name}</button> ';

@@ -69,8 +69,10 @@ class TTA_Email_Handler {
 
             // Send email to purchasing member using default attendee order.
             $base_tokens = $this->build_tokens( $event, $context, $attendees );
-            $subject  = strtr( $tpl['email_subject'], $base_tokens );
-            $body_txt = tta_convert_links( strtr( $tpl['email_body'], $base_tokens ) );
+            $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $base_tokens );
+            $subject  = strtr( $subject_raw, $base_tokens );
+            $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $base_tokens );
+            $body_txt = tta_convert_links( strtr( $body_raw, $base_tokens ) );
             $body     = nl2br( $body_txt );
             $to          = sanitize_email( $context['user_email'] );
             if ( $to && ! in_array( $to, $sent, true ) ) {
@@ -93,8 +95,10 @@ class TTA_Email_Handler {
                 }
 
                 $tokens  = $this->build_tokens( $event, $context, $ordered );
-                $subject  = strtr( $tpl['email_subject'], $tokens );
-                $body_txt = tta_convert_links( strtr( $tpl['email_body'], $tokens ) );
+                $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+                $subject  = strtr( $subject_raw, $tokens );
+                $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+                $body_txt = tta_convert_links( strtr( $body_raw, $tokens ) );
                 $body     = nl2br( $body_txt );
                 wp_mail( $recipient, $subject, $body, $headers );
                 $sent[] = $recipient;
@@ -115,11 +119,11 @@ class TTA_Email_Handler {
             '{event_name}'           => $event['name'] ?? '',
             '{event_address}'        => $event['address'] ?? '',
             '{event_link}'           => $event['page_url'] ?? '',
-            '{dashboard_profile_url}'  => home_url( '/member-dashboard/?tab=profile', 'relative' ),
-            '{dashboard_upcoming_url}' => home_url( '/member-dashboard/?tab=upcoming', 'relative' ),
-            '{dashboard_past_url}'       => home_url( '/member-dashboard/?tab=past', 'relative' ),
-            '{dashboard_billing_url}'    => home_url( '/member-dashboard/?tab=billing', 'relative' ),
-            '{dashboard_waitlist_url}'   => home_url( '/member-dashboard/?tab=waitlist', 'relative' ),
+            '{dashboard_profile_url}'  => home_url( '/member-dashboard/?tab=profile' ),
+            '{dashboard_upcoming_url}' => home_url( '/member-dashboard/?tab=upcoming' ),
+            '{dashboard_past_url}'       => home_url( '/member-dashboard/?tab=past' ),
+            '{dashboard_billing_url}'    => home_url( '/member-dashboard/?tab=billing' ),
+            '{dashboard_waitlist_url}'   => home_url( '/member-dashboard/?tab=waitlist' ),
             '{event_date}'           => isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '',
             '{event_time}'           => isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '',
             '{event_type}'           => $event['type'] ?? '',
@@ -185,8 +189,10 @@ class TTA_Email_Handler {
         $attendees = tta_get_transaction_event_attendees( $transaction['transaction_id'], $refund['event_id'] );
 
         $tokens   = $this->build_tokens( $event, $context, $attendees, $refund );
-        $subject  = strtr( $tpl['email_subject'], $tokens );
-        $body_txt = tta_convert_links( strtr( $tpl['email_body'], $tokens ) );
+        $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+        $subject  = strtr( $subject_raw, $tokens );
+        $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+        $body_txt = tta_convert_links( strtr( $body_raw, $tokens ) );
         $body     = nl2br( $body_txt );
 
         $recipients = array_unique( array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) ) );

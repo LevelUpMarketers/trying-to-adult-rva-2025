@@ -16,9 +16,10 @@ if ( ! $context['is_logged_in'] ) {
     return;
 }
 
-$member = $context['member'];
-$allowed = [ 'volunteer', 'admin', 'super_admin' ];
-if ( ! $member || ! in_array( $member['member_type'], $allowed, true ) ) {
+$member   = $context['member'];
+$allowed  = [ 'volunteer', 'admin', 'super_admin' ];
+$is_admin = current_user_can( 'manage_options' );
+if ( ! $is_admin && ( ! $member || ! in_array( $member['member_type'], $allowed, true ) ) ) {
     echo '<p>' . esc_html__( 'You do not have permission to view this page.', 'tta' ) . '</p>';
     return;
 }

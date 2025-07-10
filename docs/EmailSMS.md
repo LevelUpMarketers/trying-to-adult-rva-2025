@@ -39,7 +39,7 @@ Default values are provided on initial install:
 - **Admin Notifications**: emails are sent when new events are created, refunds are requested or events sell out.
 - **Host and Volunteer Reminders**: internal messages mirror attendee reminders at 24 and 2 hours before the event.
 
-Links to the member dashboard are relative URLs so they work on any domain. Tokens include direct links to each dashboard tab including the waitlist view.
+Links to the member dashboard now output the full site URL and include direct links to each dashboard tab, including the waitlist view.
 
 ## Previews and Tokens
 
@@ -69,6 +69,15 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {member_cost}
 {premium_cost}
 ```
+
+Dashboard URL tokens accept an optional `anchor` attribute. For example:
+
+```
+{dashboard_upcoming_url anchor="see your upcoming events"}
+```
+
+This outputs a clickable link using the provided anchor text. When the anchor is
+empty or omitted the full URL is printed.
 
 `{event_date}` outputs the event date formatted like "June 28th, 2025". `{event_time}` shows the start and end times in 12‑hour format with am/pm, e.g. "6:00 pm - 8:00 pm".
 

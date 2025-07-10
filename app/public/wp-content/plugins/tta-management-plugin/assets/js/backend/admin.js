@@ -1188,6 +1188,14 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   }
 
+  function expandAnchors(text,map){
+    return text.replace(/\{(dashboard_(?:profile|upcoming|waitlist|past|billing)_url) anchor="([^"]*)"\}/g,function(_,tok,anch){
+      var url = map['{'+tok+'}'] || '';
+      if(anch===''){ return url; }
+      return '['+anch+']('+url+')';
+    });
+  }
+
   function renderPreview($form){
     var subj = $form.find('input[name=email_subject]').val() || '';
     var body = $form.find('textarea[name=email_body]').val() || '';
@@ -1234,7 +1242,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{attendee4_email}': mem.email || 'attendee4@example.com',
         '{attendee4_phone}': mem.phone || '555-555-5558'
       };
-  Object.keys(map).forEach(function(tok){
+    subj = expandAnchors(subj, map);
+    body = expandAnchors(body, map);
+    Object.keys(map).forEach(function(tok){
       var val = map[tok];
       subj = subj.split(tok).join(val);
       body = body.split(tok).join(val);
