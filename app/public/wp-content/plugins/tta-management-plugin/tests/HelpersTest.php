@@ -86,6 +86,8 @@ class HelpersTest extends TestCase {
         if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }
         if (!function_exists('get_option')) { function get_option($k,$d=null){ return $GLOBALS['options'][$k] ?? $d; } }
         if (!function_exists('update_option')) { function update_option($k,$v,$autoload=true){ $GLOBALS['options'][$k]=$v; } }
+        if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
+        if (!function_exists('add_filter')) { function add_filter($t,$c,$p=10,$a=1){} }
 
         $GLOBALS['transients'] = [];
         $GLOBALS['options'] = [];
@@ -213,6 +215,90 @@ class HelpersTest extends TestCase {
         $this->assertSame('Test Event', $events[0]['name']);
         $this->assertSame('123 St -  - Town - ST - 12345', $events[0]['address']);
         $this->assertStringContainsString('wp_tta_memberhistory', $wpdb->last_query);
+    }
+
+    public function test_get_member_upcoming_events_splits_multi_attendees() {
+        global $wpdb;
+        $wpdb->results_data = [
+            [
+                'action_data' => json_encode([
+                    'transaction_id' => 'TXS',
+                    'amount' => 40,
+                    'items' => [
+                        [
+                            'ticket_id' => 7,
+                            'ticket_name' => 'General',
+                            'quantity' => 2,
+                            'attendees' => [
+                                [ 'first_name' => 'Ann',  'last_name' => 'A', 'email' => 'a@e.com' ],
+                                [ 'first_name' => 'Bob',  'last_name' => 'B', 'email' => 'b@e.com' ],
+                            ]
+                        ]
+                    ]
+                ]),
+                'event_id'    => 9,
+                'name'        => 'Split Event',
+                'page_id'     => 1,
+                'mainimageid' => 0,
+                'date'        => '2030-01-02',
+                'time'        => '08:00|10:00',
+                'address'     => '1 St -  - City - ST - 00000',
+                'type'        => 'paid',
+                'refundsavailable' => '1'
+            ]
+        ];
+        $events = tta_get_member_upcoming_events(1);
+        $this->assertCount(1, $events);
+        $this->assertCount(2, $events[0]['items']);
+        $this->assertSame('Ann', $events[0]['items'][0]['attendees'][0]['first_name']);
+        $this->assertSame('Bob', $events[0]['items'][1]['attendees'][0]['first_name']);
+    }
+
+    public function test_get_member_upcoming_events_handles_refund_pending_split() {
+        global $wpdb;
+        $wpdb->results_data = [
+            [
+                'action_data' => json_encode([
+                    'transaction_id' => 'TXR',
+                    'amount' => 40,
+                    'items' => [
+                        [
+                            'ticket_id' => 7,
+                            'ticket_name' => 'General',
+                            'quantity' => 2,
+                            'refund_pending' => true,
+                            'refund_attendee' => [
+                                'first_name' => 'Ann',
+                                'last_name'  => 'A',
+                                'email'      => 'a@e.com'
+                            ],
+                            'attendees' => [
+                                [ 'first_name' => 'Bob', 'last_name' => 'B', 'email' => 'b@e.com' ]
+                            ]
+                        ]
+                    ]
+                ]),
+                'event_id'    => 9,
+                'name'        => 'Refund Event',
+                'page_id'     => 1,
+                'mainimageid' => 0,
+                'date'        => '2030-01-02',
+                'time'        => '08:00|10:00',
+                'address'     => '1 St -  - City - ST - 00000',
+                'type'        => 'paid',
+                'refundsavailable' => '1'
+            ]
+        ];
+
+        $events = tta_get_member_upcoming_events(1);
+        $this->assertCount(1, $events);
+        $items = $events[0]['items'];
+        $this->assertCount(2, $items);
+        $pending = array_values(array_filter($items, function($i){ return !empty($i['refund_pending']); }));
+        $this->assertCount(1, $pending);
+        $normal = array_values(array_filter($items, function($i){ return empty($i['refund_pending']); }));
+        $this->assertCount(1, $normal);
+        $this->assertSame('Bob', $normal[0]['attendees'][0]['first_name']);
     }
 
     public function test_get_member_past_events_queries_archive() {
