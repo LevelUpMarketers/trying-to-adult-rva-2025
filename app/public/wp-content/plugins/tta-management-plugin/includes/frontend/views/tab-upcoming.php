@@ -74,11 +74,11 @@
               <?php endforeach; ?>
               </ul>
               <?php endif; ?>
-              <?php if ( empty( $it['refund_pending'] ) ) : ?>
+              <?php if ( empty( $it['refund_pending'] ) && empty( $it['refund_approved'] ) ) : ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
                   <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
-                    <?php esc_html_e( 'Cancel Attendance & Request a Refund', 'tta' ); ?>
+                    <?php esc_html_e( 'Request a Refund', 'tta' ); ?>
                   </a>
                 <?php else : ?>
                   <a href="#" class="tta-cancel-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>">
@@ -92,7 +92,7 @@
                   <span class="description"><?php esc_html_e( 'tell us why you\'re requesting a refund', 'tta' ); ?></span>
                   <textarea id="refund-<?php echo esc_attr( $ev['transaction_id'] . '-' . $it['ticket_id'] ); ?>" placeholder="<?php esc_attr_e( 'tell us why you\'re requesting a refund', 'tta' ); ?>"></textarea>
                   <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
-                    <?php echo $ev['amount'] > 0 ? esc_html__( 'Cancel Attendance & Request a Refund', 'tta' ) : esc_html__( 'Cancel Attendance', 'tta' ); ?>
+                    <?php echo $ev['amount'] > 0 ? esc_html__( 'Request a Refund', 'tta' ) : esc_html__( 'Cancel Attendance', 'tta' ); ?>
                   </button>
                   <span class="tta-progress-spinner">
                     <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
