@@ -103,6 +103,8 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {attendee4_phone}
 ```
 
+Each attendee receives a personalized email where these tokens reflect their own details.
+
 ### Refund Information
 
 ```
@@ -111,6 +113,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {refund_email}
 {refund_amount}
 {refund_ticket}
+{refund_event_name}
 {refund_event_date}
 {refund_event_time}
 ```
@@ -125,4 +128,4 @@ database values into the human-friendly strings shown by `{event_date}` and
 
 ## Email Delivery
 
-All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member and every attendee receive their own copy, with one message sent for each event in the cart.
+All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member receives one email and each attendee gets a personalized copy where tokens like `{attendee_first_name}` reflect their own information.

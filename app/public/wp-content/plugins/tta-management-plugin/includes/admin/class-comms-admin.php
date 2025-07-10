@@ -237,6 +237,7 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_email}">{refund_email}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_amount}">{refund_amount}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_ticket}">{refund_ticket}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_name}">{refund_event_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_date}">{refund_event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_time}">{refund_event_time}</button></div>';
 
