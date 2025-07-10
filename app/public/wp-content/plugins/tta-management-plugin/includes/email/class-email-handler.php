@@ -67,13 +67,11 @@ class TTA_Email_Handler {
             $subject = strtr( $tpl['email_subject'], $tokens );
             $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
 
-            $recipients = array_unique( array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) ) );
+            $recipients = array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) );
+            $recipients = array_values( array_unique( array_filter( array_map( 'sanitize_email', $recipients ) ) ) );
             $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
             foreach ( $recipients as $to ) {
-                $to = sanitize_email( $to );
-                if ( $to ) {
-                    wp_mail( $to, $subject, $body, $headers );
-                }
+                wp_mail( $to, $subject, $body, $headers );
             }
         }
     }
