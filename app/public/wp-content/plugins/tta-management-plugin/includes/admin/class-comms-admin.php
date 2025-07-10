@@ -64,6 +64,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('A member has requested a refund for the event below.', 'tta'),
                 'sms_text'    => '',
             ],
+            'refund_processed' => [
+                'label'       => __('Refund Processed', 'tta'),
+                'type'        => 'External',
+                'category'    => 'Refund',
+                'description' => __('Notifies attendees when a refund request is approved and issued.', 'tta'),
+                'email_subject' => __('Your refund has been issued', 'tta'),
+                'email_body'  => __('Your refund request was approved and has been processed. We\'re sorry you couldn\'t make it, but we hope to see you at future events!', 'tta'),
+                'sms_text'    => '',
+            ],
             'event_sold_out' => [
                 'label'       => __('Event Sold Out', 'tta'),
                 'type'        => 'Internal',
@@ -221,6 +230,13 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_last_name}">{attendee4_last_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_email}">{attendee4_email}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_phone}">{attendee4_phone}</button></div>';
+
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the refunded ticket.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Refund Information', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_first_name}">{refund_first_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_last_name}">{refund_last_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_email}">{refund_email}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_amount}">{refund_amount}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{refund_ticket}">{refund_ticket}</button></div>';
 
             echo '<button type="button" class="button tta-insert-br">Line Break</button>';
             echo '</td></tr>';

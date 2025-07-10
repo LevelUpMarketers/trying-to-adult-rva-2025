@@ -111,6 +111,16 @@ class TTA_Refund_Processor {
             [ '%d','%d','%d','%s','%s' ]
         );
 
+        $ticket_info = tta_get_ticket_basic_info( $req['ticket_id'] );
+        $refund_data = [
+            'event_id'    => intval( $req['event_id'] ),
+            'ticket_id'   => intval( $req['ticket_id'] ),
+            'ticket_name' => $ticket_info['ticket_name'] ?? '',
+            'attendee'    => $attendee,
+            'amount'      => $amount,
+        ];
+        TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
+
         tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
         TTA_Cache::flush();
     }

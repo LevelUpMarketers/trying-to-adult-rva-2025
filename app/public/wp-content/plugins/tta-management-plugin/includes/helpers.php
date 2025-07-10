@@ -2455,6 +2455,100 @@ function tta_get_event_for_email( $event_ute_id ) {
 }
 
 /**
+ * Retrieve an event ute_id from an event ID.
+ *
+ * @param int $event_id Event ID.
+ * @return string Event ute_id or empty string.
+ */
+function tta_get_event_ute_id( $event_id ) {
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return '';
+    }
+    $ute = $wpdb->get_var( $wpdb->prepare( "SELECT ute_id FROM {$events_table} WHERE id = %d UNION SELECT ute_id FROM {$archive_table} WHERE id = %d LIMIT 1", $event_id, $event_id ) );
+    return $ute ? sanitize_text_field( $ute ) : '';
+}
+
+/**
+ * Fetch ticket name and event ute_id.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return array|null
+ */
+function tta_get_ticket_basic_info( $ticket_id ) {
+    global $wpdb;
+    $tickets_table   = $wpdb->prefix . 'tta_tickets';
+    $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
+    $ticket_id = intval( $ticket_id );
+    if ( ! $ticket_id ) {
+        return null;
+    }
+    $row = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id, ticket_name FROM {$tickets_table} WHERE id = %d", $ticket_id ), ARRAY_A );
+    if ( ! $row ) {
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id, ticket_name FROM {$tickets_archive} WHERE id = %d", $ticket_id ), ARRAY_A );
+    }
+    if ( ! $row ) {
+        return null;
+    }
+    return [
+        'event_ute_id' => sanitize_text_field( $row['event_ute_id'] ),
+        'ticket_name'  => sanitize_text_field( $row['ticket_name'] ),
+    ];
+}
+
+/**
+ * Get attendees for a transaction and event.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $event_id      Event ID.
+ * @return array[]
+ */
+function tta_get_transaction_event_attendees( $gateway_tx_id, $event_id ) {
+    return tta_get_refund_request_attendees( $gateway_tx_id, $event_id );
+}
+
+/**
+ * Build a user context array for a specific user ID.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return array
+ */
+function tta_get_user_context_by_id( $user_id ) {
+    $context = [
+        'wp_user_id'       => intval( $user_id ),
+        'user_email'       => '',
+        'first_name'       => '',
+        'last_name'        => '',
+        'member'           => null,
+        'membership_level' => 'free',
+    ];
+
+    $user = get_user_by( 'ID', $user_id );
+    if ( $user ) {
+        $context['user_email'] = sanitize_email( $user->user_email );
+        $context['first_name'] = sanitize_text_field( $user->first_name );
+        $context['last_name']  = sanitize_text_field( $user->last_name );
+    }
+
+    $cache_key = 'member_row_' . $user_id;
+    $member    = TTA_Cache::remember( $cache_key, function() use ( $user_id ) {
+        global $wpdb;
+        $members_table = $wpdb->prefix . 'tta_members';
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$members_table} WHERE wpuserid = %d", $user_id ), ARRAY_A );
+    }, 300 );
+
+    if ( is_array( $member ) ) {
+        $context['member']           = $member;
+        $context['membership_level'] = $member['membership_level'] ?? 'free';
+    }
+
+    return $context;
+}
+
+/**
  * Get the remaining ticket count for an upcoming event.
  *
  * @param string $event_ute_id Event ute_id.
