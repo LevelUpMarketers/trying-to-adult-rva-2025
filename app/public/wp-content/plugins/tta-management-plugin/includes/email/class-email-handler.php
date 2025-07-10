@@ -56,6 +56,7 @@ class TTA_Email_Handler {
             if ( empty( $event ) ) {
                 continue;
             }
+
             $attendees = [];
             foreach ( $ev_items as $it ) {
                 foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) {
