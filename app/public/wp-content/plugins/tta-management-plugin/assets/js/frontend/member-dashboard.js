@@ -223,6 +223,7 @@ jQuery(function($){
         $form = $btn.closest('.tta-refund-form'),
         tx    = $btn.data('tx'),
         ticket = $btn.data('ticket'),
+        attendee = $btn.data('attendee'),
         reason= $form.find('textarea').val(),
         eventId = $form.data('event'),
         $spin = $form.find('.tta-admin-progress-spinner-svg'),
@@ -239,6 +240,7 @@ jQuery(function($){
       transaction_id: tx,
       event_id: eventId,
       ticket_id: ticket,
+      attendee_id: attendee,
       reason: reason
     }, function(res){
       var delay = Math.max(0, 5000 - (Date.now()-start));
@@ -247,7 +249,10 @@ jQuery(function($){
         $btn.prop('disabled', false);
         if(res.success){
           $resp.addClass('updated').text(res.data.message);
-          setTimeout(function(){ window.location.reload(); }, 1000);
+          // prevent repeat submissions so the message can be read
+          $form.find('textarea').prop('disabled', true);
+          $btn.prop('disabled', true);
+          $form.closest('.tta-refund-wrapper').find('.tta-refund-link, .tta-cancel-link').remove();
         }else{
           $resp.addClass('error').text(res.data.message||'Error');
         }

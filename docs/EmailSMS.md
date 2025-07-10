@@ -11,6 +11,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `reminder_2hr` | Sent two hours before an event starts. |
 | `new_event` | Internal notice when a new event is created. |
 | `refund_requested` | Internal notice when a member requests a refund. |
+| `refund_processed` | Sent to attendees when a refund request is approved and issued. |
 | `event_sold_out` | Internal alert when an event reaches capacity. |
 | `waitlist_available` | Sent when a ticket becomes available for someone on the waitlist. |
 | `host_reminder_24hr` | Reminder to event hosts 24 hours before their event. |
@@ -100,6 +101,16 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {attendee4_last_name}
 {attendee4_email}
 {attendee4_phone}
+```
+
+### Refund Information
+
+```
+{refund_first_name}
+{refund_last_name}
+{refund_email}
+{refund_amount}
+{refund_ticket}
 ```
 
 Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.

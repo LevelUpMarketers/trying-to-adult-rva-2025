@@ -46,14 +46,14 @@ class TTA_Refund_Processor {
      *
      * @param array $req Refund request data.
      */
-    public static function process_refund_request( array $req ) {
+    public static function process_refund_request( array $req, $amount_override = null ) {
         $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
         if ( ! $tx ) {
             tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
             return;
         }
 
-        $amount = tta_get_ticket_price_from_transaction( $tx, $req['ticket_id'] );
+        $amount = null === $amount_override ? tta_get_ticket_price_from_transaction( $tx, $req['ticket_id'] ) : floatval( $amount_override );
         if ( $amount <= 0 ) {
             $amount = floatval( $tx['amount'] );
         }
@@ -91,6 +91,7 @@ class TTA_Refund_Processor {
             [ '%d' ]
         );
 
+        $attendee = $req['attendee'] ?? [];
         $wpdb->insert(
             $hist_table,
             [
@@ -101,12 +102,24 @@ class TTA_Refund_Processor {
                 'action_data' => wp_json_encode([
                     'amount'         => $amount,
                     'transaction_id' => $tx['transaction_id'],
+                    'ticket_id'      => intval( $req['ticket_id'] ),
                     'attendee_id'    => 0,
                     'cancel'         => 1,
+                    'attendee'       => $attendee,
                 ]),
             ],
             [ '%d','%d','%d','%s','%s' ]
         );
+
+        $ticket_info = tta_get_ticket_basic_info( $req['ticket_id'] );
+        $refund_data = [
+            'event_id'    => intval( $req['event_id'] ),
+            'ticket_id'   => intval( $req['ticket_id'] ),
+            'ticket_name' => $ticket_info['ticket_name'] ?? '',
+            'attendee'    => $attendee,
+            'amount'      => $amount,
+        ];
+        TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
 
         tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
         TTA_Cache::flush();

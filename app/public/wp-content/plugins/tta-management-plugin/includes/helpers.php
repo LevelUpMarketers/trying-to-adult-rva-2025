@@ -1181,6 +1181,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     $events  = [];
     $txn_map = [];
     $refunds = [];
+    $approved = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
@@ -1217,6 +1218,41 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                 $txn_map[ $tx ] += 1;
             } else {
                 $txn_map[ $tx ] = 1;
+            }
+        }
+
+        if ( $events ) {
+            $ids = array_column( $events, 'event_id' );
+            $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+            $refund_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT event_id, action_data FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' AND event_id IN ($placeholders)",
+                    $wp_user_id,
+                    ...$ids
+                ),
+                ARRAY_A
+            );
+            foreach ( $refund_rows as $r ) {
+                $data = json_decode( $r['action_data'], true );
+                if ( empty( $data['cancel'] ) ) {
+                    continue;
+                }
+                $tx  = $data['transaction_id'] ?? '';
+                $tid = intval( $data['ticket_id'] ?? 0 );
+                if ( ! $tx || ! $tid ) {
+                    continue;
+                }
+                $approved[ $tx ][ $tid ][] = [
+                    'first_name' => $data['attendee']['first_name'] ?? '',
+                    'last_name'  => $data['attendee']['last_name'] ?? '',
+                    'email'      => $data['attendee']['email'] ?? '',
+                    'amount'     => floatval( $data['amount'] ?? 0 ),
+                ];
+                if ( isset( $txn_map[ $tx ] ) ) {
+                    $txn_map[ $tx ] += 1;
+                } else {
+                    $txn_map[ $tx ] = 1;
+                }
             }
         }
     }
@@ -1286,6 +1322,21 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     $item['attendees'] = array_values( $attendees );
                     $item['quantity']  = count( $item['attendees'] );
                     $item['refund_pending'] = false;
+                    if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
+                        foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
+                            $clone = $item;
+                            $clone['refund_approved'] = true;
+                            $clone['refund_amount']   = $ap['amount'];
+                            $clone['refund_attendee'] = [
+                                'first_name' => $ap['first_name'],
+                                'last_name'  => $ap['last_name'],
+                                'email'      => $ap['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
+                        }
+                    }
                     if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
                         $req  = $refunds[ $gateway_tx ][ $tid ];
                         $item['refund_pending'] = true;
@@ -1333,6 +1384,12 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     $clone['quantity']         = 1;
                     $split_items[]             = $clone;
                 }
+                continue;
+            }
+
+            if ( ! empty( $item['refund_approved'] ) ) {
+                $item['quantity'] = 1;
+                $split_items[] = $item;
                 continue;
             }
 
@@ -2015,6 +2072,7 @@ function tta_get_next_refund_request_for_ticket( $ticket_id ) {
         'event_id'      => intval( $row['event_id'] ),
         'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
         'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+        'attendee'      => $data['attendee'] ?? [],
     ];
 }
 
@@ -2181,9 +2239,10 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
  *
  * @param string $gateway_tx_id Gateway transaction ID.
  * @param int    $ticket_id     Ticket ID.
+ * @param int    $attendee_id   Optional attendee ID for transactions with multiple of the same ticket.
  * @return array|null Attendee row.
- */
-function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id ) {
+*/
+function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id, $attendee_id = 0 ) {
     global $wpdb;
     $att_table = $wpdb->prefix . 'tta_attendees';
     $tx_table  = $wpdb->prefix . 'tta_transactions';
@@ -2196,7 +2255,11 @@ function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id ) {
     if ( ! $tx_row ) {
         return null;
     }
-    $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    if ( $attendee_id ) {
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE id = %d AND transaction_id = %d AND ticket_id = %d LIMIT 1", $attendee_id, intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    } else {
+        $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
+    }
     return $att ?: null;
 }
 
@@ -2236,8 +2299,14 @@ function tta_cancel_attendance_internal( $attendee_id ) {
                 'action_data' => wp_json_encode([
                     'amount'         => 0,
                     'transaction_id' => $tx['transaction_id'],
+                    'ticket_id'      => intval( $att['ticket_id'] ),
                     'attendee_id'    => $attendee_id,
                     'cancel'         => 1,
+                    'attendee'       => [
+                        'first_name' => $att['first_name'],
+                        'last_name'  => $att['last_name'],
+                        'email'      => $att['email'],
+                    ],
                 ]),
             ],
             [ '%d','%d','%d','%s','%s' ]
@@ -2383,6 +2452,100 @@ function tta_get_event_for_email( $event_ute_id ) {
 
     TTA_Cache::set( $cache_key, $event, 300 );
     return $event;
+}
+
+/**
+ * Retrieve an event ute_id from an event ID.
+ *
+ * @param int $event_id Event ID.
+ * @return string Event ute_id or empty string.
+ */
+function tta_get_event_ute_id( $event_id ) {
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return '';
+    }
+    $ute = $wpdb->get_var( $wpdb->prepare( "SELECT ute_id FROM {$events_table} WHERE id = %d UNION SELECT ute_id FROM {$archive_table} WHERE id = %d LIMIT 1", $event_id, $event_id ) );
+    return $ute ? sanitize_text_field( $ute ) : '';
+}
+
+/**
+ * Fetch ticket name and event ute_id.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return array|null
+ */
+function tta_get_ticket_basic_info( $ticket_id ) {
+    global $wpdb;
+    $tickets_table   = $wpdb->prefix . 'tta_tickets';
+    $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
+    $ticket_id = intval( $ticket_id );
+    if ( ! $ticket_id ) {
+        return null;
+    }
+    $row = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id, ticket_name FROM {$tickets_table} WHERE id = %d", $ticket_id ), ARRAY_A );
+    if ( ! $row ) {
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id, ticket_name FROM {$tickets_archive} WHERE id = %d", $ticket_id ), ARRAY_A );
+    }
+    if ( ! $row ) {
+        return null;
+    }
+    return [
+        'event_ute_id' => sanitize_text_field( $row['event_ute_id'] ),
+        'ticket_name'  => sanitize_text_field( $row['ticket_name'] ),
+    ];
+}
+
+/**
+ * Get attendees for a transaction and event.
+ *
+ * @param string $gateway_tx_id Gateway transaction ID.
+ * @param int    $event_id      Event ID.
+ * @return array[]
+ */
+function tta_get_transaction_event_attendees( $gateway_tx_id, $event_id ) {
+    return tta_get_refund_request_attendees( $gateway_tx_id, $event_id );
+}
+
+/**
+ * Build a user context array for a specific user ID.
+ *
+ * @param int $user_id WordPress user ID.
+ * @return array
+ */
+function tta_get_user_context_by_id( $user_id ) {
+    $context = [
+        'wp_user_id'       => intval( $user_id ),
+        'user_email'       => '',
+        'first_name'       => '',
+        'last_name'        => '',
+        'member'           => null,
+        'membership_level' => 'free',
+    ];
+
+    $user = get_user_by( 'ID', $user_id );
+    if ( $user ) {
+        $context['user_email'] = sanitize_email( $user->user_email );
+        $context['first_name'] = sanitize_text_field( $user->first_name );
+        $context['last_name']  = sanitize_text_field( $user->last_name );
+    }
+
+    $cache_key = 'member_row_' . $user_id;
+    $member    = TTA_Cache::remember( $cache_key, function() use ( $user_id ) {
+        global $wpdb;
+        $members_table = $wpdb->prefix . 'tta_members';
+        return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$members_table} WHERE wpuserid = %d", $user_id ), ARRAY_A );
+    }, 300 );
+
+    if ( is_array( $member ) ) {
+        $context['member']           = $member;
+        $context['membership_level'] = $member['membership_level'] ?? 'free';
+    }
+
+    return $context;
 }
 
 /**

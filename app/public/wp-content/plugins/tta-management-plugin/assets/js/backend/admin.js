@@ -1001,11 +1001,13 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var $row = $(e.currentTarget).closest('tr[data-request]');
     var tx  = $(e.currentTarget).data('tx');
     var ticket = $(e.currentTarget).data('ticket');
+    var amount = $row.find('.tta-refund-amount').val();
     var action = (mode === 'delete') ? 'tta_delete_refund_request' : 'tta_process_refund_request';
     var data = {
       action: action,
       tx: tx,
       ticket: ticket,
+      amount: amount,
       nonce: TTA_Ajax.attendee_admin_nonce
     };
     $.post(TTA_Ajax.ajax_url, data, function(res){

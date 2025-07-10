@@ -86,7 +86,7 @@ class TTA_Email_Handler {
      * @param array $attendees List of attendee arrays.
      * @return array
      */
-    protected function build_tokens( array $event, array $member, array $attendees ) {
+    protected function build_tokens( array $event, array $member, array $attendees, array $refund = [] ) {
         $tokens = [
             '{event_name}'           => $event['name'] ?? '',
             '{event_address}'        => $event['address'] ?? '',
@@ -120,6 +120,52 @@ class TTA_Email_Handler {
             $tokens[ '{attendee' . $index . '_phone}' ]      = sanitize_text_field( $a['phone'] ?? '' );
         }
 
+        $tokens['{refund_first_name}'] = sanitize_text_field( $refund['first_name'] ?? '' );
+        $tokens['{refund_last_name}']  = sanitize_text_field( $refund['last_name'] ?? '' );
+        $tokens['{refund_email}']      = sanitize_email( $refund['email'] ?? '' );
+        $tokens['{refund_amount}']     = isset( $refund['amount'] ) ? number_format( (float) $refund['amount'], 2 ) : '';
+        $tokens['{refund_ticket}']     = sanitize_text_field( $refund['ticket_name'] ?? '' );
+
         return $tokens;
+    }
+
+    /**
+     * Send a refund processed email to all attendees on the transaction.
+     *
+     * @param array $transaction Transaction row.
+     * @param array $refund      Refund info (event_id, ticket_id, attendee, amount, ticket_name).
+     */
+    public function send_refund_emails( array $transaction, array $refund ) {
+        $templates = tta_get_comm_templates();
+        if ( empty( $templates['refund_processed'] ) ) {
+            return;
+        }
+        $tpl = $templates['refund_processed'];
+
+        $event_ute = tta_get_event_ute_id( intval( $refund['event_id'] ) );
+        if ( ! $event_ute ) {
+            return;
+        }
+
+        $event = tta_get_event_for_email( $event_ute );
+        if ( empty( $event ) ) {
+            return;
+        }
+
+        $context   = tta_get_user_context_by_id( intval( $transaction['wpuserid'] ) );
+        $attendees = tta_get_transaction_event_attendees( $transaction['transaction_id'], $refund['event_id'] );
+
+        $tokens  = $this->build_tokens( $event, $context, $attendees, $refund );
+        $subject = strtr( $tpl['email_subject'], $tokens );
+        $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+
+        $recipients = array_unique( array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) ) );
+        $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
+        foreach ( $recipients as $to ) {
+            $to = sanitize_email( $to );
+            if ( $to ) {
+                wp_mail( $to, $subject, $body, $headers );
+            }
+        }
     }
 }
