@@ -65,20 +65,22 @@ class TTA_Email_Handler {
             }
 
             $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+            $sent    = [];
 
             // Send email to purchasing member using default attendee order.
             $base_tokens = $this->build_tokens( $event, $context, $attendees );
             $subject     = strtr( $tpl['email_subject'], $base_tokens );
             $body        = nl2br( strtr( $tpl['email_body'], $base_tokens ) );
             $to          = sanitize_email( $context['user_email'] );
-            if ( $to ) {
+            if ( $to && ! in_array( $to, $sent, true ) ) {
                 wp_mail( $to, $subject, $body, $headers );
+                $sent[] = $to;
             }
 
             // Send personalized email to each attendee.
             foreach ( $attendees as $index => $att ) {
                 $recipient = sanitize_email( $att['email'] ?? '' );
-                if ( ! $recipient ) {
+                if ( ! $recipient || in_array( $recipient, $sent, true ) ) {
                     continue;
                 }
 
@@ -93,6 +95,7 @@ class TTA_Email_Handler {
                 $subject = strtr( $tpl['email_subject'], $tokens );
                 $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
                 wp_mail( $recipient, $subject, $body, $headers );
+                $sent[] = $recipient;
             }
         }
     }
