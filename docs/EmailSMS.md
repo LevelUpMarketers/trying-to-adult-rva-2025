@@ -111,6 +111,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {refund_email}
 {refund_amount}
 {refund_ticket}
+{refund_event_name}
 {refund_event_date}
 {refund_event_time}
 ```

@@ -126,6 +126,7 @@ class TTA_Email_Handler {
         $tokens['{refund_email}']      = sanitize_email( $refund['email'] ?? $att_ref['email'] ?? '' );
         $tokens['{refund_amount}']     = isset( $refund['amount'] ) ? number_format( (float) $refund['amount'], 2 ) : '';
         $tokens['{refund_ticket}']     = sanitize_text_field( $refund['ticket_name'] ?? '' );
+        $tokens['{refund_event_name}'] = $event['name'] ?? '';
         $tokens['{refund_event_date}'] = isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '';
         $tokens['{refund_event_time}'] = isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '';
 
