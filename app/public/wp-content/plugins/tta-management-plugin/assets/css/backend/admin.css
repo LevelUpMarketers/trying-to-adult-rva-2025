@@ -578,9 +578,3 @@ form p.submit{
 #tta-members-history > table > tbody > tr.tta-inline-row > td > div > div > div.tta-subscription-info > p > strong{
         font-weight:normal;
 }
-
-.tta-refund-wrapper .tta-admin-progress-response-p.updated{
-    max-height: initial;
-    font-size: 20px;
-    margin-top: 20px;
-}
