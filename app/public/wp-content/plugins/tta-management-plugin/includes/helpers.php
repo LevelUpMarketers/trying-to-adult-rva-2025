@@ -1312,6 +1312,37 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
         }
     }
 
+    // Split items so each attendee gets an individual entry
+    foreach ( $events as &$ev ) {
+        $split_items = [];
+        foreach ( $ev['items'] as $item ) {
+            if ( ! empty( $item['refund_pending'] ) ) {
+                $split_items[] = $item;
+                continue;
+            }
+            $attendees = $item['attendees'] ?? [];
+            $qty       = intval( $item['quantity'] ?? count( $attendees ) );
+            if ( $attendees ) {
+                foreach ( $attendees as $att ) {
+                    $clone = $item;
+                    $clone['attendees'] = [ $att ];
+                    $clone['quantity']  = 1;
+                    $split_items[] = $clone;
+                }
+            } elseif ( $qty > 1 ) {
+                for ( $i = 0; $i < $qty; $i++ ) {
+                    $clone = $item;
+                    $clone['quantity'] = 1;
+                    $split_items[] = $clone;
+                }
+            } else {
+                $split_items[] = $item;
+            }
+        }
+        $ev['items'] = $split_items;
+    }
+    unset( $ev );
+
     $ttl = empty( $events ) ? 60 : 300;
     TTA_Cache::set( $cache_key, $events, $ttl );
 

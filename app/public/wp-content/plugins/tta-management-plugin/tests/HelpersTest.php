@@ -215,6 +215,43 @@ class HelpersTest extends TestCase {
         $this->assertStringContainsString('wp_tta_memberhistory', $wpdb->last_query);
     }
 
+    public function test_get_member_upcoming_events_splits_multi_attendees() {
+        global $wpdb;
+        $wpdb->results_data = [
+            [
+                'action_data' => json_encode([
+                    'transaction_id' => 'TXS',
+                    'amount' => 40,
+                    'items' => [
+                        [
+                            'ticket_id' => 7,
+                            'ticket_name' => 'General',
+                            'quantity' => 2,
+                            'attendees' => [
+                                [ 'first_name' => 'Ann',  'last_name' => 'A', 'email' => 'a@e.com' ],
+                                [ 'first_name' => 'Bob',  'last_name' => 'B', 'email' => 'b@e.com' ],
+                            ]
+                        ]
+                    ]
+                ]),
+                'event_id'    => 9,
+                'name'        => 'Split Event',
+                'page_id'     => 1,
+                'mainimageid' => 0,
+                'date'        => '2030-01-02',
+                'time'        => '08:00|10:00',
+                'address'     => '1 St -  - City - ST - 00000',
+                'type'        => 'paid',
+                'refundsavailable' => '1'
+            ]
+        ];
+        $events = tta_get_member_upcoming_events(1);
+        $this->assertCount(1, $events);
+        $this->assertCount(2, $events[0]['items']);
+        $this->assertSame('Ann', $events[0]['items'][0]['attendees'][0]['first_name']);
+        $this->assertSame('Bob', $events[0]['items'][1]['attendees'][0]['first_name']);
+    }
+
     public function test_get_member_past_events_queries_archive() {
         global $wpdb;
         $wpdb->results_data = [
