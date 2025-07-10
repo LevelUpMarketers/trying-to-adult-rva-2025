@@ -358,7 +358,8 @@ class TTA_AuthorizeNet_API {
             $bill = new AnetAPI\NameAndAddressType();
             $bill->setFirstName( $billing['first_name'] ?? '' );
             $bill->setLastName( $billing['last_name'] ?? '' );
-            $bill->setAddress( $billing['address'] ?? '' );
+            $addr = trim( ( $billing['address'] ?? '' ) . ( empty( $billing['address2'] ) ? '' : ' ' . $billing['address2'] ) );
+            $bill->setAddress( $addr );
             $bill->setCity( $billing['city'] ?? '' );
             $bill->setState( $billing['state'] ?? '' );
             $bill->setZip( $billing['zip'] ?? '' );

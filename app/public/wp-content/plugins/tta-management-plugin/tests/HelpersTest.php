@@ -611,4 +611,27 @@ class HelpersTest extends TestCase {
         $this->assertSame('Ann', $attendees[0]['first_name']);
         $this->assertSame('tx1', $attendees[0]['gateway_id']);
     }
+
+    public function test_convert_links_transforms_markdown() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';
+        $out = 'Check <a href="/member-dashboard/?tab=profile">your profile</a> today.';
+        $this->assertSame( $out, tta_convert_links( $in ) );
+    }
+
+    public function test_expand_anchor_tokens_handles_anchor() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $tokens = [ '{dashboard_upcoming_url}' => 'http://example.com/member-dashboard/?tab=upcoming' ];
+        $in  = 'Visit {dashboard_upcoming_url anchor="here"} to see events.';
+        $exp = 'Visit [here](http://example.com/member-dashboard/?tab=upcoming) to see events.';
+        $this->assertSame( $exp, tta_expand_anchor_tokens( $in, $tokens ) );
+    }
+
+    public function test_expand_anchor_tokens_returns_url_when_empty() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $tokens = [ '{dashboard_upcoming_url}' => 'http://example.com/member-dashboard/?tab=upcoming' ];
+        $in  = 'Go {dashboard_upcoming_url anchor=""} now.';
+        $exp = 'Go http://example.com/member-dashboard/?tab=upcoming now.';
+        $this->assertSame( $exp, tta_expand_anchor_tokens( $in, $tokens ) );
+    }
 }

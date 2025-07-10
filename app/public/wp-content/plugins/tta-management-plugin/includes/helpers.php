@@ -153,6 +153,53 @@ function tta_esc_url_raw( $value ) {
 }
 
 /**
+ * Convert Markdown-style links to HTML anchors for emails.
+ *
+ * Supports the pattern `[text](url)` and escapes both the URL and link text.
+ *
+ * @param string $text Raw message content.
+ * @return string Text with `<a href>` tags.
+ */
+function tta_convert_links( $text ) {
+    return preg_replace_callback(
+        '/\[([^\]]+)\]\(([^\)]+)\)/',
+        static function ( $m ) {
+            $url   = esc_url( $m[2] );
+            $label = esc_html( $m[1] );
+            return '<a href="' . $url . '">' . $label . '</a>';
+        },
+        $text
+    );
+}
+
+/**
+ * Expand dashboard URL tokens with optional anchor text.
+ *
+ * Replaces patterns like `{dashboard_upcoming_url anchor="View"}` with either
+ * a Markdown-style link or the raw URL if no anchor is specified.
+ *
+ * @param string $text   Raw template text.
+ * @param array  $tokens Token map from build_tokens().
+ * @return string Text with anchor tokens expanded.
+ */
+function tta_expand_anchor_tokens( $text, array $tokens ) {
+    return preg_replace_callback(
+        '/\{(dashboard_(?:profile|upcoming|waitlist|past|billing)_url)\s+anchor="([^"]*)"\}/',
+        static function ( $m ) use ( $tokens ) {
+            $key  = '{' . $m[1] . '}';
+            $url  = isset( $tokens[ $key ] ) ? esc_url( $tokens[ $key ] ) : '';
+            $text = $m[2];
+            if ( '' === $text ) {
+                return $url;
+            }
+            $text = esc_html( $text );
+            return '[' . $text . '](' . $url . ')';
+        },
+        $text
+    );
+}
+
+/**
  * Decode a discount string stored in the events table.
  *
  * @param string $raw
@@ -3409,8 +3456,11 @@ function tta_send_waitlist_notification( $entry, $event ) {
         '{event_link}' => get_permalink( intval( $event['page_id'] ) ),
         '{first_name}' => $entry['first_name'] ?? '',
     ];
-    $subject = strtr( $tpl['email_subject'], $tokens );
-    $body    = nl2br( strtr( $tpl['email_body'], $tokens ) );
+    $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject = strtr( $sub_raw, $tokens );
+    $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt = tta_convert_links( strtr( $body_raw, $tokens ) );
+    $body    = nl2br( $body_txt );
     $to      = sanitize_email( $entry['email'] ?? '' );
     if ( $to ) {
         wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );

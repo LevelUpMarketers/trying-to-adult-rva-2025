@@ -39,7 +39,7 @@ Default values are provided on initial install:
 - **Admin Notifications**: emails are sent when new events are created, refunds are requested or events sell out.
 - **Host and Volunteer Reminders**: internal messages mirror attendee reminders at 24 and 2 hours before the event.
 
-Links to the member dashboard are relative URLs so they work on any domain. Tokens include direct links to each dashboard tab.
+Links to the member dashboard now output the full site URL and include direct links to each dashboard tab, including the waitlist view.
 
 ## Previews and Tokens
 
@@ -57,6 +57,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {event_link}
 {dashboard_profile_url}
 {dashboard_upcoming_url}
+{dashboard_waitlist_url}
 {dashboard_past_url}
 {dashboard_billing_url}
 {event_date}
@@ -68,6 +69,15 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {member_cost}
 {premium_cost}
 ```
+
+Dashboard URL tokens accept an optional `anchor` attribute. For example:
+
+```
+{dashboard_upcoming_url anchor="see your upcoming events"}
+```
+
+This outputs a clickable link using the provided anchor text. When the anchor is
+empty or omitted the full URL is printed.
 
 `{event_date}` outputs the event date formatted like "June 28th, 2025". `{event_time}` shows the start and end times in 12‑hour format with am/pm, e.g. "6:00 pm - 8:00 pm".
 
@@ -120,6 +130,10 @@ Each attendee receives a personalized email where these tokens reflect their own
 
 Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.
 
+### Hyperlinks
+
+Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. This works for any URL, including tokens like `{dashboard_upcoming_url}`.
+
 ### Formatting Helpers
 
 The helpers `tta_format_event_date()` and `tta_format_event_time()` convert raw
@@ -128,4 +142,4 @@ database values into the human-friendly strings shown by `{event_date}` and
 
 ## Email Delivery
 
-All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member receives one email and each attendee gets a personalized copy where tokens like `{attendee_first_name}` reflect their own information.
+All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member receives one email and each attendee gets a personalized copy where tokens like `{attendee_first_name}` reflect their own information. Duplicate addresses are skipped so each email address only receives one message.

@@ -98,6 +98,7 @@ class TTA_Ajax_Membership {
             'first_name' => sanitize_text_field( $_POST['bill_first'] ?? '' ),
             'last_name'  => sanitize_text_field( $_POST['bill_last'] ?? '' ),
             'address'    => sanitize_text_field( $_POST['bill_address'] ?? '' ),
+            'address2'   => sanitize_text_field( $_POST['bill_address2'] ?? '' ),
             'city'       => sanitize_text_field( $_POST['bill_city'] ?? '' ),
             'state'      => sanitize_text_field( $_POST['bill_state'] ?? '' ),
             'zip'        => sanitize_text_field( $_POST['bill_zip'] ?? '' ),

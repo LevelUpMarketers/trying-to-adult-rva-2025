@@ -48,6 +48,7 @@
     <?php $price = tta_get_membership_price( get_user_meta( get_current_user_id(), 'tta_prev_level', true ) ?: 'basic' ); ?>
     <?php $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status ); ?>
     <p><?php esc_html_e( 'Status:', 'tta' ); ?> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
+    <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
     <?php if ( 'cancelled' !== $status ) : ?>
       <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">
         <?php wp_nonce_field( 'tta_member_front_update', 'nonce' ); ?>
@@ -88,6 +89,7 @@
     </p>
     <?php $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status ); ?>
     <p><?php esc_html_e( 'Status:', 'tta' ); ?> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
+    <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
     <?php if ( $last4 ) : ?>
       <p><?php esc_html_e( 'Current Card:', 'tta' ); ?> <span id="tta-card-last4">**** <?php echo esc_html( $last4 ); ?></span></p>
     <?php endif; ?>
@@ -143,6 +145,12 @@
           <label>
             <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
             <input type="text" name="bill_address" value="<?php echo esc_attr( $street_address ); ?>" required />
+          </label>
+        </p>
+        <p>
+          <label>
+            <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+            <input type="text" name="bill_address2" value="<?php echo esc_attr( $address_2 ); ?>" />
           </label>
         </p>
         <p>
