@@ -259,3 +259,15 @@
     font-size: 20px;
     margin-top: 20px;
 }
+#tta-update-card-form > p{
+  display: inline-block;
+}
+
+#tta-update-card-form > p select{
+  width: 165px;
+  height: 35px;
+}
+
+#tta-update-card-form > p.tta-submit-wrap{
+  display:block;
+}
