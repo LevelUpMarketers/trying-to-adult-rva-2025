@@ -85,6 +85,17 @@ class TTA_Ajax_Refund {
             wp_send_json_error( [ 'message' => 'not_found' ] );
         }
 
+        global $wpdb;
+        $tickets_table = $wpdb->prefix . 'tta_tickets';
+        $released      = tta_get_released_refund_count( $ticket_id );
+        if ( $released <= 0 ) {
+            $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", $ticket_id ) );
+            $ute = tta_get_event_ute_id( $req['event_id'] );
+            if ( $ute ) {
+                TTA_Cache::delete( 'tickets_' . $ute );
+            }
+        }
+
         TTA_Refund_Processor::process_refund_request( $req, $amount );
         wp_send_json_success( [ 'message' => __( 'Refund processed.', 'tta' ) ] );
     }

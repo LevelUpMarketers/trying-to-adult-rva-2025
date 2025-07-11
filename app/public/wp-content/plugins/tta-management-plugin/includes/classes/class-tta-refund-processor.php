@@ -28,16 +28,42 @@ class TTA_Refund_Processor {
      * @param int   $user_id Buyer user ID.
      */
     public static function handle_purchase( array $items, $user_id ) {
+        global $wpdb;
+        $events = [];
+
         foreach ( $items as $it ) {
-            $tid = intval( $it['ticket_id'] );
-            $qty = intval( $it['quantity'] ?? 1 );
-            for ( $i = 0; $i < $qty; $i++ ) {
+            $tid       = intval( $it['ticket_id'] );
+            $qty       = intval( $it['quantity'] ?? 1 );
+            $event_ute = $it['event_ute_id'] ?? '';
+            if ( $event_ute ) {
+                $events[ $event_ute ] = true;
+            }
+
+            $released = tta_get_released_refund_count( $tid );
+            if ( $released <= 0 ) {
+                continue;
+            }
+
+            $stock = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
+                $tid
+            ) );
+
+            $sold_from_pool = max( 0, $released - $stock );
+            $to_refund      = min( $qty, $sold_from_pool );
+
+            for ( $i = 0; $i < $to_refund; $i++ ) {
                 $req = tta_get_next_refund_request_for_ticket( $tid );
                 if ( ! $req ) {
                     break;
                 }
                 self::process_refund_request( $req );
             }
+
+        }
+
+        foreach ( array_keys( $events ) as $ute ) {
+            tta_release_refund_tickets( $ute );
         }
     }
 
@@ -125,6 +151,7 @@ class TTA_Refund_Processor {
         TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
 
         tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
+        tta_decrement_released_refund_count( $req['ticket_id'] );
         TTA_Cache::flush();
     }
 

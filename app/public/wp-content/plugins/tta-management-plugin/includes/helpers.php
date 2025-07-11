@@ -3356,6 +3356,66 @@ function tta_admin_preview_image( $attachment_id, array $size, array $attrs = []
 }
 
 /**
+ * Track the number of refund pool tickets currently released for sale.
+ *
+ * Stored as an option mapping ticket ID to a count. Helper functions keep the
+ * array sanitized.
+ *
+ * @return array
+ */
+function tta_get_released_refund_map() {
+    $map = get_option( 'tta_refund_pool_released', [] );
+    return is_array( $map ) ? array_map( 'intval', $map ) : [];
+}
+
+/**
+ * Get released count for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return int
+ */
+function tta_get_released_refund_count( $ticket_id ) {
+    $map = tta_get_released_refund_map();
+    $ticket_id = intval( $ticket_id );
+    return isset( $map[ $ticket_id ] ) ? intval( $map[ $ticket_id ] ) : 0;
+}
+
+/**
+ * Persist released count for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @param int $count     Number of released tickets remaining.
+ */
+function tta_set_released_refund_count( $ticket_id, $count ) {
+    $ticket_id = intval( $ticket_id );
+    $count     = intval( $count );
+    $map       = tta_get_released_refund_map();
+    if ( $count <= 0 ) {
+        unset( $map[ $ticket_id ] );
+    } else {
+        $map[ $ticket_id ] = $count;
+    }
+    update_option( 'tta_refund_pool_released', $map, false );
+}
+
+/**
+ * Decrease released refund count for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @param int $diff      Amount to subtract.
+ */
+function tta_decrement_released_refund_count( $ticket_id, $diff = 1 ) {
+    $ticket_id = intval( $ticket_id );
+    $diff      = intval( $diff );
+    if ( $diff <= 0 ) {
+        return;
+    }
+    $current = tta_get_released_refund_count( $ticket_id );
+    $new     = max( 0, $current - $diff );
+    tta_set_released_refund_count( $ticket_id, $new );
+}
+
+/**
  * Release tickets from the refund pool when an event sells out.
  *
  * @param string $event_ute_id Event ute_id.
@@ -3395,6 +3455,7 @@ function tta_release_refund_tickets( $event_ute_id ) {
         if ( $pool > 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
             TTA_Cache::delete( 'tickets_' . $event_ute_id );
+            tta_set_released_refund_count( $tid, $pool );
             tta_notify_waitlist_ticket_available( $tid );
         }
     }
