@@ -127,6 +127,10 @@ class TTA_Cart {
     $this->ensure_cart( true );
     $ticket_id = intval( $ticket_id );
     $qty       = intval( $qty );
+    $event_ute = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT event_ute_id FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d", $ticket_id ) );
+    if ( $event_ute ) {
+      tta_release_refund_tickets( $event_ute );
+    }
     $existing_qty = (int) $this->wpdb->get_var(
       $this->wpdb->prepare(
         "SELECT quantity FROM {$this->items_table} WHERE cart_id = %d AND ticket_id = %d",

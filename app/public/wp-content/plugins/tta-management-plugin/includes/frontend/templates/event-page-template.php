@@ -60,6 +60,8 @@ if ( ! $event ) {
 
 $has_waitlist = ( '1' === (string) ( $event['waitlistavailable'] ?? '0' ) );
 
+tta_release_refund_tickets( $event['ute_id'] );
+
 // ───────────────
 // 3) Fetch this event’s ticket types
 // ───────────────
