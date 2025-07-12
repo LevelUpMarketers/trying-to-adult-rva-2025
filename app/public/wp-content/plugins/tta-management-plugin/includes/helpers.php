@@ -2985,7 +2985,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                     </th>
                     <?php endif; ?>
                     <th>
-                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Limit of two tickets per event in total.' ); ?>">
+                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Maximum quantity each member can purchase for this ticket.' ); ?>">
                             <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Quantity', 'tta' ); ?>
@@ -3165,7 +3165,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                     </th>
                     <?php endif; ?>
                     <th>
-                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Limit of two tickets per event in total.' ); ?>">
+                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Maximum quantity each member can purchase for this ticket.' ); ?>">
                             <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Qty', 'tta' ); ?>

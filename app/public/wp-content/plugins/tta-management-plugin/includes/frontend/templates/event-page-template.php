@@ -72,7 +72,7 @@ $tickets_table  = $wpdb->prefix . ( $is_archived ? 'tta_tickets_archive' : 'tta_
 $tickets        = TTA_Cache::remember( 'tickets_' . $event['ute_id'], function() use ( $wpdb, $tickets_table, $event ) {
     return $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT id, ticket_name, ticketlimit, baseeventcost, discountedmembercost, premiummembercost
+            "SELECT id, ticket_name, ticketlimit, memberlimit, baseeventcost, discountedmembercost, premiummembercost
              FROM {$tickets_table}
              WHERE event_ute_id = %s
              ORDER BY id ASC",

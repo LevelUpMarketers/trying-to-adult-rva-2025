@@ -169,6 +169,8 @@ class TTA_Ajax_Cart {
     public static function ajax_update_cart() {
         check_ajax_referer( 'tta_frontend_nonce', 'nonce' );
 
+        global $wpdb;
+
         $cart = new TTA_Cart();
 
         $notices = [];

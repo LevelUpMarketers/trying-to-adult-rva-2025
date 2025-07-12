@@ -93,6 +93,7 @@ CREATE TABLE `wp_j9bzlz98u3_tta_tickets` (
   `ticket_name` VARCHAR(255) NOT NULL,
   `waitlist_id` BIGINT UNSIGNED NOT NULL,
   `ticketlimit` INT UNSIGNED NOT NULL,
+  `memberlimit` INT UNSIGNED NOT NULL DEFAULT 2,
   `baseeventcost` DECIMAL(10,2) NOT NULL,
   `discountedmembercost` DECIMAL(10,2) NOT NULL,
   `premiummembercost` DECIMAL(10,2) NOT NULL,
@@ -157,11 +158,11 @@ CREATE TABLE `wp_j9bzlz98u3_tta_attendees_archive` (
 
 -- Populate tta_tickets
 INSERT INTO `wp_j9bzlz98u3_tta_tickets`
-  (`id`, `event_ute_id`, `event_name`, `ticket_name`, `waitlist_id`, `ticketlimit`, `baseeventcost`, `discountedmembercost`, `premiummembercost`)
+  (`id`, `event_ute_id`, `event_name`, `ticket_name`, `waitlist_id`, `ticketlimit`, `memberlimit`, `baseeventcost`, `discountedmembercost`, `premiummembercost`)
 VALUES
-  (8, 'tte_6852c9ecec0713.67263231', 'New Member Dinner at Tres Machos', 'General Admission', 8, 15, 20.00, 15.00, 10.00),
-  (9, 'tte_68554e50b4e3b2.57528002', 'Buffet & Besties at King\u2019s Korner', 'General Admission', 9, 12,  0.00,  0.00,  0.00),
-  (10,'tte_68554f6943c920.35289009', 'Roller Skating',               'General Admission',10, 30, 12.00, 10.00,  8.00);
+  (8, 'tte_6852c9ecec0713.67263231', 'New Member Dinner at Tres Machos', 'General Admission', 8, 15, 2, 20.00, 15.00, 10.00),
+  (9, 'tte_68554e50b4e3b2.57528002', 'Buffet & Besties at King\u2019s Korner', 'General Admission', 9, 12, 2,  0.00,  0.00,  0.00),
+  (10,'tte_68554f6943c920.35289009', 'Roller Skating',               'General Admission',10, 30, 2, 12.00, 10.00,  8.00);
 
 -- Populate tta_events
 INSERT INTO `wp_j9bzlz98u3_tta_events`
