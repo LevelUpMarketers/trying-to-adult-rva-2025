@@ -72,7 +72,6 @@ class TTA_Ajax_Tickets {
         // 3) Grab submitted arrays for existing tickets
         $names               = $_POST['event_name']           ?? [];
         $limits              = $_POST['ticketlimit']          ?? [];
-                        'memberlimit'           => intval( $new_memberlimit[  ] ?? 2 ),
         $member_limits       = $_POST['memberlimit']          ?? [];
         $base_costs          = $_POST['baseeventcost']        ?? [];
         $member_costs        = $_POST['discountedmembercost'] ?? [];
