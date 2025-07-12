@@ -218,8 +218,9 @@ class TTA_Assets {
                 'tta-eventpage-js',
                 'tta_event',
                 [
-                    'limit_msg'   => __( "We're sorry, there's a limit of %d per ticket.", 'tta' ),
-                    'sold_out_msg' => __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' ),
+                    'limit_msg'      => __( "We're sorry, there's a limit of %d per ticket.", 'tta' ),
+                    'prev_limit_msg' => __( "We're sorry, there's a limit of %d per ticket. You've already purchased tickets in a previous transaction.", 'tta' ),
+                    'sold_out_msg'   => __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' ),
                 ]
             );
         }

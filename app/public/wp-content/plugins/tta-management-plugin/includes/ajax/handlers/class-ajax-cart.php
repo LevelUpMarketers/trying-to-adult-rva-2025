@@ -102,7 +102,7 @@ class TTA_Ajax_Cart {
                 $qty  = min( $allowed_total, $qty );
                 $diff = $qty - $existing_qty;
                 if ( $purchased_ticket >= $limit ) {
-                    $message = sprintf( __( "We're sorry, but you've already purchased %d ticket(s). There's a limit of %d per ticket.", 'tta' ), $purchased_ticket, $limit );
+                    $message = sprintf( __( "We're sorry, there's a limit of %d per ticket. You've already purchased tickets in a previous transaction.", 'tta' ), $limit );
                 } else {
                     $message = sprintf( __( "We're sorry, there's a limit of %d per ticket.", 'tta' ), $limit );
                 }

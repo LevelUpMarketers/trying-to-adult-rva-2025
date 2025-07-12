@@ -10,7 +10,10 @@ jQuery(function($){
     var val    = parseInt($input.val(), 10) || 0;
     if ( val >= max || val >= allowed ) {
       if ( val >= allowed && window.ttaShowNotice ) {
-        window.ttaShowNotice($input, tta_event.limit_msg.replace('%d', limit));
+        var msg = (purchased >= limit)
+          ? tta_event.prev_limit_msg.replace('%d', limit)
+          : tta_event.limit_msg.replace('%d', limit);
+        window.ttaShowNotice($input, msg);
       }
       return;
     }

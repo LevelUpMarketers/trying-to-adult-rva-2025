@@ -90,7 +90,9 @@ jQuery(function($){
     var val       = parseInt($input.val(),10) || 0;
     if(val > allowed){
       $input.val(allowed);
-      var msg = tta_event.limit_msg.replace('%d', limit);
+      var msg = (purchased >= limit)
+        ? tta_event.prev_limit_msg.replace('%d', limit)
+        : tta_event.limit_msg.replace('%d', limit);
       showNotice($input, msg);
     }
   }
