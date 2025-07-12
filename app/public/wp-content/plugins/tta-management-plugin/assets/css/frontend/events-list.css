@@ -282,3 +282,30 @@ li.tta-event-list-item > div > a > span:hover{
     flex: 1 1 auto;
   }
 }
+
+.next.page-numbers, .prev.page-numbers{
+  color:#fff;
+}
+
+.tta-pagination-next .page-numbers, .tta-pagination-prev .page-numbers{
+  font-family:inherit!important;
+}
+
+.tta-events-pagination a.page-numbers{
+  padding: .615em .769em;
+}
+
+.tta-pagination-next, .tta-pagination-prev{
+    display: inline-block;
+    margin-top: 0.5em;
+    padding: 4px 10px;
+    background: #0073aa;
+    border-radius: 4px;
+}
+
+#main > div > div > main > div > div.tta-pagination-next > a, #main > div > div > main > div > div.tta-pagination-prev > a{
+  padding: 4px 10px;
+}
+
+
+

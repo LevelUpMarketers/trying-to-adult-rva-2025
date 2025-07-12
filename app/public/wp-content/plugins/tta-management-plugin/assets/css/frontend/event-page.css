@@ -13,6 +13,9 @@
   align-items: center;.tta-related-event
   max-width: 1200px;
   margin: 0 auto;
+  width: 72%;
+  margin-left: auto;
+  margin-right: auto;
 }
 .tta-event-hero-text {
   flex: 1 1 400px;
