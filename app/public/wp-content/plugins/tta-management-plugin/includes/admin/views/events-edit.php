@@ -674,19 +674,6 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
     </table>
 
     <?php
-    // Prepare waitlist display data
-    $waitlist_id = intval( $event['waitlist_id'] ?? 0 );
-    $wl_csv      = '';
-    $userids     = [];
-    if ( $waitlist_id ) {
-        $wl_csv  = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT userids FROM {$wpdb->prefix}tta_waitlist WHERE id = %d",
-                $waitlist_id
-            )
-        );
-        $userids = $wl_csv ? explode( ',', $wl_csv ) : [];
-    }
     // Show or hide based on dropdown
     $show_waitlist = ( $event['waitlistavailable'] ?? '0' ) === '1';
     ?>

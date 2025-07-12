@@ -107,49 +107,65 @@ class TTA_Ajax_Tickets {
 
             // b) Update or insert waitlist row (with ticket_name)
             $csv    = tta_sanitize_text_field( $waitlist_csv_by_tid[ $tid ] ?? '' );
-            $exists = (bool) $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT COUNT(*) FROM {$waitlist_table} WHERE ticket_id = %d",
-                    $tid
-                )
-            );
+            if ( tta_waitlist_uses_csv() ) {
+                $exists = (bool) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*) FROM {$waitlist_table} WHERE ticket_id = %d",
+                        $tid
+                    )
+                );
 
-            if ( '' === $csv ) {
-                // Clear but update ticket_name & event_name
-                $wpdb->update(
-                    $waitlist_table,
-                    [
-                        'userids'     => '',
-                        'ticket_name' => $ticket_name,
-                        'event_name'  => $event_name,
-                    ],
-                    [ 'ticket_id' => $tid ],
-                    [ '%s', '%s', '%s' ],
-                    [ '%d' ]
-                );
-            } elseif ( $exists ) {
-                $wpdb->update(
-                    $waitlist_table,
-                    [
-                        'userids'     => $csv,
-                        'ticket_name' => $ticket_name,
-                        'event_name'  => $event_name,
-                    ],
-                    [ 'ticket_id' => $tid ],
-                    [ '%s', '%s', '%s' ],
-                    [ '%d' ]
-                );
+                if ( '' === $csv ) {
+                    // Clear but update ticket_name & event_name
+                    $wpdb->update(
+                        $waitlist_table,
+                        [
+                            'userids'     => '',
+                            'ticket_name' => $ticket_name,
+                            'event_name'  => $event_name,
+                        ],
+                        [ 'ticket_id' => $tid ],
+                        [ '%s', '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                } elseif ( $exists ) {
+                    $wpdb->update(
+                        $waitlist_table,
+                        [
+                            'userids'     => $csv,
+                            'ticket_name' => $ticket_name,
+                            'event_name'  => $event_name,
+                        ],
+                        [ 'ticket_id' => $tid ],
+                        [ '%s', '%s', '%s' ],
+                        [ '%d' ]
+                    );
+                } else {
+                    $wpdb->insert(
+                        $waitlist_table,
+                        [
+                            'event_ute_id' => $ute,
+                            'ticket_id'    => $tid,
+                            'ticket_name'  => $ticket_name,
+                            'event_name'   => $event_name,
+                            'userids'      => $csv,
+                        ],
+                        [ '%s', '%d', '%s', '%s', '%s' ]
+                    );
+                }
             } else {
-                $wpdb->insert(
+                if ( '' === $csv ) {
+                    $wpdb->delete( $waitlist_table, [ 'ticket_id' => $tid ], [ '%d' ] );
+                }
+                $wpdb->update(
                     $waitlist_table,
                     [
-                        'event_ute_id' => $ute,
-                        'ticket_id'    => $tid,
-                        'ticket_name'  => $ticket_name,
-                        'event_name'   => $event_name,
-                        'userids'      => $csv,
+                        'ticket_name' => $ticket_name,
+                        'event_name'  => $event_name,
                     ],
-                    [ '%s', '%d', '%s', '%s', '%s' ]
+                    [ 'ticket_id' => $tid ],
+                    [ '%s', '%s' ],
+                    [ '%d' ]
                 );
             }
         }
@@ -197,8 +213,8 @@ class TTA_Ajax_Tickets {
                 );
                 $new_tid = $wpdb->insert_id;
 
-                if ( $waitlist_enabled && $new_tid ) {
-                    // insert waitlist row
+                if ( $waitlist_enabled && $new_tid && tta_waitlist_uses_csv() ) {
+                    // insert waitlist row for CSV-based tables
                     $wpdb->insert(
                         $waitlist_table,
                         [

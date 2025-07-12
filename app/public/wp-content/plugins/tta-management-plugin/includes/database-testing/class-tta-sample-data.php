@@ -153,7 +153,7 @@ class TTA_Sample_Data {
                 $ticket_id = 0;
             }
 
-            if ( $row['waitlistavailable'] ) {
+            if ( $row['waitlistavailable'] && tta_waitlist_uses_csv() ) {
                 $wpdb->insert( $waitlist_table, [
                     'event_ute_id' => $row['ute_id'],
                     'ticket_id'    => $ticket_id,

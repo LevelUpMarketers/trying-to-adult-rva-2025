@@ -313,6 +313,21 @@ function tta_get_waitlist_context() {
 }
 
 /**
+ * Determine if the waitlist table still uses a CSV column.
+ *
+ * @return bool True if the table includes a `userids` column.
+ */
+function tta_waitlist_uses_csv() {
+    static $uses_csv = null;
+    if ( null === $uses_csv ) {
+        global $wpdb;
+        $table     = $wpdb->prefix . 'tta_waitlist';
+        $uses_csv = (bool) $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'userids'" );
+    }
+    return $uses_csv;
+}
+
+/**
  * Get count of tickets a user has already purchased for an event.
  *
  * @param int    $user_id
