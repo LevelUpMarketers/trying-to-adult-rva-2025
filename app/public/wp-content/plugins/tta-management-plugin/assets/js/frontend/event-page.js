@@ -83,11 +83,13 @@ jQuery(function($){
   window.ttaShowNotice = showNotice;
 
   function enforceLimit(){
-    var $input = $(this);
-    var limit = parseInt($input.data('limit'),10) || 2;
-    var val   = parseInt($input.val(),10) || 0;
-    if(val > limit){
-      $input.val(limit);
+    var $input    = $(this);
+    var limit     = parseInt($input.data('limit'),10) || 2;
+    var purchased = parseInt($input.data('purchased'),10) || 0;
+    var allowed   = Math.max(0, limit - purchased);
+    var val       = parseInt($input.val(),10) || 0;
+    if(val > allowed){
+      $input.val(allowed);
       var msg = tta_event.limit_msg.replace('%d', limit);
       showNotice($input, msg);
     }
