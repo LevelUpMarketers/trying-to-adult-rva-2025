@@ -345,6 +345,7 @@ class CartTest extends TestCase {
                 return [
                     'id'=>1,
                     'event_ute_id'=>'ev1',
+                    'memberlimit'=>2,
                     'baseeventcost'=>10,
                     'discountedmembercost'=>8,
                     'premiummembercost'=>7
@@ -352,6 +353,7 @@ class CartTest extends TestCase {
             }
             public function get_var($q){
                 if (strpos($q,'ticketlimit')!==false) return 5;
+                if (strpos($q,'memberlimit')!==false) return 2;
                 return null;
             }
             public function get_results($q,$o=ARRAY_A){ return []; }

@@ -212,25 +212,20 @@ class TTA_Cart {
       )
     );
 
-    // Enforce two ticket limit per event in total
-    $event_ute = $this->wpdb->get_var(
+    // Enforce per-ticket purchase limit
+    $limit = (int) $this->wpdb->get_var(
       $this->wpdb->prepare(
-        "SELECT event_ute_id FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d",
+        "SELECT memberlimit FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d",
         $ticket_id
       )
     );
-    if ( $event_ute ) {
-      $event_total = 0;
-      foreach ( $this->get_items() as $row ) {
-        if ( $row['event_ute_id'] === $event_ute && intval( $row['ticket_id'] ) !== $ticket_id ) {
-          $event_total += intval( $row['quantity'] );
-        }
-      }
-      $purchased = is_user_logged_in() ? tta_get_purchased_ticket_count( get_current_user_id(), $event_ute ) : 0;
-      $allowed   = max( 0, 2 - $purchased - $event_total );
-      if ( $qty > $allowed ) {
-        $qty = $allowed;
-      }
+    if ( $limit < 1 ) {
+      $limit = 2;
+    }
+    $purchased = is_user_logged_in() ? tta_get_purchased_ticket_count_for_ticket( get_current_user_id(), $ticket_id ) : 0;
+    $allowed   = max( 0, $limit - $purchased );
+    if ( $qty > $allowed ) {
+      $qty = $allowed;
     }
 
     if ( $qty <= 0 ) {

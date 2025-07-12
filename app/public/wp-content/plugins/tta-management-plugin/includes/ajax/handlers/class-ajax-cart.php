@@ -62,7 +62,7 @@ class TTA_Ajax_Cart {
 
             $ticket = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT event_ute_id, ticket_name, baseeventcost, discountedmembercost, premiummembercost
+                    "SELECT event_ute_id, ticket_name, baseeventcost, discountedmembercost, premiummembercost, memberlimit
                      FROM {$wpdb->prefix}tta_tickets
                      WHERE id = %d",
                     $ticket_id
@@ -73,19 +73,22 @@ class TTA_Ajax_Cart {
                 continue;
             }
 
-            $event_ute     = $ticket['event_ute_id'];
-            $existing_qty  = $existing_tickets[ $ticket_id ] ?? 0;
-            $event_total   = $existing_events[ $event_ute ] ?? 0;
-            $purchased     = is_user_logged_in() ? tta_get_purchased_ticket_count( get_current_user_id(), $event_ute ) : 0;
-            $allowed_total = max( 0, 2 - $purchased - $event_total );
-            $diff          = $qty - $existing_qty;
-            if ( $diff > 0 && $diff > $allowed_total ) {
-                $qty  = $existing_qty + $allowed_total;
-                $diff = $allowed_total;
-                if ( $purchased >= 2 ) {
-                    $message = sprintf( __( "We're sorry, but you've already purchased %d ticket(s). There's a limit of two tickets total per event.", 'tta' ), $purchased );
+            $event_ute    = $ticket['event_ute_id'];
+            $limit        = intval( $ticket['memberlimit'] );
+            if ( $limit < 1 ) {
+                $limit = 2;
+            }
+            $existing_qty = $existing_tickets[ $ticket_id ] ?? 0;
+            $purchased    = is_user_logged_in() ? tta_get_purchased_ticket_count_for_ticket( get_current_user_id(), $ticket_id ) : 0;
+            $allowed_total = max( 0, $limit - $purchased );
+            $diff         = $qty - $existing_qty;
+            if ( $diff > 0 && $qty > $allowed_total ) {
+                $qty  = min( $allowed_total, $qty );
+                $diff = $qty - $existing_qty;
+                if ( $purchased >= $limit ) {
+                    $message = sprintf( __( "We're sorry, but you've already purchased %d ticket(s). There's a limit of %d per ticket.", 'tta' ), $purchased, $limit );
                 } else {
-                    $message = __( "We're sorry, there's a limit of two tickets total per event.", 'tta' );
+                    $message = sprintf( __( "We're sorry, there's a limit of %d per ticket.", 'tta' ), $limit );
                 }
             }
 
@@ -173,7 +176,9 @@ class TTA_Ajax_Cart {
             $posted = intval( $qty );
             $final  = $cart->update_quantity( intval( $ticket_id ), $posted );
             if ( $final < $posted ) {
-                $notices[ intval( $ticket_id ) ] = __( "We're sorry, there's a limit of two tickets total per event.", 'tta' );
+                $limit = (int) $wpdb->get_var( $wpdb->prepare( "SELECT memberlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d", $ticket_id ) );
+                if ( $limit < 1 ) { $limit = 2; }
+                $notices[ intval( $ticket_id ) ] = sprintf( __( "We're sorry, there's a limit of %d per ticket.", 'tta' ), $limit );
             }
         }
 

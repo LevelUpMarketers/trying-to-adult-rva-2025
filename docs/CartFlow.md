@@ -10,7 +10,7 @@ This document summarizes the current logic around the cart and checkout process 
    - Expired cart items are cleared before ticket data loads so availability displays correctly.
    - Whenever a new item is added or a quantity increases, expired reservations are purged to free any leftover stock.
    - Expiration timestamps use WordPress local time so cleanup works consistently across servers.
-   - Quantity selectors on the event page prevent selecting more than two tickets in total. A notice appears when the limit would be exceeded. Sold out ticket rows have their quantity controls disabled and the **Get Tickets** button is disabled if no tickets remain.
+  - Quantity selectors on the event page enforce each ticket's per‑member limit. A notice appears when the limit would be exceeded. Sold out ticket rows have their quantity controls disabled and the **Get Tickets** button is disabled if no tickets remain.
    - When a user adds tickets, the browser issues an AJAX request to `tta_add_to_cart`. The handler calculates the price, reserves inventory, and calls `TTA_Cart::add_item()`.
    - The AJAX handler now explicitly creates a cart row first via `ensure_cart_exists()` so empty databases start tracking sessions immediately.
    - Cart data is stored in the `tta_carts` and `tta_cart_items` tables keyed by a session ID. Ticket availability is decreased immediately on add and the related event cache is cleared.
@@ -22,10 +22,10 @@ This document summarizes the current logic around the cart and checkout process 
    - When the cart only contains a membership, the table hides the **Ticket Reserved for…** column and the first column heading becomes **Event or Item**. Membership pricing shows "Per Month" in the price and subtotal columns, and the total row also displays "Per Month". Column spans adjust so the table remains aligned without the countdown column.
    - If both a membership and tickets are present, the total row displays the first charge (e.g. `$15.00 today, $5 Per Month`) so customers understand future recurring payments.
    - A dedicated **Ticket Reserved for…** column displays a live five minute countdown for ticket rows.
-   - The Quantity column enforces a maximum of two tickets per event in total.
+  - The Quantity column enforces the per‑member limit configured for each ticket.
    - Discount codes are applied via an **Apply Discount** button. Multiple codes can be active and are split across matching event tickets. Active codes list the related event name in parentheses and appear beneath the cart total for easy removal.
    - The Price column always shows the base cost (e.g. `$20 x 2` when quantity is two). Subtotals strike through the original amount when discounts are applied.
-   - Quantity updates that exceed the two ticket limit display an inline notice beside the input.
+  - Quantity updates that exceed a ticket's limit display an inline notice beside the input.
    - Countdown timers remove items immediately when they expire.
     - Expired items are batched into a single AJAX request so multiple events expiring at once do not overload the database.
     - Timers calculate remaining time from the expiration timestamp so they stay accurate when the tab is hidden.
@@ -57,7 +57,7 @@ This document summarizes the current logic around the cart and checkout process 
 ## Branching Logic Highlights
 
 - Pricing logic branches on membership level when adding items to the cart.
-- Each member may purchase a maximum of two tickets per event. Quantities in the cart plus past purchases are checked during the `tta_add_to_cart` AJAX request.
+- Each member may purchase up to the limit specified for each ticket. Quantities in the cart plus past purchases are checked during the `tta_add_to_cart` AJAX request.
 - Checkout can branch if inventory changes mid-process, redirecting back to the cart with a notice.
  - Payment failure stops checkout and displays the returned error. The plugin now surfaces Authorize.Net error codes and descriptions (for example `11: A duplicate transaction has been submitted`). If the code is recognized, an extra sentence explains what it means.
 - Successful completion empties the cart and fires hooks for additional actions (e.g., ticket emails).

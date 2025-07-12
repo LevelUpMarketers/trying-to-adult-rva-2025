@@ -72,6 +72,8 @@ class TTA_Ajax_Tickets {
         // 3) Grab submitted arrays for existing tickets
         $names               = $_POST['event_name']           ?? [];
         $limits              = $_POST['ticketlimit']          ?? [];
+                        'memberlimit'           => intval( $new_memberlimit[  ] ?? 2 ),
+        $member_limits       = $_POST['memberlimit']          ?? [];
         $base_costs          = $_POST['baseeventcost']        ?? [];
         $member_costs        = $_POST['discountedmembercost'] ?? [];
         $premium_costs       = $_POST['premiummembercost']    ?? [];
@@ -90,12 +92,13 @@ class TTA_Ajax_Tickets {
                 [
                     'ticket_name'          => $ticket_name,
                     'ticketlimit'          => $new_limit,
+                    'memberlimit'          => intval( $member_limits[ $tid ] ?? 2 ),
                     'baseeventcost'        => floatval( $base_costs[ $tid ] ?? 0 ),
                     'discountedmembercost' => floatval( $member_costs[ $tid ] ?? 0 ),
                     'premiummembercost'    => floatval( $premium_costs[ $tid ] ?? 0 ),
                 ],
                 [ 'id' => $tid ],
-                [ '%s', '%d', '%f', '%f', '%f' ],
+                [ '%s', '%d', '%d', '%f', '%f', '%f' ],
                 [ '%d' ]
             );
 
@@ -164,11 +167,12 @@ class TTA_Ajax_Tickets {
 
         // 6) Insert any new tickets (and waitlists if enabled)
         if ( ! empty( $_POST['new_event_name'] ) ) {
-            $new_names   = $_POST['new_event_name']            ?? [];
-            $new_limits  = $_POST['new_ticketlimit']          ?? [];
-            $new_base    = $_POST['new_baseeventcost']         ?? [];
-            $new_member  = $_POST['new_discountedmembercost']  ?? [];
-            $new_prem    = $_POST['new_premiummembercost']     ?? [];
+            $new_names       = $_POST['new_event_name']            ?? [];
+            $new_limits      = $_POST['new_ticketlimit']          ?? [];
+            $new_memberlimit = $_POST['new_memberlimit']         ?? [];
+            $new_base        = $_POST['new_baseeventcost']         ?? [];
+            $new_member      = $_POST['new_discountedmembercost']  ?? [];
+            $new_prem        = $_POST['new_premiummembercost']     ?? [];
 
             foreach ( $new_names as $i => $raw_name ) {
                 $ticket_name = tta_sanitize_text_field( $raw_name );
@@ -184,12 +188,13 @@ class TTA_Ajax_Tickets {
                         'event_name'            => $event_name,
                         'ticket_name'           => $ticket_name,
                         'ticketlimit'           => intval( $new_limits[ $i ]    ?? 10000 ),
+                        'memberlimit'           => intval( $new_memberlimit[ $i ] ?? 2 ),
                         'baseeventcost'         => floatval( $new_base[ $i ]     ?? 0 ),
                         'discountedmembercost'  => floatval( $new_member[ $i ]   ?? 0 ),
                         'premiummembercost'     => floatval( $new_prem[ $i ]     ?? 0 ),
                         'waitlist_id'           => 0,
                     ],
-                    [ '%s', '%s', '%s', '%d', '%f', '%f', '%f', '%d' ]
+                    [ '%s', '%s', '%s', '%d', '%d', '%f', '%f', '%f', '%d' ]
                 );
                 $new_tid = $wpdb->insert_id;
 

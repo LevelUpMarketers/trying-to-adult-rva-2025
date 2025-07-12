@@ -372,6 +372,75 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
 }
 
 /**
+ * Get how many of a specific ticket a user has purchased.
+ *
+ * @param int $user_id
+ * @param int $ticket_id
+ * @return int
+ */
+function tta_get_purchased_ticket_count_for_ticket( $user_id, $ticket_id ) {
+    global $wpdb;
+
+    $user_id  = intval( $user_id );
+    $ticket_id = intval( $ticket_id );
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND action_type = 'purchase'",
+            $user_id
+        ),
+        ARRAY_A
+    );
+
+    $total = 0;
+    foreach ( $rows as $row ) {
+        $data = json_decode( $row['action_data'], true );
+        foreach ( (array) ( $data['items'] ?? [] ) as $it ) {
+            if ( intval( $it['ticket_id'] ?? 0 ) === $ticket_id ) {
+                $total += intval( $it['quantity'] );
+            }
+        }
+    }
+
+    $event_ute_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT event_ute_id FROM {$wpdb->prefix}tta_tickets WHERE id = %d UNION SELECT event_ute_id FROM {$wpdb->prefix}tta_tickets_archive WHERE id = %d LIMIT 1",
+            $ticket_id,
+            $ticket_id
+        )
+    );
+
+    if ( $event_ute_id ) {
+        $event_id = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+                $event_ute_id,
+                $event_ute_id
+            )
+        );
+
+        if ( $event_id ) {
+            $refunds = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND event_id = %d AND action_type = 'refund'",
+                    $user_id,
+                    $event_id
+                ),
+                ARRAY_A
+            );
+            foreach ( $refunds as $row ) {
+                $data = json_decode( $row['action_data'], true );
+                if ( ! empty( $data['cancel'] ) ) {
+                    $total -= 1;
+                }
+            }
+        }
+    }
+
+    return max( 0, $total );
+}
+
+/**
  * Retrieve attendee records for a given event.
  *
  * @param string $event_ute_id Event ute_id.

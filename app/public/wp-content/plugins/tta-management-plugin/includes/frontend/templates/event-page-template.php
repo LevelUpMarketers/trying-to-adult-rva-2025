@@ -823,6 +823,7 @@ echo $form_html . $lost_pw_html;
                     value="<?php echo esc_attr( $cart_quantities[ $ticket['id'] ] ?? 0 ); ?>"
                     min="0"
                     <?php if ( $available ): ?>max="<?php echo esc_attr( $available ); ?>"<?php endif; ?>
+                    data-limit="<?php echo esc_attr( $ticket['memberlimit'] ?? 2 ); ?>"
                     <?php disabled( $is_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>
                   />
                   <button type="button" class="tta-qty-increase<?php echo ($is_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>" aria-label="<?php esc_attr_e( 'Increase quantity', 'tta' ); ?>" <?php disabled( $is_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>>+</button>
