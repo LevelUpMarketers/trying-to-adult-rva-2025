@@ -57,7 +57,7 @@ This document summarizes the current logic around the cart and checkout process 
 ## Branching Logic Highlights
 
 - Pricing logic branches on membership level when adding items to the cart.
-- Each member may purchase up to the limit specified for each ticket. Quantities in the cart plus past purchases are checked during the `tta_add_to_cart` AJAX request.
+- Each member may purchase up to the limit specified for each ticket. Quantities in the cart plus past purchases are checked during the `tta_add_to_cart` AJAX request, and the summed limits for all tickets cap a member's total for the event.
 - Checkout can branch if inventory changes mid-process, redirecting back to the cart with a notice.
  - Payment failure stops checkout and displays the returned error. The plugin now surfaces Authorize.Net error codes and descriptions (for example `11: A duplicate transaction has been submitted`). If the code is recognized, an extra sentence explains what it means.
 - Successful completion empties the cart and fires hooks for additional actions (e.g., ticket emails).
