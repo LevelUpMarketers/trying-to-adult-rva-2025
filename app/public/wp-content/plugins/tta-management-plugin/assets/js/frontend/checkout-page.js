@@ -46,7 +46,15 @@ jQuery(function($){
             var intro = res.data.membership ? 'Also, thanks for signing up for our upcoming event!' : 'Thanks for signing up!';
             html += '<p>'+intro+' A receipt has been emailed to each of the email addresses below. Please keep these emails to present to the Event Host or Volunteer upon arrival.</p><ul>';
             var emails = Array.isArray(res.data.emails) ? res.data.emails : (res.data.emails ? [res.data.emails] : []);
-            emails.forEach(function(e){ html += '<li>'+ $('<div>').text(e).html() +'</li>'; });
+            var unique = {};
+            emails.forEach(function(e){
+              if(!e){return;}
+              var norm = String(e).trim().toLowerCase();
+              if(!unique[norm]) unique[norm] = e.trim();
+            });
+            Object.values(unique).forEach(function(e){
+              html += '<li>' + $('<div>').text(e).html() + '</li>';
+            });
             html += '</ul>';
           }
           $resp.removeClass('error').addClass('updated').html(html);
