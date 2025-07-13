@@ -140,8 +140,14 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
             $user   = wp_get_current_user();
             $emails = array_merge( [ $user->user_email ], tta_collect_attendee_emails( $attendees ) );
             $emails = array_filter( array_map( 'sanitize_email', $emails ) );
-            $emails = array_map( 'strtolower', $emails );
-            $emails = array_values( array_unique( $emails ) );
+            $unique = [];
+            foreach ( $emails as $email ) {
+                $key = strtolower( $email );
+                if ( ! isset( $unique[ $key ] ) ) {
+                    $unique[ $key ] = $email;
+                }
+            }
+            $emails = array_values( $unique );
             $_SESSION['tta_checkout_emails']      = $emails;
             $_SESSION['tta_checkout_membership']  = $membership_total > 0 ? $membership_level : '';
             $_SESSION['tta_checkout_has_tickets'] = ! empty( $attendees );
