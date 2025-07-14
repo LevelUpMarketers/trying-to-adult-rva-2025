@@ -259,6 +259,26 @@
     font-size: 20px;
     margin-top: 20px;
 }
+
+/* Disabled refund controls */
+.tta-refund-form button[disabled],
+.tta-refund-form textarea[disabled] {
+  position: relative;
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+.tta-refund-form button[disabled]::before,
+.tta-refund-form textarea[disabled]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: inherit;
+  pointer-events: none;
+}
 #tta-update-card-form > p{
   display: inline-block;
 }

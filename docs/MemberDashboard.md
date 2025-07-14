@@ -23,7 +23,7 @@ shows:
 - If a refund is pending for one attendee the entry remains with a pending note while any remaining attendees still appear separately with their own refund links
 - Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. The attendee is removed immediately. The refund is processed automatically once another member buys that ticket, otherwise the request expires two hours before the event. Administrators can review pending requests on the **TTA Refund Requests** admin page where they remain listed until processed.
 - Once a refund is approved the entry stays visible until the event date with a note showing the refunded amount and that the attendee has been cancelled. The refund link and form are removed so no further requests can be made.
-- Successful submission displays the message "Your refund request has been submitted! Per our Refund Policy, you will be automatically refunded when another attendee purchases your ticket. There's nothing else for you to do! Check back here periodically to see the status of your refund request."
+- Successful submission displays the message "Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it's sold, you'll automatically receive a refund. There's nothing else for you to do! Check back here periodically to see the status of your refund request."
 - After submitting, the page no longer reloads automatically; the refund button and link are disabled so the confirmation message stays visible.
 
 Events are loaded chronologically and the layout supports any number of events.
@@ -65,6 +65,6 @@ Charges related to a membership, including the first month billed at checkout
 and all recurring payments, use the transaction type **Membership Subscription**
 in the history table.
 Event names link to their event pages even after the events move into the
-archive, and each row displays the date, item name, amount charged, transaction
-type, and the payment method used. Refunds appear as negative amounts in the
-table.
+archive, and each row displays the date, item name, amount charged, the gateway
+transaction ID, transaction type, and the payment method used. Refunds appear as
+negative amounts in the table.
