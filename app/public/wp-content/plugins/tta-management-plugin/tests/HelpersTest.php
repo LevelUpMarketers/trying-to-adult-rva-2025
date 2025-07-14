@@ -11,6 +11,11 @@ class DummyWpdbHelpers {
     public $last_query = '';
     public $results_data = [];
     public $event_row_data = [ 'ute_id' => 'ute1', 'hosts' => '', 'volunteers' => '' ];
+    public $row_data = null;
+
+    public function esc_like( $text ) {
+        return $text;
+    }
 
     public function get_var($query) {
         $this->var_calls++;
@@ -42,6 +47,11 @@ class DummyWpdbHelpers {
         }
         if ( strpos( $query, 'FROM wp_tta_transactions' ) !== false ) {
             return [ 'id' => 99, 'details' => json_encode([['event_ute_id'=>'ute1','ticket_id'=>3,'final_price'=>5]]), 'created_at' => '2025-07-01 10:00:00' ];
+        }
+        if ( $this->row_data !== null ) {
+            $row = $this->row_data;
+            $this->row_data = null;
+            return $row;
         }
         return [
             'wpuserid' => 1,
@@ -77,6 +87,7 @@ class HelpersTest extends TestCase {
         if (!function_exists('esc_url')) { function esc_url($v){ return $v; } }
         if (!function_exists('esc_url_raw')) { function esc_url_raw($v){ return $v; } }
         if (!function_exists('esc_attr')) { function esc_attr($v){ return $v; } }
+        if (!function_exists('esc_like')) { function esc_like($v){ return $v; } }
         if (!function_exists('is_user_logged_in')) { function is_user_logged_in(){ return true; } }
         if (!function_exists('wp_get_current_user')) { function wp_get_current_user(){ return (object)['ID'=>1,'user_email'=>'u@e.com','user_login'=>'user','first_name'=>'First','last_name'=>'Last']; } }
         if (!function_exists('wp_get_attachment_image_url')) { function wp_get_attachment_image_url($id,$size){ return $id===1?false:'img'.$id.'.jpg'; } }
@@ -644,6 +655,28 @@ class HelpersTest extends TestCase {
         $this->assertSame( 1, $wpdb->results_calls );
         $cached = tta_get_ticket_refunded_attendees( 3, 5 );
         $this->assertSame( 1, $wpdb->results_calls );
+    }
+
+    public function test_get_next_refund_request_for_ticket_includes_reason() {
+        global $wpdb;
+        $this->wpdb->row_calls = 0;
+        $this->wpdb->row_data  = [
+            'member_id' => 7,
+            'wpuserid'  => 3,
+            'event_id'  => 5,
+            'action_data' => json_encode([
+                'transaction_id' => 'tx9',
+                'ticket_id'      => 3,
+                'reason'         => 'Need refund',
+                'attendee'       => []
+            ])
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        $req = tta_get_next_refund_request_for_ticket( 3 );
+        $this->assertSame( 'Need refund', $req['reason'] );
+        $this->assertSame( 'tx9', $req['transaction_id'] );
+        $this->assertSame( 1, $this->wpdb->row_calls );
     }
 
     public function test_convert_links_transforms_markdown() {
