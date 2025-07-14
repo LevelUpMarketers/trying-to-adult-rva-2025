@@ -284,8 +284,8 @@ $tickets = $wpdb->get_results(
               <thead>
                 <tr>
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee first and last name.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Name', 'tta' ); ?></th>
-                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee email address.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Email', 'tta' ); ?></th>
-                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Phone number provided at checkout.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Phone', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee contact info.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Email & Phone', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason provided with the refund request.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Note', 'tta' ); ?></th>
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Amount refunded for this ticket.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Refunded', 'tta' ); ?></th>
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Gateway transaction ID.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Transaction ID', 'tta' ); ?></th>
                 </tr>
@@ -306,8 +306,8 @@ $tickets = $wpdb->get_results(
                   <?php endif; ?>
                   <tr>
                     <td><?php echo esc_html( trim( $a['first_name'] . ' ' . $a['last_name'] ) ); ?></td>
-                    <td><?php echo esc_html( $a['email'] ); ?></td>
-                    <td><?php echo esc_html( $a['phone'] ); ?></td>
+                    <td><?php echo esc_html( $a['email'] ); ?><?php echo $a['phone'] ? '<br>' . esc_html( $a['phone'] ) : ''; ?></td>
+                    <td><?php echo esc_html( $a['reason'] ); ?></td>
                     <td><?php echo sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $a['amount_paid'], 2 ) ); ?></td>
                     <td><?php echo esc_html( $a['gateway_id'] ); ?></td>
                   </tr>
@@ -495,7 +495,7 @@ $tickets = $wpdb->get_results(
                   ?>
                   <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
                     <td><?php echo esc_html( $name ); ?></td>
-                    <td><?php echo esc_html( $phone ? ( $email . ' / ' . $phone ) : $email ); ?></td>
+                    <td><?php echo esc_html( $email ); ?><?php echo $phone ? '<br>' . esc_html( $phone ) : ''; ?></td>
                     <td><?php echo esc_html( $reason ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
                     <td>

@@ -2425,6 +2425,7 @@ function tta_get_ticket_refunded_attendees( $ticket_id, $event_id ) {
             'last_name'   => sanitize_text_field( $att['last_name'] ?? '' ),
             'email'       => sanitize_email( $att['email'] ?? '' ),
             'phone'       => sanitize_text_field( $att['phone'] ?? '' ),
+            'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
             'amount_paid' => $amount,
             'gateway_id'  => sanitize_text_field( $data['transaction_id'] ?? '' ),
             'created_at'  => $r['action_date'],
