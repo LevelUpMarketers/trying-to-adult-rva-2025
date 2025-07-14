@@ -612,6 +612,40 @@ class HelpersTest extends TestCase {
         $this->assertSame('tx1', $attendees[0]['gateway_id']);
     }
 
+    public function test_get_ticket_refunded_attendees_returns_reason() {
+        global $wpdb;
+        $this->wpdb->results_calls = 0;
+        $this->wpdb->results_data = [
+            [
+                'action_data' => json_encode([
+                    'amount'         => 70,
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 3,
+                    'attendee_id'    => 0,
+                    'cancel'         => 1,
+                    'attendee'       => [
+                        'first_name' => 'Ann',
+                        'last_name'  => 'Bee',
+                        'email'      => 'a@example.com',
+                        'phone'      => '123',
+                    ],
+                    'reason'        => 'No longer attending',
+                ]),
+                'action_date' => '2025-07-14 12:00:00',
+            ]
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $rows = tta_get_ticket_refunded_attendees( 3, 5 );
+        $this->assertCount( 1, $rows );
+        $this->assertSame( 'No longer attending', $rows[0]['reason'] );
+        $this->assertSame( 'tx2', $rows[0]['gateway_id'] );
+        $this->assertSame( 1, $wpdb->results_calls );
+        $cached = tta_get_ticket_refunded_attendees( 3, 5 );
+        $this->assertSame( 1, $wpdb->results_calls );
+    }
+
     public function test_convert_links_transforms_markdown() {
         require_once __DIR__ . '/../includes/helpers.php';
         $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';

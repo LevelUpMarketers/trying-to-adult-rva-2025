@@ -2256,6 +2256,7 @@ function tta_get_refund_request( $gateway_tx_id, $ticket_id ) {
         'event_id'      => intval( $row['event_id'] ),
         'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
         'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
+        'reason'        => sanitize_text_field( $data['reason'] ?? '' ),
         'attendee'      => $data['attendee'] ?? [],
     ];
 }

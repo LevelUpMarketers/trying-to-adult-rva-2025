@@ -118,6 +118,7 @@ class TTA_Refund_Processor {
         );
 
         $attendee = $req['attendee'] ?? [];
+        $reason   = sanitize_text_field( $req['reason'] ?? '' );
         $wpdb->insert(
             $hist_table,
             [
@@ -132,6 +133,7 @@ class TTA_Refund_Processor {
                     'attendee_id'    => 0,
                     'cancel'         => 1,
                     'attendee'       => $attendee,
+                    'reason'         => $reason,
                 ]),
             ],
             [ '%d','%d','%d','%s','%s' ]
