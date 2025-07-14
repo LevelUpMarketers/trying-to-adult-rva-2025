@@ -106,10 +106,13 @@ function tta_sanitize_email( $value ) {
 }
 
 /**
- * Collect unique attendee emails from the nested attendee array structure.
+ * Collect attendee emails from the nested attendee array structure.
+ *
+ * The returned list preserves the submitted order and may contain
+ * duplicates. Consumers are expected to de-duplicate as needed.
  *
  * @param array $attendees Attendee data posted from checkout.
- * @return array           Sanitized list of unique emails.
+ * @return array           Sanitized list of emails.
  */
 function tta_collect_attendee_emails( array $attendees ) {
     $emails = [];
@@ -121,7 +124,7 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
-    return array_values( array_unique( $emails ) );
+    return $emails;
 }
 
 /**
