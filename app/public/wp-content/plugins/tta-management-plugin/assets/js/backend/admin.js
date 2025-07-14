@@ -342,8 +342,6 @@ jQuery(function($){
 
     var $btn  = $form.find('.submit .button-primary').prop('disabled', true);
 
-    // Rebuild userids before serializing
-    rebuildUserids();
 
     var data = $form.serialize()
              + '&action=tta_update_event'
@@ -389,32 +387,6 @@ jQuery(function($){
   //
   // Remove a waitlist entry
   //
-  $(document).on('click', '.tta-remove-waitlist', function(e){
-    e.preventDefault();
-    $(this).closest('.tta-waitlist-entry').remove();
-    rebuildUserids();
-  });
-
-
-
-  //
-  // Rebuild the CSV of user IDs and store in a hidden input
-  //
-  function rebuildUserids(){
-    var uids = [];
-    $('#tta-waitlist-container .tta-waitlist-entry').each(function(){
-      uids.push( $(this).data('userid') );
-    });
-    var csv = uids.join(',');
-    var $form = $('#tta-event-edit-form');
-    var $input = $form.find('input[name="userids"]');
-    if ( ! $input.length ) {
-      $input = $('<input>')
-        .attr({ type: 'hidden', name: 'userids' })
-        .appendTo( $form );
-    }
-    $input.val(csv);
-  }
 
 
   // ─────────────────────────────────────────────────────────────────────

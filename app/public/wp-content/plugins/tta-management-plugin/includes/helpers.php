@@ -106,10 +106,13 @@ function tta_sanitize_email( $value ) {
 }
 
 /**
- * Collect unique attendee emails from the nested attendee array structure.
+ * Collect attendee emails from the nested attendee array structure.
+ *
+ * The returned list preserves the submitted order and may contain
+ * duplicates. Consumers are expected to de-duplicate as needed.
  *
  * @param array $attendees Attendee data posted from checkout.
- * @return array           Sanitized list of unique emails.
+ * @return array           Sanitized list of emails.
  */
 function tta_collect_attendee_emails( array $attendees ) {
     $emails = [];
@@ -121,7 +124,7 @@ function tta_collect_attendee_emails( array $attendees ) {
             }
         }
     }
-    return array_values( array_unique( $emails ) );
+    return $emails;
 }
 
 /**
@@ -313,6 +316,21 @@ function tta_get_waitlist_context() {
 }
 
 /**
+ * Determine if the waitlist table still uses a CSV column.
+ *
+ * @return bool True if the table includes a `userids` column.
+ */
+function tta_waitlist_uses_csv() {
+    static $uses_csv = null;
+    if ( null === $uses_csv ) {
+        global $wpdb;
+        $table     = $wpdb->prefix . 'tta_waitlist';
+        $uses_csv = (bool) $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'userids'" );
+    }
+    return $uses_csv;
+}
+
+/**
  * Get count of tickets a user has already purchased for an event.
  *
  * @param int    $user_id
@@ -364,6 +382,75 @@ function tta_get_purchased_ticket_count( $user_id, $event_ute_id ) {
             $data = json_decode( $row['action_data'], true );
             if ( ! empty( $data['cancel'] ) ) {
                 $total -= 1;
+            }
+        }
+    }
+
+    return max( 0, $total );
+}
+
+/**
+ * Get how many of a specific ticket a user has purchased.
+ *
+ * @param int $user_id
+ * @param int $ticket_id
+ * @return int
+ */
+function tta_get_purchased_ticket_count_for_ticket( $user_id, $ticket_id ) {
+    global $wpdb;
+
+    $user_id  = intval( $user_id );
+    $ticket_id = intval( $ticket_id );
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND action_type = 'purchase'",
+            $user_id
+        ),
+        ARRAY_A
+    );
+
+    $total = 0;
+    foreach ( $rows as $row ) {
+        $data = json_decode( $row['action_data'], true );
+        foreach ( (array) ( $data['items'] ?? [] ) as $it ) {
+            if ( intval( $it['ticket_id'] ?? 0 ) === $ticket_id ) {
+                $total += intval( $it['quantity'] );
+            }
+        }
+    }
+
+    $event_ute_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT event_ute_id FROM {$wpdb->prefix}tta_tickets WHERE id = %d UNION SELECT event_ute_id FROM {$wpdb->prefix}tta_tickets_archive WHERE id = %d LIMIT 1",
+            $ticket_id,
+            $ticket_id
+        )
+    );
+
+    if ( $event_ute_id ) {
+        $event_id = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+                $event_ute_id,
+                $event_ute_id
+            )
+        );
+
+        if ( $event_id ) {
+            $refunds = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT action_data FROM {$wpdb->prefix}tta_memberhistory WHERE wpuserid = %d AND event_id = %d AND action_type = 'refund'",
+                    $user_id,
+                    $event_id
+                ),
+                ARRAY_A
+            );
+            foreach ( $refunds as $row ) {
+                $data = json_decode( $row['action_data'], true );
+                if ( ! empty( $data['cancel'] ) ) {
+                    $total -= 1;
+                }
             }
         }
     }
@@ -2916,7 +3003,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                     </th>
                     <?php endif; ?>
                     <th>
-                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Limit of two tickets per event in total.' ); ?>">
+                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Maximum quantity each member can purchase for this ticket.' ); ?>">
                             <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Quantity', 'tta' ); ?>
@@ -3096,7 +3183,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                     </th>
                     <?php endif; ?>
                     <th>
-                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Limit of two tickets per event in total.' ); ?>">
+                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'Maximum quantity each member can purchase for this ticket.' ); ?>">
                             <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Qty', 'tta' ); ?>

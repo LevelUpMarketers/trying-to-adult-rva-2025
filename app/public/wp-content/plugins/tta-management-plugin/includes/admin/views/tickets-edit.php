@@ -105,6 +105,22 @@ $tickets = $wpdb->get_results(
         </tr>
         <tr>
           <th>
+            <label for="memberlimit_<?php echo $tid; ?>"><?php esc_html_e( 'Per Member Limit', 'tta' ); ?></label>
+            <span class="tta-tooltip-icon"
+                  data-tooltip="<?php esc_attr_e( 'Maximum quantity each member can purchase.', 'tta' ); ?>">
+              <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>"
+                   alt="Help">
+            </span>
+          </th>
+          <td>
+            <input type="number"
+                   name="memberlimit[<?php echo $tid; ?>]"
+                   id="memberlimit_<?php echo $tid; ?>"
+                   value="<?php echo esc_attr( $t['memberlimit'] ?? 2 ); ?>">
+          </td>
+        </tr>
+        <tr>
+          <th>
             <label for="baseeventcost_<?php echo $tid; ?>"><?php esc_html_e( 'Base Cost', 'tta' ); ?></label>
             <span class="tta-tooltip-icon"
                   data-tooltip="<?php esc_attr_e( 'Standard ticket price.', 'tta' ); ?>">
@@ -484,6 +500,16 @@ $tickets = $wpdb->get_results(
             </span>
           </th>
           <td><input type="number" name="new_ticketlimit[]" value="10000"></td>
+        </tr>
+        <tr>
+          <th>
+            <label><?php esc_html_e( 'Per Member Limit', 'tta' ); ?></label>
+            <span class="tta-tooltip-icon"
+                  data-tooltip="<?php esc_attr_e( 'Maximum quantity each member can purchase.', 'tta' ); ?>">
+              <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+            </span>
+          </th>
+          <td><input type="number" name="new_memberlimit[]" value="2"></td>
         </tr>
         <tr>
           <th>

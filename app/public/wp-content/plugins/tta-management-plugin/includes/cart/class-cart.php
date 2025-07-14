@@ -212,25 +212,42 @@ class TTA_Cart {
       )
     );
 
-    // Enforce two ticket limit per event in total
-    $event_ute = $this->wpdb->get_var(
+    // Enforce per-ticket and per-event purchase limits
+    $row = $this->wpdb->get_row(
       $this->wpdb->prepare(
-        "SELECT event_ute_id FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d",
+        "SELECT memberlimit, event_ute_id FROM {$this->wpdb->prefix}tta_tickets WHERE id = %d",
         $ticket_id
-      )
+      ),
+      ARRAY_A
     );
-    if ( $event_ute ) {
-      $event_total = 0;
-      foreach ( $this->get_items() as $row ) {
-        if ( $row['event_ute_id'] === $event_ute && intval( $row['ticket_id'] ) !== $ticket_id ) {
-          $event_total += intval( $row['quantity'] );
-        }
+    $limit     = $row ? intval( $row['memberlimit'] ) : 2;
+    if ( $limit < 1 ) { $limit = 2; }
+    $event_ute = $row['event_ute_id'] ?? '';
+
+    $event_limit = $event_ute ? (int) $this->wpdb->get_var(
+      $this->wpdb->prepare(
+        "SELECT SUM(memberlimit) FROM {$this->wpdb->prefix}tta_tickets WHERE event_ute_id = %s",
+        $event_ute
+      )
+    ) : 0;
+    if ( $event_limit < 1 ) { $event_limit = $limit; }
+
+    $purchased_ticket = is_user_logged_in() ? tta_get_purchased_ticket_count_for_ticket( get_current_user_id(), $ticket_id ) : 0;
+    $purchased_event  = is_user_logged_in() && $event_ute ? tta_get_purchased_ticket_count( get_current_user_id(), $event_ute ) : 0;
+
+    $existing_event_total = 0;
+    foreach ( $this->get_raw_items() as $row_it ) {
+      if ( $row_it['event_ute_id'] === $event_ute ) {
+        $existing_event_total += intval( $row_it['quantity'] );
       }
-      $purchased = is_user_logged_in() ? tta_get_purchased_ticket_count( get_current_user_id(), $event_ute ) : 0;
-      $allowed   = max( 0, 2 - $purchased - $event_total );
-      if ( $qty > $allowed ) {
-        $qty = $allowed;
-      }
+    }
+    $existing_event_total -= $existing_qty;
+
+    $ticket_allowed = max( 0, $limit - $purchased_ticket );
+    $event_allowed  = max( 0, $event_limit - $purchased_event - $existing_event_total );
+    $allowed        = min( $ticket_allowed, $event_allowed );
+    if ( $qty > $allowed ) {
+      $qty = $allowed;
     }
 
     if ( $qty <= 0 ) {

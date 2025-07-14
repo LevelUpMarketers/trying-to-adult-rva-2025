@@ -83,14 +83,16 @@ jQuery(function($){
   window.ttaShowNotice = showNotice;
 
   function enforceLimit(){
-    var $input = $(this);
-    var total = 0;
-    $('.tta-qty-input').each(function(){ total += parseInt($(this).val(),10)||0; });
-    if(total > 2){
-      var others = total - parseInt($input.val(),10)||0;
-      var allowed = Math.max(0, 2 - others);
+    var $input    = $(this);
+    var limit     = parseInt($input.data('limit'),10) || 2;
+    var purchased = parseInt($input.data('purchased'),10) || 0;
+    var allowed   = Math.max(0, limit - purchased);
+    var val       = parseInt($input.val(),10) || 0;
+    if(val > allowed){
       $input.val(allowed);
-      var msg = $('.tta-qty-input').length > 1 ? tta_event.multi_limit_msg : tta_event.single_limit_msg;
+      var msg = (purchased >= limit)
+        ? tta_event.prev_limit_msg.replace('%d', limit)
+        : tta_event.limit_msg.replace('%d', limit);
       showNotice($input, msg);
     }
   }

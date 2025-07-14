@@ -4,8 +4,19 @@ jQuery(function($){
   $('.tta-qty-increase').on('click', function(){
     var $input = $(this).closest('.tta-ticket-quantity').find('.tta-qty-input');
     var max    = parseInt($input.attr('max'), 10) || Infinity;
+    var limit  = parseInt($input.data('limit'), 10) || 2;
+    var purchased = parseInt($input.data('purchased'), 10) || 0;
+    var allowed = Math.max(0, limit - purchased);
     var val    = parseInt($input.val(), 10) || 0;
-    if ( val >= max ) return;
+    if ( val >= max || val >= allowed ) {
+      if ( val >= allowed && window.ttaShowNotice ) {
+        var msg = (purchased >= limit)
+          ? tta_event.prev_limit_msg.replace('%d', limit)
+          : tta_event.limit_msg.replace('%d', limit);
+        window.ttaShowNotice($input, msg);
+      }
+      return;
+    }
     var desired  = val + 1;
     var ticketId = $input.attr('name').match(/\d+/)[0];
     $.post( tta_ajax.ajax_url, {

@@ -109,12 +109,12 @@ class TTA_Ajax_Events {
 
         // 4) If waitlists are enabled, create one now
         $waitlist_id = 0;
-        if ( '1' === $waitlist_available ) {
+        if ( '1' === $waitlist_available && tta_waitlist_uses_csv() ) {
             $waitlist_data = [
                 'event_ute_id' => $ute_id,
                 'ticket_id'    => $ticket_id,
                 'event_name'   => $event_data['name'],
-                'ticket_name'   => 'General Admission',
+                'ticket_name'  => 'General Admission',
                 'userids'      => '',
             ];
             $wpdb->insert( $waitlist_table, $waitlist_data );
@@ -253,7 +253,7 @@ class TTA_Ajax_Events {
 
         
         // 4) If waitlists are enabled, ensure each ticket has a waitlist row
-        if ( '1' === $event_data['waitlistavailable'] ) {
+        if ( '1' === $event_data['waitlistavailable'] && tta_waitlist_uses_csv() ) {
             $tickets = $wpdb->get_results(
                 $wpdb->prepare(
                     "SELECT id, waitlist_id, ticket_name FROM {$tickets_table} WHERE event_ute_id = %d",

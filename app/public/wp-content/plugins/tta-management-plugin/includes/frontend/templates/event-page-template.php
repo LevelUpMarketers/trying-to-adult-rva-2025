@@ -72,7 +72,7 @@ $tickets_table  = $wpdb->prefix . ( $is_archived ? 'tta_tickets_archive' : 'tta_
 $tickets        = TTA_Cache::remember( 'tickets_' . $event['ute_id'], function() use ( $wpdb, $tickets_table, $event ) {
     return $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT id, ticket_name, ticketlimit, baseeventcost, discountedmembercost, premiummembercost
+            "SELECT id, ticket_name, ticketlimit, memberlimit, baseeventcost, discountedmembercost, premiummembercost
              FROM {$tickets_table}
              WHERE event_ute_id = %s
              ORDER BY id ASC",
@@ -95,6 +95,15 @@ foreach ( $tickets as $t ) {
 foreach ( $cart_items as $it ) {
     if ( isset( $it['event_ute_id'] ) && $it['event_ute_id'] === $event['ute_id'] ) {
         $cart_quantities[ intval( $it['ticket_id'] ) ] = intval( $it['quantity'] );
+    }
+}
+
+// Build a map of quantities this user already purchased for each ticket
+$purchased_counts = [];
+if ( is_user_logged_in() ) {
+    $uid = get_current_user_id();
+    foreach ( $tickets as $t ) {
+        $purchased_counts[ intval( $t['id'] ) ] = tta_get_purchased_ticket_count_for_ticket( $uid, intval( $t['id'] ) );
     }
 }
 
@@ -808,6 +817,16 @@ echo $form_html . $lost_pw_html;
             }
         ?>
             <?php $is_sold_out = $available < 1; ?>
+            <?php
+              $purchased = intval( $purchased_counts[ intval( $ticket['id'] ) ] ?? 0 );
+              $ticket_limit = intval( $ticket['memberlimit'] ?? 2 );
+              $remaining_allowance = max( 0, $ticket_limit - $purchased );
+              $ticket_limit_reached = ( $remaining_allowance < 1 );
+              $ticket_tooltip = $tooltip_message;
+              if ( $ticket_limit_reached && ! $disable_controls ) {
+                  $ticket_tooltip = sprintf( __( 'You have already purchased the limit of %d for this ticket.', 'tta' ), $ticket_limit );
+              }
+            ?>
             <div class="tta-top-indiv-wrapper">
               <div class="tta-ticket-item">
                 <?php echo $price_row . ' ' . $avail_text; ?>
@@ -815,17 +834,19 @@ echo $form_html . $lost_pw_html;
               <div class="tta-ticket-quantity">
                 <span class="tta-ticket-name"><?php echo esc_html( $ticket['ticket_name'] ); ?></span>
                 <div>
-                  <button type="button" class="tta-qty-decrease<?php echo ($is_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>" aria-label="<?php esc_attr_e( 'Decrease quantity', 'tta' ); ?>" <?php disabled( $is_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>>–</button>
+                  <button type="button" class="tta-qty-decrease<?php echo ($is_sold_out || $disable_controls || $ticket_limit_reached) ? ' tta-disabled' : ''; ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' tta-tooltip-trigger' : ''; ?>" aria-label="<?php esc_attr_e( 'Decrease quantity', 'tta' ); ?>" <?php disabled( $is_sold_out || $disable_controls || $ticket_limit_reached ); ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' data-tooltip="' . esc_attr( $ticket_tooltip ) . '"' : ''; ?>>–</button>
                   <input
                     type="number"
                     name="tta_ticket_qty[<?php echo esc_attr( $ticket['id'] ); ?>]"
-                    class="tta-qty-input<?php echo ($is_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>"
+                    class="tta-qty-input<?php echo ($is_sold_out || $disable_controls || $ticket_limit_reached) ? ' tta-disabled' : ''; ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' tta-tooltip-trigger' : ''; ?>"
                     value="<?php echo esc_attr( $cart_quantities[ $ticket['id'] ] ?? 0 ); ?>"
                     min="0"
                     <?php if ( $available ): ?>max="<?php echo esc_attr( $available ); ?>"<?php endif; ?>
-                    <?php disabled( $is_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>
+                    data-limit="<?php echo esc_attr( $ticket_limit ); ?>"
+                    data-purchased="<?php echo esc_attr( $purchased ); ?>"
+                    <?php disabled( $is_sold_out || $disable_controls || $ticket_limit_reached ); ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' data-tooltip="' . esc_attr( $ticket_tooltip ) . '"' : ''; ?>
                   />
-                  <button type="button" class="tta-qty-increase<?php echo ($is_sold_out || $disable_controls) ? ' tta-disabled' : ''; ?><?php echo $disable_controls ? ' tta-tooltip-trigger' : ''; ?>" aria-label="<?php esc_attr_e( 'Increase quantity', 'tta' ); ?>" <?php disabled( $is_sold_out || $disable_controls ); ?><?php echo $disable_controls ? ' data-tooltip="' . esc_attr( $tooltip_message ) . '"' : ''; ?>>+</button>
+                  <button type="button" class="tta-qty-increase<?php echo ($is_sold_out || $disable_controls || $ticket_limit_reached) ? ' tta-disabled' : ''; ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' tta-tooltip-trigger' : ''; ?>" aria-label="<?php esc_attr_e( 'Increase quantity', 'tta' ); ?>" <?php disabled( $is_sold_out || $disable_controls || $ticket_limit_reached ); ?><?php echo ($disable_controls || $ticket_limit_reached) ? ' data-tooltip="' . esc_attr( $ticket_tooltip ) . '"' : ''; ?>>+</button>
                 </div>
                 <div class="tta-ticket-notice" aria-live="polite"></div>
               </div>
