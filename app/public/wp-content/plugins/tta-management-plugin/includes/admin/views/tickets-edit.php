@@ -441,16 +441,16 @@ $tickets = $wpdb->get_results(
                     <?php esc_html_e( 'Name', 'tta' ); ?>
                   </th>
                   <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee email address.', 'tta' ); ?>">
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee contact info.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
-                    <?php esc_html_e( 'Email', 'tta' ); ?>
+                    <?php esc_html_e( 'Email & Phone', 'tta' ); ?>
                   </th>
                   <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Phone number provided at checkout.', 'tta' ); ?>">
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason provided with the refund request.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
-                    <?php esc_html_e( 'Phone', 'tta' ); ?>
+                    <?php esc_html_e( 'Note', 'tta' ); ?>
                   </th>
                   <th>
                     <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Amount charged for this ticket.', 'tta' ); ?>">
@@ -488,14 +488,15 @@ $tickets = $wpdb->get_results(
                   <?php endif; ?>
                   <?php
                   $name  = trim( $a['first_name'] . ' ' . $a['last_name'] );
-                  $email = $a['email'];
-                  $phone = $a['phone'];
-                  $paid  = floatval( $a['amount_paid'] );
+                  $email  = $a['email'];
+                  $phone  = $a['phone'];
+                  $reason = $a['reason'];
+                  $paid   = floatval( $a['amount_paid'] );
                   ?>
                   <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
                     <td><?php echo esc_html( $name ); ?></td>
-                    <td><?php echo esc_html( $email ); ?></td>
-                    <td><?php echo esc_html( $phone ); ?></td>
+                    <td><?php echo esc_html( $phone ? ( $email . ' / ' . $phone ) : $email ); ?></td>
+                    <td><?php echo esc_html( $reason ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
                     <td>
                       <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">

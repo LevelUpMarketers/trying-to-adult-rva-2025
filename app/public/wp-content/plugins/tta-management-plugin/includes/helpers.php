@@ -2362,13 +2362,14 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
         }
         $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
         $attendees[] = [
-            'first_name'    => sanitize_text_field( $req['first_name'] ),
-            'last_name'     => sanitize_text_field( $req['last_name'] ),
-            'email'         => sanitize_email( $req['email'] ),
-            'phone'         => sanitize_text_field( $req['phone'] ),
-            'amount_paid'   => floatval( $req['amount_paid'] ),
-            'gateway_id'    => sanitize_text_field( $req['transaction_id'] ),
-            'created_at'    => $tx['created_at'] ?? '',
+            'first_name'  => sanitize_text_field( $req['first_name'] ),
+            'last_name'   => sanitize_text_field( $req['last_name'] ),
+            'email'       => sanitize_email( $req['email'] ),
+            'phone'       => sanitize_text_field( $req['phone'] ),
+            'reason'      => sanitize_text_field( $req['reason'] ),
+            'amount_paid' => floatval( $req['amount_paid'] ),
+            'gateway_id'  => sanitize_text_field( $req['transaction_id'] ),
+            'created_at'  => $tx['created_at'] ?? '',
         ];
     }
 
