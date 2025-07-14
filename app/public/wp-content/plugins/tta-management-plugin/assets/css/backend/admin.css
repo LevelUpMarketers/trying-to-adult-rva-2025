@@ -169,7 +169,7 @@
 }
 .tta-admin-progress-response-p.updated,
 .tta-admin-progress-response-p.error{
-    max-height:135px;
+    max-height:1000px;
 }
 
 form p.submit{
