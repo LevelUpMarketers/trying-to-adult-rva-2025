@@ -87,12 +87,16 @@ class HelpersTest extends TestCase {
         if (!function_exists('esc_url')) { function esc_url($v){ return $v; } }
         if (!function_exists('esc_url_raw')) { function esc_url_raw($v){ return $v; } }
         if (!function_exists('esc_attr')) { function esc_attr($v){ return $v; } }
+        if (!function_exists('esc_html')) { function esc_html($v){ return $v; } }
+        if (!function_exists('esc_html_e')) { function esc_html_e($s,$d=null){ echo $s; } }
+        if (!function_exists('esc_html__')) { function esc_html__($s,$d=null){ return $s; } }
         if (!function_exists('esc_like')) { function esc_like($v){ return $v; } }
         if (!function_exists('is_user_logged_in')) { function is_user_logged_in(){ return true; } }
         if (!function_exists('wp_get_current_user')) { function wp_get_current_user(){ return (object)['ID'=>1,'user_email'=>'u@e.com','user_login'=>'user','first_name'=>'First','last_name'=>'Last']; } }
         if (!function_exists('get_userdata')) { function get_userdata($id){ return (object)['ID'=>$id,'user_email'=>'member'.$id.'@example.com']; } }
         if (!function_exists('wp_get_attachment_image_url')) { function wp_get_attachment_image_url($id,$size){ return $id===1?false:'img'.$id.'.jpg'; } }
         if (!function_exists('wp_get_attachment_url')) { function wp_get_attachment_url($id){ return 'file'.$id.'.jpg'; } }
+        if (!function_exists('get_permalink')) { function get_permalink($id){ return 'post/'.$id; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
         if (!function_exists('wp_json_encode')) { function wp_json_encode($data, $options = 0, $depth = 512){ return json_encode($data, $options, $depth); } }
         if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }

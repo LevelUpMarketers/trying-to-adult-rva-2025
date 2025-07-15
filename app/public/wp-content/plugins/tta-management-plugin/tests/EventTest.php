@@ -143,6 +143,9 @@ class EventTest extends TestCase {
         }
         if (!function_exists('wp_enqueue_media')) { function wp_enqueue_media(){} }
         if (!function_exists('wp_enqueue_editor')) { function wp_enqueue_editor(){} }
+        if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
+        if (!function_exists('add_filter')) { function add_filter($t,$c,$p=10,$a=1){} }
+        if (!function_exists('sanitize_textarea_field')) { function sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
 
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/ajax/handlers/class-ajax-events.php';
