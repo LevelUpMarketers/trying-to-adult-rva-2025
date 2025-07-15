@@ -34,10 +34,11 @@ class TTA_Ajax_Refund {
         $amount      = 0;
         if ( $att ) {
             $att_details = [
-                'first_name'  => $att['first_name'],
-                'last_name'   => $att['last_name'],
-                'email'       => $att['email'],
-                'phone'       => $att['phone'],
+                'id'         => intval( $att['id'] ),
+                'first_name' => $att['first_name'],
+                'last_name'  => $att['last_name'],
+                'email'      => $att['email'],
+                'phone'      => $att['phone'],
             ];
             $tx_row  = tta_get_transaction_by_gateway_id( $tx_id );
             if ( $tx_row ) {

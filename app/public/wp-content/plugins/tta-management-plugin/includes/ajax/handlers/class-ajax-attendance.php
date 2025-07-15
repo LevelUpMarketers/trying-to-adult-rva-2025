@@ -122,7 +122,7 @@ class TTA_Ajax_Attendance {
 
         TTA_Cache::flush();
 
-        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
+        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ), $id );
 
         if ( $should_notify ) {
             tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );
@@ -200,7 +200,7 @@ class TTA_Ajax_Attendance {
                     ],
                 ];
 
-                $exists = tta_get_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
+                $exists = tta_get_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ), $id );
                 if ( ! $exists ) {
                     $wpdb->insert( $hist_table, [
                         'member_id'   => intval( $tx['member_id'] ),
@@ -279,7 +279,7 @@ class TTA_Ajax_Attendance {
 
         TTA_Cache::flush();
 
-        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
+        tta_delete_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ), $id );
 
         wp_send_json_success( [ 'message' => __( 'Refund processed.', 'tta' ) ] );
     }

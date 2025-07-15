@@ -112,7 +112,7 @@ class TTA_Refund_Processor {
     public static function process_refund_request( array $req, $amount_override = null ) {
         $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
         if ( ! $tx ) {
-            tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
+            tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'], $req['attendee']['id'] ?? 0 );
             return;
         }
 
@@ -182,7 +182,7 @@ class TTA_Refund_Processor {
         ];
         TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
 
-        tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'] );
+        tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'], $req['attendee']['id'] ?? 0 );
         tta_decrement_released_refund_count( $req['ticket_id'] );
         TTA_Cache::flush();
     }

@@ -563,10 +563,11 @@ class HelpersTest extends TestCase {
                     'ticket_id' => 3,
                     'reason' => 'Changed plans',
                     'attendee' => [
-                        'first_name'  => 'Ann',
-                        'last_name'   => 'Bee',
-                        'email'       => 'a@example.com',
-                        'phone'       => '123',
+                        'id'         => 55,
+                        'first_name' => 'Ann',
+                        'last_name'  => 'Bee',
+                        'email'      => 'a@example.com',
+                        'phone'      => '123',
                         'amount_paid' => 10.00,
                     ],
                 ]),
@@ -585,6 +586,7 @@ class HelpersTest extends TestCase {
         $this->assertSame('Ann', $rows[0]['first_name']);
         $this->assertSame('a@example.com', $rows[0]['email']);
         $this->assertSame(10.0, $rows[0]['amount_paid']);
+        $this->assertSame(55, $rows[0]['attendee_id']);
         $this->assertSame(1, $wpdb->results_calls);
         $cached = tta_get_refund_requests();
         $this->assertSame(1, $wpdb->results_calls);
