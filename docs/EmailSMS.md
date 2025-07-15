@@ -138,7 +138,8 @@ Template text can include Markdown-style links in the form `[Link Text](https://
 
 The helpers `tta_format_event_date()` and `tta_format_event_time()` convert raw
 database values into the human-friendly strings shown by `{event_date}` and
-`{event_time}`.
+`{event_time}`. `tta_format_event_datetime()` is a convenience wrapper that
+returns both values combined in a single string.
 
 ## Email Delivery
 

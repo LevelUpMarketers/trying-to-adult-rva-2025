@@ -560,6 +560,31 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
 }
 
 /**
+ * Get the number of expected attendees for an event.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return int Count of attendees.
+ */
+function tta_get_expected_attendee_count( $event_ute_id ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return 0;
+    }
+
+    $cache_key = 'expected_count_' . $event_ute_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    $attendees = tta_get_event_attendees_with_status( $event_ute_id );
+    $count     = count( $attendees );
+
+    TTA_Cache::set( $cache_key, $count, 60 );
+    return $count;
+}
+
+/**
  * Retrieve attendees for a specific ticket.
  *
  * @param int $ticket_id Ticket ID.
@@ -1309,6 +1334,46 @@ function tta_format_event_time( $range ) {
         $out .= $ts2 ? date_i18n( 'g:i a', $ts2 ) : $end;
     }
     return trim( $out );
+}
+
+/**
+ * Format event date and time together for display.
+ *
+ * @param string $date  Event date in YYYY-MM-DD format.
+ * @param string $range Time range in "HH:MM|HH:MM" format.
+ * @return string Human readable date and time.
+ */
+function tta_format_event_datetime( $date, $range ) {
+    $date_ts  = strtotime( $date );
+    $date_str = $date_ts ? date_i18n( 'l F j, Y', $date_ts ) : '';
+
+    $parts = explode( '|', $range );
+    $start = trim( $parts[0] ?? '' );
+    $end   = trim( $parts[1] ?? '' );
+
+    $time = '';
+    if ( $start ) {
+        $ts = strtotime( $start );
+        $time = $ts ? date_i18n( 'g:i A', $ts ) : $start;
+    }
+    if ( $end ) {
+        $ts2  = strtotime( $end );
+        $time .= $time ? ' to ' : '';
+        $time .= $ts2 ? date_i18n( 'g:i A', $ts2 ) : $end;
+    }
+
+    return trim( $date_str . ( $time ? ' - ' . $time : '' ) );
+}
+
+/**
+ * Build a Google Maps URL for an address string.
+ *
+ * @param string $raw Raw address.
+ * @return string URL.
+ */
+function tta_get_google_maps_url( $raw ) {
+    $address = tta_format_address( $raw );
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $address );
 }
 
 /**

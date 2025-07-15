@@ -522,6 +522,18 @@ class HelpersTest extends TestCase {
         require_once __DIR__ . '/../includes/helpers.php';
         $this->assertSame('6:00 pm - 8:00 pm', tta_format_event_time('18:00|20:00'));
     }
+
+    public function test_format_event_datetime_handles_range() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $out = tta_format_event_datetime('2025-07-19', '18:00|20:00');
+        $this->assertSame('Saturday July 19, 2025 - 6:00 PM to 8:00 PM', $out);
+    }
+
+    public function test_format_event_datetime_handles_single_time() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $out = tta_format_event_datetime('2025-07-19', '18:00|');
+        $this->assertSame('Saturday July 19, 2025 - 6:00 PM', $out);
+    }
     public function test_get_member_waitlist_events_returns_entries() {
         global $wpdb;
         $this->wpdb->results_calls = 0;

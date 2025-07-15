@@ -38,6 +38,7 @@ get_header();
       <th><?php esc_html_e( 'Event Image', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Event Name', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Date', 'tta' ); ?></th>
+      <th><?php esc_html_e( '# of Expected Attendees', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Status', 'tta' ); ?></th>
       <th></th>
     </tr>
@@ -56,6 +57,7 @@ get_header();
       <td><?php echo $img; ?></td>
       <td><?php echo esc_html( $e['name'] ); ?></td>
       <td><?php echo esc_html( date_i18n( 'n-j-Y', strtotime( $e['date'] ) ) ); ?></td>
+      <td><?php echo intval( tta_get_expected_attendee_count( $e['ute_id'] ) ); ?></td>
       <td><?php echo esc_html( $status ); ?></td>
       <td class="tta-toggle-cell"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>
     </tr>

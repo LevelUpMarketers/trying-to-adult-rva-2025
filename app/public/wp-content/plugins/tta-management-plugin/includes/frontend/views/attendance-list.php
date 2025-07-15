@@ -5,9 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 ?>
 <div class="tta-attendance-details">
   <h4><?php echo esc_html( $event['name'] ); ?></h4>
-  <p><?php echo esc_html( date_i18n( 'F j, Y', strtotime( $event['date'] ) ) ); ?>
-     <?php echo esc_html( $event['time'] ); ?></p>
-  <p><?php echo esc_html( tta_format_address( $event['address'] ) ); ?></p>
+  <p><?php echo esc_html( tta_format_event_datetime( $event['date'], $event['time'] ) ); ?></p>
+  <p>
+    <a href="<?php echo esc_url( tta_get_google_maps_url( $event['address'] ) ); ?>" target="_blank" rel="noopener">
+      <?php echo esc_html( tta_format_address( $event['address'] ) ); ?>
+    </a>
+  </p>
 </div>
 <table class="widefat striped tta-attendance-table">
   <thead>
