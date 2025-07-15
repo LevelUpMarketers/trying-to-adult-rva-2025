@@ -39,7 +39,7 @@ Attendee lists now reflect the database in real time. When a member requests a r
 Past events show the same details as upcoming events. To keep the database small, events more than three days past are moved to an `tta_events_archive` table by a daily cron job. The dashboard transparently queries both the current events table and this archive so members can always view their history.
 
 - Each attendee entry also lists their final attendance status (Attended, No-Show, or Pending) along with any refund notes.
-- A short summary at the top shows how many events you've attended, how many you no-showed, and the total amount you've saved from member pricing and discount codes.
+- A summary box at the top displays how many events you've attended and no‑showed along with your total savings. The message varies by membership level—Basic members are prompted to upgrade, Premium members see a referral link, and Free members get an invitation to join.
 
 ## Billing & Membership Info
 

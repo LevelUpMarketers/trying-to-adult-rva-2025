@@ -4,13 +4,49 @@
   <?php
   $user_id = get_current_user_id();
   $summary = tta_get_member_attendance_summary( $user_id );
-  echo '<p class="tta-attendance-summary">' . esc_html( sprintf(
-      /* translators: 1: attended count, 2: no-show count, 3: amount saved */
-      __( 'Attended: %1$d | No-Shows: %2$d | Total Saved: $%3$s', 'tta' ),
-      $summary['attended'],
-      $summary['no_show'],
-      number_format( $summary['savings'], 2 )
-  ) ) . '</p>';
+  $level   = tta_get_user_membership_level( $user_id );
+  ?>
+  <div class="tta-attendance-summary-div">
+    <?php if ( 'premium' === $level ) : ?>
+      <p class="tta-attendance-summary">
+        <?php
+        echo wp_kses(
+            sprintf(
+                /* translators: %s: amount saved */
+                __( 'Your membership and discount codes have saved you a total of $%s! Did you know you can receive a referral bonus, to include free events? <a href="/referral-program">Click here to learn more now!</a>', 'tta' ),
+                number_format( $summary['savings'], 2 )
+            ),
+            array( 'a' => array( 'href' => array() ) )
+        );
+        ?>
+      </p>
+    <?php elseif ( 'basic' === $level ) : ?>
+      <p class="tta-attendance-summary">
+        <?php
+        echo wp_kses(
+            sprintf(
+                /* translators: %s: amount saved */
+                __( 'Your membership and discount codes have saved you a total of $%s! <a href="/become-a-member">Upgrade to a Premium Membership now</a> to save even more!', 'tta' ),
+                number_format( $summary['savings'], 2 )
+            ),
+            array( 'a' => array( 'href' => array() ) )
+        );
+        ?>
+      </p>
+    <?php else : ?>
+      <p class="tta-attendance-summary">
+        <?php
+        echo wp_kses(
+            __( 'Did you know? Members receive discounts and extra perks. <a href="/become-a-member">Become a member now and start saving!</a>', 'tta' ),
+            array( 'a' => array( 'href' => array() ) )
+        );
+        ?>
+      </p>
+    <?php endif; ?>
+    <p class="tta-attendance-summary"><?php printf( esc_html__( 'Total Events Attended: %d', 'tta' ), intval( $summary['attended'] ) ); ?></p>
+    <p class="tta-attendance-summary"><?php printf( esc_html__( 'Total Event No-Shows: %d', 'tta' ), intval( $summary['no_show'] ) ); ?></p>
+  </div>
+  <?php
 
   $events = tta_get_member_past_events( $user_id );
   if ( $events ) :
