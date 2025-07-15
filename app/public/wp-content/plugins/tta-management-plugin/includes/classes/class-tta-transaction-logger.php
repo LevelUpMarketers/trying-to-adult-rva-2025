@@ -129,13 +129,7 @@ class TTA_Transaction_Logger {
                     if ( ! $email ) {
                         continue;
                     }
-                    $member_row = $wpdb->get_row(
-                        $wpdb->prepare(
-                            "SELECT id, wpuserid FROM {$members_table} WHERE email = %s LIMIT 1",
-                            $email
-                        ),
-                        ARRAY_A
-                    );
+                    $member_row = tta_get_member_row_by_email( $email );
                     if ( $member_row && intval( $member_row['wpuserid'] ) !== $user_id ) {
                         $unique_members[ $member_row['wpuserid'] ] = $member_row;
                     }

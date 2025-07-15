@@ -146,6 +146,29 @@ function tta_get_membership_level_by_email( $email ) {
 }
 
 /**
+ * Get a member row by email address.
+ *
+ * @param string $email Email to search.
+ * @return array|null   Array with id and wpuserid or null if not found.
+ */
+function tta_get_member_row_by_email( $email ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $email         = sanitize_email( $email );
+    if ( ! $email ) {
+        return null;
+    }
+
+    return $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT id, wpuserid FROM {$members_table} WHERE LOWER(email) = %s LIMIT 1",
+            strtolower( $email )
+        ),
+        ARRAY_A
+    );
+}
+
+/**
  * Sanitize a URL input preserving apostrophes.
  *
  * @param mixed $value
