@@ -26,6 +26,7 @@ shows:
 - Successful submission displays the message "Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it's sold, you'll automatically receive a refund. There's nothing else for you to do! Check back here periodically to see the status of your refund request."
 - After submitting, the page no longer reloads automatically; the refund button and link are disabled so the confirmation message stays visible.
 - Each event includes a small form to send a message to the hosts and volunteers. Submitted notes are stored with your tickets and emailed to the hosts so they can assist you on event day.
+- When a member purchases tickets on behalf of another member the additional attendee's upcoming events cache is cleared so the new event appears immediately on their dashboard.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the

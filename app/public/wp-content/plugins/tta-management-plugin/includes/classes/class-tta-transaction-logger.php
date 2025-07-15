@@ -120,6 +120,8 @@ class TTA_Transaction_Logger {
                 ],
                 [ '%d', '%d', '%d', '%s', '%s' ]
             );
+            // clear upcoming events cache for the purchaser
+            TTA_Cache::delete( 'upcoming_events_' . $user_id );
 
             // Record history for any additional attendees who are members
             $unique_members = [];
@@ -141,13 +143,15 @@ class TTA_Transaction_Logger {
                 $history_table,
                 [
                     'member_id'   => intval( $m['id'] ),
-                        'wpuserid'    => intval( $m['wpuserid'] ),
-                        'event_id'    => intval( $event_id ),
-                        'action_type' => 'purchase',
-                        'action_data' => wp_json_encode( $history_data ),
-                    ],
+                    'wpuserid'    => intval( $m['wpuserid'] ),
+                    'event_id'    => intval( $event_id ),
+                    'action_type' => 'purchase',
+                    'action_data' => wp_json_encode( $history_data ),
+                ],
                 [ '%d', '%d', '%d', '%s', '%s' ]
             );
+            // clear upcoming events cache for this attendee member
+            TTA_Cache::delete( 'upcoming_events_' . intval( $m['wpuserid'] ) );
         }
         }
 
