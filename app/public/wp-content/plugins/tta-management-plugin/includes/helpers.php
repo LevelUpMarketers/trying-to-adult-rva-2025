@@ -1527,15 +1527,17 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_map ), '%s' ) );
         $tx_rows      = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, transaction_id FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
+                "SELECT id, transaction_id, wpuserid FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
                 ...array_keys( $txn_map )
             ),
             ARRAY_A
         );
 
-        $tx_ids = [];
+        $tx_ids   = [];
+        $tx_users = [];
         foreach ( $tx_rows as $tr ) {
             $tx_ids[ $tr['transaction_id'] ] = intval( $tr['id'] );
+            $tx_users[ $tr['transaction_id'] ] = intval( $tr['wpuserid'] );
         }
 
         if ( $tx_ids ) {
@@ -1573,6 +1575,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     continue;
                 }
                 $internal_tx = $tx_ids[ $gateway_tx ];
+                $purchaser   = $tx_users[ $gateway_tx ] ?? 0;
                 $new_items   = [];
                 foreach ( $ev['items'] as $item ) {
                     $tid = intval( $item['ticket_id'] ?? 0 );
@@ -1587,6 +1590,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     );
                     $item['attendees'] = array_values( $attendees );
                     $item['quantity']  = count( $item['attendees'] );
+                    $item['purchaser_id'] = $purchaser;
                     $item['refund_pending'] = false;
                     if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
                         foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
