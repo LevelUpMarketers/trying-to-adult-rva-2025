@@ -38,6 +38,8 @@ Attendee lists now reflect the database in real time. When a member requests a r
 
 Past events show the same details as upcoming events. To keep the database small, events more than three days past are moved to an `tta_events_archive` table by a daily cron job. The dashboard transparently queries both the current events table and this archive so members can always view their history.
 
+- Each attendee entry also lists their final attendance status (Checked In, No Show, or Pending) along with any refund notes.
+
 ## Billing & Membership Info
 
 The billing tab now displays the member's current plan and subscription status. When a Basic or Premium plan is active, a **Cancel Membership** button appears. Submitting the form calls an AJAX endpoint that shows a loading spinner and returns a success or error message. On success the membership level reverts to **Free**, the status changes to *Cancelled*, and the button disappears.

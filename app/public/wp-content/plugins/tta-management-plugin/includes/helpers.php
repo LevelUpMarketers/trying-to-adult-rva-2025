@@ -1662,12 +1662,16 @@ function tta_get_member_past_events( $wp_user_id ) {
         ARRAY_A
     );
 
-    $events = [];
+    $events  = [];
+    $txn_map = [];
+    $refunds = [];
+    $approved = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
             continue;
         }
+        $txn_map[ $data['transaction_id'] ?? '' ] = 0;
         $events[] = [
             'event_id'       => intval( $row['event_id'] ),
             'name'           => sanitize_text_field( $row['name'] ),
@@ -1683,6 +1687,218 @@ function tta_get_member_past_events( $wp_user_id ) {
             'items'          => $data['items'] ?? [],
         ];
     }
+
+    $member_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_members WHERE wpuserid = %d", $wp_user_id ) );
+    if ( $member_id ) {
+        foreach ( tta_get_refund_requests() as $req ) {
+            if ( intval( $req['member_id'] ) !== $member_id ) {
+                continue;
+            }
+            $tx  = $req['transaction_id'];
+            $tid = intval( $req['ticket_id'] );
+            $refunds[ $tx ][ $tid ] = $req;
+            if ( isset( $txn_map[ $tx ] ) ) {
+                $txn_map[ $tx ] += 1;
+            } else {
+                $txn_map[ $tx ] = 1;
+            }
+        }
+
+        if ( $events ) {
+            $ids = array_column( $events, 'event_id' );
+            $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+            $refund_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT event_id, action_data FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' AND event_id IN ($placeholders)",
+                    $wp_user_id,
+                    ...$ids
+                ),
+                ARRAY_A
+            );
+            foreach ( $refund_rows as $r ) {
+                $data = json_decode( $r['action_data'], true );
+                if ( empty( $data['cancel'] ) || floatval( $data['amount'] ?? 0 ) <= 0 ) {
+                    continue;
+                }
+                $tx  = $data['transaction_id'] ?? '';
+                $tid = intval( $data['ticket_id'] ?? 0 );
+                $email = sanitize_email( $data['attendee']['email'] ?? '' );
+                if ( ! $tx || ! $tid || ! $email ) {
+                    continue;
+                }
+                if ( ! isset( $approved[ $tx ][ $tid ][ $email ] ) ) {
+                    $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
+                }
+                $approved[ $tx ][ $tid ][ $email ] = [
+                    'first_name' => $data['attendee']['first_name'] ?? '',
+                    'last_name'  => $data['attendee']['last_name'] ?? '',
+                    'email'      => $email,
+                    'amount'     => floatval( $data['amount'] ?? 0 ),
+                ];
+            }
+            foreach ( $approved as $tx_key => &$tids ) {
+                foreach ( $tids as $tid_key => &$ap ) {
+                    $ap = array_values( $ap );
+                }
+                unset( $ap );
+            }
+            unset( $tids );
+        }
+    }
+
+    if ( $txn_map && ! property_exists( $wpdb, 'results_data' ) ) {
+        $placeholders = implode( ',', array_fill( 0, count( $txn_map ), '%s' ) );
+        $tx_rows      = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, transaction_id FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
+                ...array_keys( $txn_map )
+            ),
+            ARRAY_A
+        );
+
+        $tx_ids = [];
+        foreach ( $tx_rows as $tr ) {
+            $tx_ids[ $tr['transaction_id'] ] = intval( $tr['id'] );
+        }
+
+        if ( $tx_ids ) {
+            $placeholders = implode( ',', array_fill( 0, count( $tx_ids ), '%d' ) );
+            $counts       = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT transaction_id, COUNT(*) AS cnt FROM {$wpdb->prefix}tta_attendees WHERE transaction_id IN ($placeholders) GROUP BY transaction_id",
+                    ...array_values( $tx_ids )
+                ),
+                ARRAY_A
+            );
+
+            foreach ( $counts as $c ) {
+                $tid = array_search( intval( $c['transaction_id'] ), $tx_ids, true );
+                if ( $tid ) {
+                    $txn_map[ $tid ] = intval( $c['cnt'] );
+                }
+            }
+        }
+
+        if ( $txn_map ) {
+            $events = array_filter(
+                $events,
+                static function ( $ev ) use ( $txn_map ) {
+                    $tx = $ev['transaction_id'] ?? '';
+                    return isset( $txn_map[ $tx ] ) && $txn_map[ $tx ] > 0;
+                }
+            );
+            $events = array_values( $events );
+
+            foreach ( $events as &$ev ) {
+                $gateway_tx = $ev['transaction_id'] ?? '';
+                if ( ! isset( $tx_ids[ $gateway_tx ] ) ) {
+                    continue;
+                }
+                $internal_tx = $tx_ids[ $gateway_tx ];
+                $new_items   = [];
+                foreach ( $ev['items'] as $item ) {
+                    $tid = intval( $item['ticket_id'] ?? 0 );
+                    if ( ! $tid ) {
+                        continue;
+                    }
+                    $attendees = array_filter(
+                        tta_get_ticket_attendees( $tid ),
+                        static function ( $a ) use ( $internal_tx ) {
+                            return intval( $a['transaction_id'] ) === $internal_tx;
+                        }
+                    );
+                    $item['attendees'] = array_values( $attendees );
+                    $item['quantity']  = count( $item['attendees'] );
+                    $item['refund_pending'] = false;
+                    if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
+                        foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
+                            $clone = $item;
+                            $clone['refund_approved'] = true;
+                            $clone['refund_amount']   = $ap['amount'];
+                            $clone['refund_attendee'] = [
+                                'first_name' => $ap['first_name'],
+                                'last_name'  => $ap['last_name'],
+                                'email'      => $ap['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
+                        }
+                    }
+                    if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
+                        $req  = $refunds[ $gateway_tx ][ $tid ];
+                        $item['refund_pending'] = true;
+                        $item['refund_attendee'] = [
+                            'first_name' => $req['first_name'],
+                            'last_name'  => $req['last_name'],
+                            'email'      => $req['email'],
+                        ];
+                        if ( 0 === $item['quantity'] ) {
+                            $item['quantity'] = 1;
+                        }
+                        $new_items[] = $item;
+                    } elseif ( $item['quantity'] > 0 ) {
+                        $new_items[] = $item;
+                    }
+                }
+                $ev['items'] = $new_items;
+            }
+            unset( $ev );
+            $events = array_filter( $events, static function ( $e ) {
+                return ! empty( $e['items'] );
+            } );
+            $events = array_values( $events );
+        }
+    }
+
+    foreach ( $events as &$ev ) {
+        $split_items = [];
+        foreach ( $ev['items'] as $item ) {
+            $attendees = $item['attendees'] ?? [];
+            if ( ! empty( $item['refund_pending'] ) ) {
+                $pending            = $item;
+                $pending['quantity'] = 1;
+                $pending['attendees'] = [];
+                $split_items[]      = $pending;
+
+                foreach ( $attendees as $att ) {
+                    $clone                     = $item;
+                    $clone['refund_pending']   = false;
+                    unset( $clone['refund_attendee'] );
+                    $clone['attendees']        = [ $att ];
+                    $clone['quantity']         = 1;
+                    $split_items[]             = $clone;
+                }
+                continue;
+            }
+
+            if ( ! empty( $item['refund_approved'] ) ) {
+                $item['quantity'] = 1;
+                $split_items[] = $item;
+                continue;
+            }
+
+            $qty = intval( $item['quantity'] ?? count( $attendees ) );
+            if ( $attendees ) {
+                foreach ( $attendees as $att ) {
+                    $clone              = $item;
+                    $clone['attendees'] = [ $att ];
+                    $clone['quantity']  = 1;
+                    $split_items[]      = $clone;
+                }
+            } elseif ( $qty > 1 ) {
+                for ( $i = 0; $i < $qty; $i++ ) {
+                    $clone              = $item;
+                    $clone['quantity']  = 1;
+                    $split_items[]      = $clone;
+                }
+            } else {
+                $split_items[] = $item;
+            }
+        }
+        $ev['items'] = $split_items;
+    }
+    unset( $ev );
 
     $ttl = empty( $events ) ? 60 : 300;
     TTA_Cache::set( $cache_key, $events, $ttl );
@@ -2118,7 +2334,7 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id
     }
 
     $ticket_sql = $ticket_id ? ' AND a.ticket_id = %d' : '';
-    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
     $params = $ticket_id ? [ $tx['id'], $ute_id, $ticket_id, $tx['id'], $ute_id, $ticket_id ] : [ $tx['id'], $ute_id, $tx['id'], $ute_id ];
     $rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
 
@@ -2144,6 +2360,7 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id
             'last_name'   => sanitize_text_field( $r['last_name'] ),
             'email'       => sanitize_email( $r['email'] ),
             'phone'       => sanitize_text_field( $r['phone'] ),
+            'status'      => sanitize_text_field( $r['status'] ?? 'pending' ),
             'amount_paid' => $price_map[ $tid ] ?? 0,
             'gateway_id'  => $gateway_tx_id,
             'created_at'  => $tx['created_at'],

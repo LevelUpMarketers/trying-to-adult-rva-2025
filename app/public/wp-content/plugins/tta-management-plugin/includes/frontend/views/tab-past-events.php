@@ -37,7 +37,12 @@
               <strong><?php echo esc_html( $it['ticket_name'] ); ?> (<?php echo intval( $it['quantity'] ); ?>)</strong>
               <ul class="tta-attendees">
               <?php foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) : ?>
-                <li><?php echo esc_html( trim( $att['first_name'] . ' ' . $att['last_name'] ) . ' (' . $att['email'] . ')' ); ?></li>
+                <li>
+                  <?php echo esc_html( trim( $att['first_name'] . ' ' . $att['last_name'] ) . ' (' . $att['email'] . ')' ); ?>
+                  <span class="tta-attendance-status">
+                    <?php echo esc_html( ucwords( str_replace( '_', ' ', $att['status'] ?? 'pending' ) ) ); ?>
+                  </span>
+                </li>
               <?php endforeach; ?>
               </ul>
             </div>
