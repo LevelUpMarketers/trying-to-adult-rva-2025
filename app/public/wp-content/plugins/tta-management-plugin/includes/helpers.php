@@ -3045,7 +3045,7 @@ function tta_get_event_for_email( $event_ute_id ) {
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$events_table} WHERE ute_id = %s",
+            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, host_notes FROM {$events_table} WHERE ute_id = %s",
             $event_ute_id
         ),
         ARRAY_A
@@ -3054,7 +3054,7 @@ function tta_get_event_for_email( $event_ute_id ) {
     if ( ! $row ) {
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$archive_table} WHERE ute_id = %s",
+                "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, host_notes FROM {$archive_table} WHERE ute_id = %s",
                 $event_ute_id
             ),
             ARRAY_A
@@ -3080,6 +3080,7 @@ function tta_get_event_for_email( $event_ute_id ) {
         'base_cost'    => floatval( $row['baseeventcost'] ),
         'member_cost'  => floatval( $row['discountedmembercost'] ),
         'premium_cost' => floatval( $row['premiummembercost'] ),
+        'host_notes'   => sanitize_textarea_field( $row['host_notes'] ),
     ];
 
     TTA_Cache::set( $cache_key, $event, 300 );

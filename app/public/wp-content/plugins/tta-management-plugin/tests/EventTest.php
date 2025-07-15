@@ -183,6 +183,7 @@ class EventTest extends TestCase {
             'url4' => '',
             'mainimageid' => 0,
             'otherimageids' => '',
+            'host_notes' => 'Test notes',
             'tta_event_save_nonce' => 'yes',
         ];
     }
@@ -200,6 +201,7 @@ class EventTest extends TestCase {
         $ticket = $this->wpdb->data[$tickets_table][$ticket_id];
         $this->assertSame('Test Event', $event['name']);
         $this->assertSame('123 St -  - Town - VA - 12345', $event['address']);
+        $this->assertSame('Test notes', $event['host_notes']);
         $this->assertSame($event['ute_id'], $ticket['event_ute_id']);
         $this->assertSame('General Admission', $ticket['ticket_name']);
     }
@@ -214,6 +216,7 @@ class EventTest extends TestCase {
         $_POST['tta_event_id'] = $id;
         $_POST['name'] = 'Updated';
         $_POST['date'] = '2025-02-02';
+        $_POST['host_notes'] = 'Updated note';
         TTA_Ajax_Events::update_event();
         $result = $GLOBALS['_last_json'];
         $this->assertTrue($result['success']);
@@ -221,5 +224,6 @@ class EventTest extends TestCase {
         $event  = $this->wpdb->data[$events_table][$id];
         $this->assertSame('Updated', $event['name']);
         $this->assertSame('2025-02-02', $event['date']);
+        $this->assertSame('Updated note', $event['host_notes']);
     }
 }

@@ -528,8 +528,8 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
                     </span>
                     <label for="volunteers">Event Volunteers</label>
                 </th>
-                <td>
-                    <div id="volunteers-container">
+            <td>
+                <div id="volunteers-container">
                         <?php foreach ( $volunteers as $i => $v ) : ?>
                             <div class="interest-item" style="margin-bottom:8px; display:flex; align-items:center;">
                                 <input type="text" name="volunteers[]" class="regular-text volunteer-field" list="tta-member-options" placeholder="Volunteer #<?php echo $i+1; ?>" value="<?php echo esc_attr( $v ); ?>" />
@@ -539,9 +539,19 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
-                </td>
-            </tr>
+                <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
+            </td>
+        </tr>
+
+        <!-- Host Notes -->
+        <tr>
+            <th>
+                <label for="host_notes_edit">Event Host Notes</label>
+            </th>
+            <td>
+                <textarea name="host_notes" id="host_notes_edit" rows="4" class="large-text" placeholder="Notes for hosts and volunteers" <?php echo $readonly ? 'readonly' : ''; ?>><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
+            </td>
+        </tr>
 
         </tbody>
 

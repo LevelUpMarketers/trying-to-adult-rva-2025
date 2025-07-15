@@ -65,6 +65,7 @@ class TTA_Ajax_Events {
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
             'hosts'                => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
             'volunteers'           => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+            'host_notes'           => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
 
         // Save venue if new when updating
@@ -229,6 +230,7 @@ class TTA_Ajax_Events {
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
             'hosts'                => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
             'volunteers'           => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+            'host_notes'           => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
 
         $updated = $wpdb->update( $events_table, $event_data, [ 'id' => $id ] );

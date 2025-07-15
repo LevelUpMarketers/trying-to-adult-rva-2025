@@ -16,6 +16,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
       <?php echo esc_html( tta_format_address( $event['address'] ) ); ?>
     </a>
   </p>
+  <?php if ( ! empty( $event['host_notes'] ) ) : ?>
+  <p class="tta-host-notes">
+    <?php echo nl2br( esc_html( $event['host_notes'] ) ); ?>
+  </p>
+  <?php endif; ?>
 </div>
 <table class="widefat striped tta-attendance-table">
   <thead>

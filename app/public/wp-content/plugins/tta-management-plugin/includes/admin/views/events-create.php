@@ -64,6 +64,7 @@ if ( isset( $_POST['tta_event_save'] ) && check_admin_referer(
         'otherimageids'         => tta_sanitize_text_field( $_POST['otherimageids'] ),
         'hosts'                 => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
         'volunteers'            => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+        'host_notes'            => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
     ];
 
     // Store venue if new
@@ -563,6 +564,16 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
                     <?php endforeach; ?>
                 </div>
                 <button type="button" class="button" id="add-volunteer" style="margin-top:8px;">+ Add Another Volunteer</button>
+            </td>
+        </tr>
+
+        <!-- Host Notes -->
+        <tr>
+            <th>
+                <label for="host_notes">Event Host Notes</label>
+            </th>
+            <td>
+                <textarea name="host_notes" id="host_notes" rows="4" class="large-text" placeholder="Notes for hosts and volunteers"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
             </td>
         </tr>
 
