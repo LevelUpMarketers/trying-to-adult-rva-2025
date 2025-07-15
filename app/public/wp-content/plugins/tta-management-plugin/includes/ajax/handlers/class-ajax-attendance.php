@@ -180,12 +180,45 @@ class TTA_Ajax_Attendance {
         if ( ! $res['success'] ) {
             $msg = strtolower( $res['error'] );
             if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) || false !== strpos( strtolower( $status_res['status'] ?? '' ), 'pending' ) ) {
-                wp_send_json_error( [ 'message' => __( 'Transaction has not settled yet. Try again later.', 'tta' ) ] );
-            }
-            wp_send_json_error( [ 'message' => $res['error'] ] );
-        }
+                $ticket = $wpdb->get_row( $wpdb->prepare( "SELECT event_ute_id FROM {$ticket_table} WHERE id = %d", intval( $att['ticket_id'] ) ), ARRAY_A );
+                $event_id = 0;
+                if ( $ticket && ! empty( $ticket['event_ute_id'] ) ) {
+                    $event_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s LIMIT 1", $ticket['event_ute_id'] ) );
+                }
 
-        if ( ! $res['success'] ) {
+                $action_data = [
+                    'transaction_id' => $tx['transaction_id'],
+                    'ticket_id'      => intval( $att['ticket_id'] ),
+                    'reason'         => '',
+                    'attendee'       => [
+                        'id'         => $id,
+                        'first_name' => $att['first_name'],
+                        'last_name'  => $att['last_name'],
+                        'email'      => $att['email'],
+                        'phone'      => $att['phone'],
+                        'amount_paid'=> $amount,
+                    ],
+                ];
+
+                $exists = tta_get_refund_request( $tx['transaction_id'], intval( $att['ticket_id'] ) );
+                if ( ! $exists ) {
+                    $wpdb->insert( $hist_table, [
+                        'member_id'   => intval( $tx['member_id'] ),
+                        'wpuserid'    => intval( $tx['wpuserid'] ),
+                        'event_id'    => $event_id,
+                        'action_type' => 'refund_request',
+                        'action_data' => wp_json_encode( $action_data ),
+                    ], [ '%d','%d','%d','%s','%s' ] );
+                    TTA_Cache::delete( 'tta_refund_requests' );
+                }
+
+                if ( 'cancel' === $mode ) {
+                    tta_cancel_attendance_internal( $id, true, false );
+                }
+
+                wp_send_json_success( [ 'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ) ] );
+            }
+
             wp_send_json_error( [ 'message' => $res['error'] ] );
         }
 

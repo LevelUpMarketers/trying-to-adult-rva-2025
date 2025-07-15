@@ -2485,8 +2485,9 @@ function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id, $attendee_id
  *
  * @param int  $attendee_id     Attendee ID.
  * @param bool $update_inventory Whether to increment ticket inventory.
+ * @param bool $log_history      Whether to record a refund entry in member history.
  */
-function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true ) {
+function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true, $log_history = true ) {
     global $wpdb;
     $att_table   = $wpdb->prefix . 'tta_attendees';
     $ticket_table = $wpdb->prefix . 'tta_tickets';
@@ -2506,7 +2507,7 @@ function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true 
         $event_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1", $ticket['event_ute_id'], $ticket['event_ute_id'] ) );
     }
 
-    if ( $tx ) {
+    if ( $tx && $log_history ) {
         $wpdb->insert(
             $hist_table,
             [

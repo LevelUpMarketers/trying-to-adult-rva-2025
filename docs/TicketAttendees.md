@@ -9,7 +9,7 @@ both issues the refund and removes the attendee from the event while increasing
 the available ticket count. The second option refunds the amount but leaves the
 attendee registered. For cases where no refund is needed, a **Cancel Attendance
 (No Refund)** button simply frees the ticket and removes the attendee. Any refund or cancellation also reduces the member's purchase tally so they can buy additional tickets up to the limit. If the
-transaction has not yet settled, the refund is delayed until the charge settles rather than voiding the entire transaction. Leaving the **Refund $** field blank refunds the full amount paid for
+transaction has not yet settled, the refund is stored and reattempted automatically by a cron job each day at roughly 1:15&nbsp;AM and 8:15&nbsp;AM rather than voiding the entire transaction. Leaving the **Refund $** field blank refunds the full amount paid for
 that attendee only, not the entire transaction.
 
 ## Waitlist Entries

@@ -43,7 +43,7 @@ class TTA_Ajax_Refund {
             if ( $tx_row ) {
                 $amount = tta_get_ticket_price_from_transaction( $tx_row, $ticket_id );
             }
-            tta_cancel_attendance_internal( intval( $att['id'] ), false );
+            tta_cancel_attendance_internal( intval( $att['id'] ), false, false );
         }
 
         $action_data = [

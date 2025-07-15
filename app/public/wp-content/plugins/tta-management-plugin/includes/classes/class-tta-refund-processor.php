@@ -9,16 +9,43 @@ class TTA_Refund_Processor {
         }
     }
 
+    /** Schedule refund retry events twice daily. */
+    public static function schedule_retry_events() {
+        if ( ! wp_next_scheduled( 'tta_refund_retry_morning' ) ) {
+            $morning = strtotime( '08:15' );
+            if ( $morning <= time() ) {
+                $morning += DAY_IN_SECONDS;
+            }
+            wp_schedule_event( $morning, 'daily', 'tta_refund_retry_morning' );
+        }
+        if ( ! wp_next_scheduled( 'tta_refund_retry_night' ) ) {
+            $night = strtotime( '01:15' );
+            if ( $night <= time() ) {
+                $night += DAY_IN_SECONDS;
+            }
+            wp_schedule_event( $night, 'daily', 'tta_refund_retry_night' );
+        }
+    }
+
     /** Clear cron event. */
     public static function clear_event() {
         wp_clear_scheduled_hook( 'tta_refund_request_cron' );
+    }
+
+    /** Clear refund retry events. */
+    public static function clear_retry_events() {
+        wp_clear_scheduled_hook( 'tta_refund_retry_morning' );
+        wp_clear_scheduled_hook( 'tta_refund_retry_night' );
     }
 
     /** Initialize hooks. */
     public static function init() {
         add_action( 'tta_after_purchase_logged', [ __CLASS__, 'handle_purchase' ], 10, 2 );
         add_action( 'tta_refund_request_cron', [ __CLASS__, 'expire_requests' ] );
+        add_action( 'tta_refund_retry_morning', [ __CLASS__, 'retry_pending_requests' ] );
+        add_action( 'tta_refund_retry_night', [ __CLASS__, 'retry_pending_requests' ] );
         self::schedule_event();
+        self::schedule_retry_events();
     }
 
     /**
@@ -33,12 +60,32 @@ class TTA_Refund_Processor {
 
         foreach ( $items as $it ) {
             $tid       = intval( $it['ticket_id'] );
-            $qty       = intval( $it['quantity'] ?? 1 );
             $event_ute = $it['event_ute_id'] ?? '';
             if ( $event_ute ) {
                 $events[ $event_ute ] = true;
             }
+        }
 
+        foreach ( array_keys( $events ) as $ute ) {
+            tta_release_refund_tickets( $ute );
+        }
+    }
+
+    /** Attempt to process pending refund requests. */
+    public static function retry_pending_requests() {
+        global $wpdb;
+        $requests = tta_get_refund_requests();
+        if ( ! $requests ) {
+            return;
+        }
+
+        $grouped = [];
+        foreach ( $requests as $req ) {
+            $tid = intval( $req['ticket_id'] );
+            $grouped[ $tid ][] = $req;
+        }
+
+        foreach ( $grouped as $tid => $list ) {
             $released = tta_get_released_refund_count( $tid );
             if ( $released <= 0 ) {
                 continue;
@@ -50,20 +97,10 @@ class TTA_Refund_Processor {
             ) );
 
             $sold_from_pool = max( 0, $released - $stock );
-            $to_refund      = min( $qty, $sold_from_pool );
-
+            $to_refund      = min( count( $list ), $sold_from_pool );
             for ( $i = 0; $i < $to_refund; $i++ ) {
-                $req = tta_get_next_refund_request_for_ticket( $tid );
-                if ( ! $req ) {
-                    break;
-                }
-                self::process_refund_request( $req );
+                self::process_refund_request( $list[ $i ] );
             }
-
-        }
-
-        foreach ( array_keys( $events ) as $ute ) {
-            tta_release_refund_tickets( $ute );
         }
     }
 
