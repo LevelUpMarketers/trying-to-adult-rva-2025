@@ -11,7 +11,7 @@ update each record via AJAX. Attendance status writes back to the
 - Attendees who cancelled or requested a refund no longer appear in the list so
   hosts don't accidentally mark them as no-shows.
 - Two new columns display how many events each attendee has previously checked in for and any **Needs Assistance** note they left for the host. When no note exists a simple `-` is shown.
-- Members submit these assistance notes from the Upcoming Events tab on their dashboard, and the messages are emailed to hosts automatically.
+- Members submit these assistance notes from the Upcoming Events tab on their dashboard. The note is stored only for the member's own attendee record and emailed to all event hosts automatically.
 - A new **# of Expected Attendees** column shows how many approved attendees are expected for each event.
 - If the event has host notes, they appear beneath the address so volunteers can see any special instructions.
 - The **Date & Time** column uses the same human-friendly format as the event header.

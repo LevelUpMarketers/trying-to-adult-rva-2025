@@ -4227,7 +4227,7 @@ function tta_get_event_host_volunteer_emails( $event_id ) {
 }
 
 /**
- * Store an assistance note for all of a user's attendees at an event.
+ * Store an assistance note for the logged in member's attendee record.
  *
  * @param int    $wp_user_id    WordPress user ID.
  * @param string $event_ute_id  Event ute ID.
@@ -4242,14 +4242,20 @@ function tta_save_assistance_note( $wp_user_id, $event_ute_id, $note ) {
         return false;
     }
 
+    $user = get_userdata( $wp_user_id );
+    if ( ! $user ) {
+        return false;
+    }
+
     $att_table     = $wpdb->prefix . 'tta_attendees';
     $tx_table      = $wpdb->prefix . 'tta_transactions';
     $tickets_table = $wpdb->prefix . 'tta_tickets';
 
     $ids = $wpdb->get_col( $wpdb->prepare(
-        "SELECT a.id FROM {$att_table} a JOIN {$tx_table} tx ON a.transaction_id = tx.id JOIN {$tickets_table} t ON a.ticket_id = t.id WHERE tx.wpuserid = %d AND t.event_ute_id = %s",
+        "SELECT a.id FROM {$att_table} a JOIN {$tx_table} tx ON a.transaction_id = tx.id JOIN {$tickets_table} t ON a.ticket_id = t.id WHERE tx.wpuserid = %d AND t.event_ute_id = %s AND a.email = %s",
         $wp_user_id,
-        $event_ute_id
+        $event_ute_id,
+        $user->user_email
     ) );
 
     if ( empty( $ids ) ) {

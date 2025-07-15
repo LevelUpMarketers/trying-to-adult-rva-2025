@@ -90,6 +90,7 @@ class HelpersTest extends TestCase {
         if (!function_exists('esc_like')) { function esc_like($v){ return $v; } }
         if (!function_exists('is_user_logged_in')) { function is_user_logged_in(){ return true; } }
         if (!function_exists('wp_get_current_user')) { function wp_get_current_user(){ return (object)['ID'=>1,'user_email'=>'u@e.com','user_login'=>'user','first_name'=>'First','last_name'=>'Last']; } }
+        if (!function_exists('get_userdata')) { function get_userdata($id){ return (object)['ID'=>$id,'user_email'=>'member'.$id.'@example.com']; } }
         if (!function_exists('wp_get_attachment_image_url')) { function wp_get_attachment_image_url($id,$size){ return $id===1?false:'img'.$id.'.jpg'; } }
         if (!function_exists('wp_get_attachment_url')) { function wp_get_attachment_url($id){ return 'file'.$id.'.jpg'; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
@@ -388,13 +389,8 @@ class HelpersTest extends TestCase {
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
         tta_save_assistance_note( 5, 'ute1', 'Help' );
-        $found = false;
-        foreach ( $wpdb->queries as $q ) {
-            if ( strpos( $q, 'UPDATE wp_tta_attendees' ) !== false ) {
-                $found = true; break;
-            }
-        }
-        $this->assertTrue( $found );
+        $this->assertStringContainsString( 'a.email', $wpdb->queries[0] );
+        $this->assertStringContainsString( 'UPDATE wp_tta_attendees', $wpdb->queries[1] );
     }
 
     public function test_get_event_attendees_with_status_queries_table() {
