@@ -68,6 +68,23 @@ class TTA_Ajax_Events {
             'host_notes'           => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
 
+        $required = [
+            'name'       => $event_data['name'],
+            'date'       => $event_data['date'],
+            'start_time' => $start,
+            'venuename'  => $event_data['venuename'],
+        ];
+        $missing = [];
+        foreach ( $required as $key => $val ) {
+            if ( '' === $val ) {
+                $missing[] = $key;
+            }
+        }
+        if ( $missing ) {
+            wp_send_json_error( [ 'message' => 'Missing required fields: ' . implode( ', ', $missing ) ] );
+            return;
+        }
+
         // Save venue if new when updating
         $venue_table = $wpdb->prefix . 'tta_venues';
         $venue_name  = tta_sanitize_text_field( $_POST['venuename'] ?? '' );

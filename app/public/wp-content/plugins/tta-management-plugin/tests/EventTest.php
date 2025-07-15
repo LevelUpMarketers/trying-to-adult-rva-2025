@@ -169,6 +169,7 @@ class EventTest extends TestCase {
             'city' => 'Town',
             'state' => 'VA',
             'zip' => '12345',
+            'venuename' => 'The Venue',
             'type' => 'free',
             'baseeventcost' => 50,
             'discountedmembercost' => 40,
@@ -225,5 +226,13 @@ class EventTest extends TestCase {
         $this->assertSame('Updated', $event['name']);
         $this->assertSame('2025-02-02', $event['date']);
         $this->assertSame('Updated note', $event['host_notes']);
+    }
+
+    public function test_save_event_requires_fields() {
+        $_POST = $this->basePost();
+        unset($_POST['name']);
+        TTA_Ajax_Events::save_event();
+        $result = $GLOBALS['_last_json'];
+        $this->assertFalse($result['success']);
     }
 }
