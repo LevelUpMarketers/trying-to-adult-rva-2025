@@ -7,6 +7,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
   <h4><?php echo esc_html( $event['name'] ); ?></h4>
   <p><?php echo esc_html( tta_format_event_datetime( $event['date'], $event['time'] ) ); ?></p>
   <p>
+    <a href="<?php echo esc_url( $event['venue_url'] ); ?>" target="_blank" rel="noopener">
+      <?php echo esc_html( $event['venue_name'] ); ?>
+    </a>
+  </p>
+  <p>
     <a href="<?php echo esc_url( tta_get_google_maps_url( $event['address'] ) ); ?>" target="_blank" rel="noopener">
       <?php echo esc_html( tta_format_address( $event['address'] ) ); ?>
     </a>

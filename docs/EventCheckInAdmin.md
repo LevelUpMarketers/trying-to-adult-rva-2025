@@ -10,13 +10,8 @@ update each record via AJAX. Attendance status writes back to the
 
 - Attendees who cancelled or requested a refund no longer appear in the list so
   hosts don't accidentally mark them as no-shows.
-- Two new columns display how many events each attendee has previously checked
-  in for and any **Needs Assistance** note they left for the host. When no note
-  exists a simple `-` is shown.
-- A new **# of Expected Attendees** column shows how many approved attendees are
-  expected for each event.
-- Clicking the **Check In** or **No-Show** buttons now updates the status label
-  with proper capitalization.
-- Event headers display the date and time in a friendly format like `Saturday
-  July 19, 2025 - 6:00 PM to 8:00 PM` and the venue address links directly to
-  Google Maps for quick directions.
+- Two new columns display how many events each attendee has previously checked in for and any **Needs Assistance** note they left for the host. When no note exists a simple `-` is shown.
+- A new **# of Expected Attendees** column shows how many approved attendees are expected for each event.
+- The **Date & Time** column uses the same human-friendly format as the event header.
+- Clicking the **Check In** or **No-Show** buttons now updates the status label with proper capitalization.
+- Event headers display the date and time in a friendly format like `Saturday July 19, 2025 - 6:00 PM to 8:00 PM`. The venue name links to its website and the address links directly to Google Maps for quick directions.
