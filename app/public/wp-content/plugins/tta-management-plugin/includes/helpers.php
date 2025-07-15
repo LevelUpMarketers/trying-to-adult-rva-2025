@@ -648,7 +648,7 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_ids ), '%d' ) );
         $txn_rows     = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, transaction_id, created_at, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
+                "SELECT id, transaction_id, created_at, wpuserid, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
                 $txn_ids
             ),
             ARRAY_A
@@ -656,9 +656,15 @@ function tta_get_ticket_attendees( $ticket_id ) {
 
         foreach ( $txn_rows as $tx ) {
             $txn_id = intval( $tx['id'] );
+            $email = '';
+            if ( ! empty( $tx['wpuserid'] ) ) {
+                $user  = get_userdata( intval( $tx['wpuserid'] ) );
+                $email = $user ? strtolower( $user->user_email ) : '';
+            }
             $txn_map[ $txn_id ] = [
-                'gateway_id' => sanitize_text_field( $tx['transaction_id'] ),
-                'created_at' => $tx['created_at'],
+                'gateway_id'      => sanitize_text_field( $tx['transaction_id'] ),
+                'created_at'      => $tx['created_at'],
+                'purchaser_email' => $email,
             ];
 
             $details = json_decode( $tx['details'], true );
@@ -684,6 +690,8 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $r['amount_paid']  = $price_map[ $txid ] ?? 0;
         $r['gateway_id']   = $txn_map[ $txid ]['gateway_id'] ?? '';
         $r['created_at']   = $txn_map[ $txid ]['created_at'] ?? '';
+        $purch_email       = $txn_map[ $txid ]['purchaser_email'] ?? '';
+        $r['is_purchaser'] = $purch_email && strtolower( $r['email'] ) === $purch_email;
     }
 
     $ttl = empty( $rows ) ? 60 : 300;
@@ -2765,7 +2773,12 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
         if ( intval( $req['ticket_id'] ) !== $ticket_id || intval( $req['event_id'] ) !== $event_id ) {
             continue;
         }
-        $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
+        $tx      = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
+        $p_email = '';
+        if ( $tx && ! empty( $tx['wpuserid'] ) ) {
+            $u       = get_userdata( intval( $tx['wpuserid'] ) );
+            $p_email = $u ? strtolower( $u->user_email ) : '';
+        }
         $attendees[] = [
             'first_name'  => sanitize_text_field( $req['first_name'] ),
             'last_name'   => sanitize_text_field( $req['last_name'] ),
@@ -2775,6 +2788,7 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
             'amount_paid' => floatval( $req['amount_paid'] ),
             'gateway_id'  => sanitize_text_field( $req['transaction_id'] ),
             'created_at'  => $tx['created_at'] ?? '',
+            'is_purchaser'=> $p_email && strtolower( $req['email'] ) === $p_email,
         ];
     }
 
@@ -2824,16 +2838,24 @@ function tta_get_ticket_refunded_attendees( $ticket_id, $event_id ) {
         if ( $amount <= 0 ) {
             continue;
         }
-        $att = $data['attendee'] ?? [];
+        $att  = $data['attendee'] ?? [];
+        $tx   = tta_get_transaction_by_gateway_id( $data['transaction_id'] ?? '' );
+        $p_em = '';
+        if ( $tx && ! empty( $tx['wpuserid'] ) ) {
+            $u    = get_userdata( intval( $tx['wpuserid'] ) );
+            $p_em = $u ? strtolower( $u->user_email ) : '';
+        }
+        $email = sanitize_email( $att['email'] ?? '' );
         $attendees[] = [
             'first_name'  => sanitize_text_field( $att['first_name'] ?? '' ),
             'last_name'   => sanitize_text_field( $att['last_name'] ?? '' ),
-            'email'       => sanitize_email( $att['email'] ?? '' ),
+            'email'       => $email,
             'phone'       => sanitize_text_field( $att['phone'] ?? '' ),
             'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
             'amount_paid' => $amount,
             'gateway_id'  => sanitize_text_field( $data['transaction_id'] ?? '' ),
             'created_at'  => $r['action_date'],
+            'is_purchaser'=> $p_em && strtolower( $email ) === $p_em,
         ];
     }
 
