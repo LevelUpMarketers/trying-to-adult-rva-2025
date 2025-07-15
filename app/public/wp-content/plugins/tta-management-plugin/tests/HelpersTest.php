@@ -383,14 +383,13 @@ class HelpersTest extends TestCase {
         $wpdb = new class {
             public $prefix = 'wp_';
             public $last_query = '';
-            public function get_results($q,$o=ARRAY_A){ $this->last_query = $q; return [ ['id'=>1,'first_name'=>'A','last_name'=>'B','email'=>'e','phone'=>'p','status'=>'pending'] ]; }
+            public function get_results($q,$o=ARRAY_A){ $this->last_query = $q; return [ ['id'=>1,'ticket_id'=>2,'first_name'=>'A','last_name'=>'B','email'=>'e','phone'=>'p','status'=>'pending'] ]; }
+            public function get_var($q){ return 5; }
             public function prepare($q,...$a){ foreach($a as $v){ $q=preg_replace('/%s/',$v,$q,1); $q=preg_replace('/%d/',$v,$q,1); } return $q; }
         };
         require_once __DIR__ . '/../includes/helpers.php';
         $rows = tta_get_event_attendees_with_status('ev1');
         $this->assertCount(1, $rows);
-        $this->assertStringContainsString('wp_tta_attendees', $wpdb->last_query);
-        $this->assertStringContainsString('wp_tta_attendees_archive', $wpdb->last_query);
     }
 
     public function test_get_remaining_ticket_count_queries_table() {

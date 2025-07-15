@@ -496,31 +496,67 @@ function tta_get_event_attendees( $event_ute_id ) {
  */
 function tta_get_event_attendees_with_status( $event_ute_id ) {
     global $wpdb;
+
     $att_table       = $wpdb->prefix . 'tta_attendees';
     $att_archive     = $wpdb->prefix . 'tta_attendees_archive';
     $tickets_table   = $wpdb->prefix . 'tta_tickets';
     $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
-    $sql = "(SELECT a.id, a.first_name, a.last_name, a.email, a.phone, a.status
+
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status
                FROM {$att_table} a
                JOIN {$tickets_table} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
             UNION ALL
-            (SELECT a.id, a.first_name, a.last_name, a.email, a.phone, a.status
+            (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status
                FROM {$att_archive} a
                JOIN {$tickets_archive} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
             ORDER BY last_name, first_name";
 
     $rows = $wpdb->get_results( $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ), ARRAY_A );
-    foreach ( $rows as &$r ) {
-        $r['id']         = intval( $r['id'] );
-        $r['first_name'] = sanitize_text_field( $r['first_name'] );
-        $r['last_name']  = sanitize_text_field( $r['last_name'] );
-        $r['email']      = sanitize_email( $r['email'] );
-        $r['phone']      = sanitize_text_field( $r['phone'] );
-        $r['status']     = sanitize_text_field( $r['status'] );
+
+    $event_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+            $event_ute_id,
+            $event_ute_id
+        )
+    );
+
+    $exclude_emails = [];
+    if ( $event_id ) {
+        $ticket_ids = [];
+        foreach ( $rows as $r ) {
+            $ticket_ids[ intval( $r['ticket_id'] ) ] = true;
+        }
+        foreach ( array_keys( $ticket_ids ) as $tid ) {
+            foreach ( tta_get_ticket_pending_refund_attendees( $tid, $event_id ) as $req ) {
+                $exclude_emails[] = strtolower( $req['email'] );
+            }
+            foreach ( tta_get_ticket_refunded_attendees( $tid, $event_id ) as $ref ) {
+                $exclude_emails[] = strtolower( $ref['email'] );
+            }
+        }
+        $exclude_emails = array_unique( $exclude_emails );
     }
-    return $rows;
+
+    $out = [];
+    foreach ( $rows as $r ) {
+        if ( in_array( strtolower( $r['email'] ), $exclude_emails, true ) ) {
+            continue;
+        }
+        $r['id']            = intval( $r['id'] );
+        $r['first_name']    = sanitize_text_field( $r['first_name'] );
+        $r['last_name']     = sanitize_text_field( $r['last_name'] );
+        $r['email']         = sanitize_email( $r['email'] );
+        $r['phone']         = sanitize_text_field( $r['phone'] );
+        $r['status']        = sanitize_text_field( $r['status'] );
+        $r['attended_count'] = tta_get_attended_event_count_by_email( $r['email'] );
+        $r['assistance_note'] = '-';
+        $out[] = $r;
+    }
+
+    return $out;
 }
 
 /**
@@ -2752,6 +2788,42 @@ function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id, $attendee_id
         $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
     }
     return $att ?: null;
+}
+
+/**
+ * Get how many events an attendee has checked into.
+ *
+ * @param string $email Attendee email address.
+ * @return int Number of events attended.
+ */
+function tta_get_attended_event_count_by_email( $email ) {
+    $email = strtolower( sanitize_email( $email ) );
+    if ( '' === $email ) {
+        return 0;
+    }
+
+    $cache_key = 'attended_count_' . md5( $email );
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    global $wpdb;
+    $att_table   = $wpdb->prefix . 'tta_attendees';
+    $archive     = $wpdb->prefix . 'tta_attendees_archive';
+
+    $count = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$att_table} WHERE LOWER(email) = %s AND status = 'checked_in'",
+        $email
+    ) );
+
+    $count += (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$archive} WHERE LOWER(email) = %s AND status = 'checked_in'",
+        $email
+    ) );
+
+    TTA_Cache::set( $cache_key, $count, 300 );
+    return $count;
 }
 
 /**
