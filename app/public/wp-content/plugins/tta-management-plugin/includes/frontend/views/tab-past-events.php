@@ -2,7 +2,17 @@
 <div id="tab-past" class="tta-dashboard-section">
   <h3><?php esc_html_e( 'Your Past Events', 'tta' ); ?></h3>
   <?php
-  $events = tta_get_member_past_events( get_current_user_id() );
+  $user_id = get_current_user_id();
+  $summary = tta_get_member_attendance_summary( $user_id );
+  echo '<p class="tta-attendance-summary">' . esc_html( sprintf(
+      /* translators: 1: attended count, 2: no-show count, 3: amount saved */
+      __( 'Attended: %1$d | No-Shows: %2$d | Total Saved: $%3$s', 'tta' ),
+      $summary['attended'],
+      $summary['no_show'],
+      number_format( $summary['savings'], 2 )
+  ) ) . '</p>';
+
+  $events = tta_get_member_past_events( $user_id );
   if ( $events ) :
       foreach ( $events as $ev ) :
           $thumb = '';
@@ -40,7 +50,15 @@
                 <li>
                   <?php echo esc_html( trim( $att['first_name'] . ' ' . $att['last_name'] ) . ' (' . $att['email'] . ')' ); ?>
                   <span class="tta-attendance-status">
-                    <?php echo esc_html( ucwords( str_replace( '_', ' ', $att['status'] ?? 'pending' ) ) ); ?>
+                    <?php
+                    $st = $att['status'] ?? 'pending';
+                    $map = [
+                      'checked_in' => __( 'Attended', 'tta' ),
+                      'no_show'    => __( 'No-Show', 'tta' ),
+                      'pending'    => __( 'Pending', 'tta' ),
+                    ];
+                    echo esc_html( $map[ $st ] ?? ucwords( str_replace( '_', ' ', $st ) ) );
+                    ?>
                   </span>
                 </li>
               <?php endforeach; ?>

@@ -1563,6 +1563,67 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
 }
 
 /**
+ * Get a summary of a member's attendance and total savings.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array {
+ *     @type int   $attended Number of events attended.
+ *     @type int   $no_show  Number of no-shows.
+ *     @type float $savings  Total amount saved from discounts.
+ * }
+ */
+function tta_get_member_attendance_summary( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return [ 'attended' => 0, 'no_show' => 0, 'savings' => 0 ];
+    }
+
+    $cache_key = 'attendance_summary_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $events   = tta_get_member_past_events( $wp_user_id );
+    $user     = get_userdata( $wp_user_id );
+    $email    = $user ? strtolower( $user->user_email ) : '';
+    $attended = 0;
+    $no_show  = 0;
+    foreach ( $events as $ev ) {
+        $found = '';
+        foreach ( $ev['items'] as $item ) {
+            foreach ( (array) ( $item['attendees'] ?? [] ) as $att ) {
+                if ( $email && strtolower( $att['email'] ) === $email ) {
+                    $found = $att['status'] ?? '';
+                    break 2;
+                }
+            }
+        }
+        if ( 'checked_in' === $found ) {
+            $attended++;
+        } elseif ( 'no_show' === $found ) {
+            $no_show++;
+        }
+    }
+
+    global $wpdb;
+    $tx_table = $wpdb->prefix . 'tta_transactions';
+    $savings  = (float) $wpdb->get_var( $wpdb->prepare(
+        "SELECT SUM(discount_saved) FROM {$tx_table} WHERE wpuserid = %d",
+        $wp_user_id
+    ) );
+
+    $summary = [
+        'attended' => $attended,
+        'no_show'  => $no_show,
+        'savings'  => $savings,
+    ];
+
+    TTA_Cache::set( $cache_key, $summary, 300 );
+    return $summary;
+}
+
+/**
  * Retrieve waitlist events for a user.
  *
  * @param int $wp_user_id WordPress user ID.
