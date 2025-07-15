@@ -20,6 +20,7 @@ require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-authnet-test.ph
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-bi.php';
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-waitlist.php';
 require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-refund.php';
+require_once TTA_PLUGIN_DIR . 'includes/ajax/handlers/class-ajax-assistance.php';
 
 
 // Initialize them
@@ -39,3 +40,4 @@ TTA_Ajax_Auth::init();
 TTA_Ajax_BI::init();
 TTA_Ajax_Waitlist::init();
 TTA_Ajax_Refund::init();
+TTA_Ajax_Assistance::init();

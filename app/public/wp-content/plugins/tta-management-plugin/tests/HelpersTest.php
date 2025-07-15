@@ -378,6 +378,25 @@ class HelpersTest extends TestCase {
         $this->assertSame('checked_in', $wpdb->updated[1]['status']);
     }
 
+    public function test_save_assistance_note_updates_db() {
+        global $wpdb;
+        $wpdb = new class extends DummyWpdbHelpers {
+            public $queries = [];
+            public function get_col( $q ) { $this->queries[] = $q; return [1,2]; }
+            public function query( $q ) { $this->queries[] = $q; }
+        };
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        tta_save_assistance_note( 5, 'ute1', 'Help' );
+        $found = false;
+        foreach ( $wpdb->queries as $q ) {
+            if ( strpos( $q, 'UPDATE wp_tta_attendees' ) !== false ) {
+                $found = true; break;
+            }
+        }
+        $this->assertTrue( $found );
+    }
+
     public function test_get_event_attendees_with_status_queries_table() {
         global $wpdb;
         $wpdb = new class {

@@ -127,6 +127,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your volunteer shift begins in two hours. Event details are below.', 'tta'),
                 'sms_text'    => '',
             ],
+            'assistance_request' => [
+                'label'       => __('Assistance Request', 'tta'),
+                'type'        => 'Internal',
+                'category'    => 'Event Coordination',
+                'description' => __('Notification sent when a member asks for help finding the group.', 'tta'),
+                'email_subject' => __('Member needs assistance', 'tta'),
+                'email_body'  => __('A member has requested help finding the event group. Their note is below.', 'tta'),
+                'sms_text'    => '',
+            ],
         ];
     }
 

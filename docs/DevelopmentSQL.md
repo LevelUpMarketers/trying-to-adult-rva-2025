@@ -211,6 +211,17 @@ ALTER TABLE `wp_j9bzlz98u3_tta_events_archive`
   ADD COLUMN `host_notes` TEXT AFTER `volunteers`;
 ```
 
+## Add `assistance_note` Column
+
+Version 1.9.0 stores optional messages from attendees to event hosts. Run this if upgrading manually:
+
+```sql
+ALTER TABLE `wp_j9bzlz98u3_tta_attendees`
+  ADD COLUMN `assistance_note` TEXT AFTER `is_member`;
+ALTER TABLE `wp_j9bzlz98u3_tta_attendees_archive`
+  ADD COLUMN `assistance_note` TEXT AFTER `is_member`;
+```
+
 ## Add phone and opt-in columns to `tta_attendees`
 
 If you updated from a version prior to 1.0.0, these columns will be added automatically when the plugin loads. If you prefer to run the SQL manually, use:

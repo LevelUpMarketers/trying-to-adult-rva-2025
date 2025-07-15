@@ -502,12 +502,12 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
     $tickets_table   = $wpdb->prefix . 'tta_tickets';
     $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
 
-    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.assistance_note, a.status
                FROM {$att_table} a
                JOIN {$tickets_table} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
-            UNION ALL
-            (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status
+           UNION ALL
+            (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.assistance_note, a.status
                FROM {$att_archive} a
                JOIN {$tickets_archive} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
@@ -552,7 +552,8 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
         $r['phone']         = sanitize_text_field( $r['phone'] );
         $r['status']        = sanitize_text_field( $r['status'] );
         $r['attended_count'] = tta_get_attended_event_count_by_email( $r['email'] );
-        $r['assistance_note'] = '-';
+        $note = trim( $r['assistance_note'] ?? '' );
+        $r['assistance_note'] = $note !== '' ? sanitize_textarea_field( $note ) : '-';
         $out[] = $r;
     }
 
@@ -4173,6 +4174,156 @@ function tta_send_waitlist_notification( $entry, $event ) {
     // schedule these emails via a service like SendGrid if their API allows it.
 }
 add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
+
+/**
+ * Retrieve email addresses for all hosts and volunteers of an event.
+ *
+ * @param int $event_id Event ID.
+ * @return array List of emails.
+ */
+function tta_get_event_host_volunteer_emails( $event_id ) {
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $members_table = $wpdb->prefix . 'tta_members';
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d UNION SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d LIMIT 1",
+            $event_id,
+            $event_id
+        ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        return [];
+    }
+
+    $names = array_merge(
+        array_filter( array_map( 'trim', explode( ',', $row['hosts'] ?? '' ) ) ),
+        array_filter( array_map( 'trim', explode( ',', $row['volunteers'] ?? '' ) ) )
+    );
+
+    $emails = [];
+    foreach ( $names as $name ) {
+        $parts = array_map( 'sanitize_text_field', preg_split( '/\s+/', $name, 2 ) );
+        if ( empty( $parts[0] ) ) {
+            continue;
+        }
+        $first = $parts[0];
+        $last  = $parts[1] ?? '';
+        $email = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT email FROM {$members_table} WHERE first_name = %s AND last_name = %s LIMIT 1",
+                $first,
+                $last
+            )
+        );
+        if ( $email ) {
+            $emails[] = sanitize_email( $email );
+        }
+    }
+    return array_values( array_unique( $emails ) );
+}
+
+/**
+ * Store an assistance note for all of a user's attendees at an event.
+ *
+ * @param int    $wp_user_id    WordPress user ID.
+ * @param string $event_ute_id  Event ute ID.
+ * @param string $note          Message text.
+ * @return bool True on success.
+ */
+function tta_save_assistance_note( $wp_user_id, $event_ute_id, $note ) {
+    global $wpdb;
+    $wp_user_id   = intval( $wp_user_id );
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( ! $wp_user_id || '' === $event_ute_id ) {
+        return false;
+    }
+
+    $att_table     = $wpdb->prefix . 'tta_attendees';
+    $tx_table      = $wpdb->prefix . 'tta_transactions';
+    $tickets_table = $wpdb->prefix . 'tta_tickets';
+
+    $ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT a.id FROM {$att_table} a JOIN {$tx_table} tx ON a.transaction_id = tx.id JOIN {$tickets_table} t ON a.ticket_id = t.id WHERE tx.wpuserid = %d AND t.event_ute_id = %s",
+        $wp_user_id,
+        $event_ute_id
+    ) );
+
+    if ( empty( $ids ) ) {
+        return false;
+    }
+
+    $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+    $sql = $wpdb->prepare(
+        "UPDATE {$att_table} SET assistance_note = %s WHERE id IN ($placeholders)",
+        tta_sanitize_textarea_field( $note ),
+        ...$ids
+    );
+    $wpdb->query( $sql );
+    TTA_Cache::flush();
+    return true;
+}
+
+/**
+ * Email event hosts and volunteers when a member asks for assistance.
+ *
+ * @param string $event_ute_id Event ute ID.
+ * @param int    $wp_user_id   WordPress user ID submitting the note.
+ * @param string $note         Message text.
+ */
+function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['assistance_request'] ) ) {
+        return;
+    }
+    $tpl   = $templates['assistance_request'];
+    $event = tta_get_event_for_email( $event_ute_id );
+    if ( empty( $event ) ) {
+        return;
+    }
+
+    $context = tta_get_user_context_by_id( $wp_user_id );
+    $tokens = [
+        '{event_name}'           => $event['name'] ?? '',
+        '{event_address}'        => $event['address'] ?? '',
+        '{event_link}'           => $event['page_url'] ?? '',
+        '{dashboard_profile_url}'  => home_url( '/member-dashboard/?tab=profile' ),
+        '{dashboard_upcoming_url}' => home_url( '/member-dashboard/?tab=upcoming' ),
+        '{dashboard_past_url}'       => home_url( '/member-dashboard/?tab=past' ),
+        '{dashboard_billing_url}'    => home_url( '/member-dashboard/?tab=billing' ),
+        '{dashboard_waitlist_url}'   => home_url( '/member-dashboard/?tab=waitlist' ),
+        '{event_date}'           => isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '',
+        '{event_time}'           => isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '',
+        '{event_type}'           => $event['type'] ?? '',
+        '{venue_name}'           => $event['venue_name'] ?? '',
+        '{venue_url}'            => $event['venue_url'] ?? '',
+        '{base_cost}'            => isset( $event['base_cost'] ) ? number_format( (float) $event['base_cost'], 2 ) : '',
+        '{member_cost}'          => isset( $event['member_cost'] ) ? number_format( (float) $event['member_cost'], 2 ) : '',
+        '{premium_cost}'         => isset( $event['premium_cost'] ) ? number_format( (float) $event['premium_cost'], 2 ) : '',
+        '{first_name}'           => $context['first_name'] ?? '',
+        '{last_name}'            => $context['last_name'] ?? '',
+        '{email}'                => $context['user_email'] ?? '',
+        '{phone}'                => $context['member']['phone'] ?? '',
+        '{membership_level}'     => $context['membership_level'] ?? '',
+        '{member_type}'          => $context['member']['member_type'] ?? '',
+        '{assistance_note}'      => sanitize_textarea_field( $note ),
+    ];
+
+    $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject     = strtr( $subject_raw, $tokens );
+    $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt    = tta_convert_links( strtr( $body_raw, $tokens ) );
+    $body        = nl2br( $body_txt );
+
+    $emails = tta_get_event_host_volunteer_emails( $event['id'] );
+    $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+    foreach ( $emails as $to ) {
+        wp_mail( $to, $subject, $body, $headers );
+    }
+}
 
 /**
  * Retrieve all saved ads.
