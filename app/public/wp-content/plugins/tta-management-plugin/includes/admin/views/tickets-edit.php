@@ -40,9 +40,22 @@ $tickets = $wpdb->get_results(
 
     // Fetch confirmed attendees for this ticket
     $attendees      = tta_get_ticket_attendees( $tid );
+    usort( $attendees, static function ( $a, $b ) {
+        return strtotime( $b['created_at'] ) - strtotime( $a['created_at'] );
+    } );
     $att_count      = count( $attendees );
+
     $pending_refs   = tta_get_ticket_pending_refund_attendees( $tid, $event_id );
+    usort( $pending_refs, static function ( $a, $b ) {
+        return strtotime( $b['created_at'] ) - strtotime( $a['created_at'] );
+    } );
     $pending_count  = count( $pending_refs );
+
+    $refunded_attendees = tta_get_ticket_refunded_attendees( $tid, $event_id );
+    usort( $refunded_attendees, static function ( $a, $b ) {
+        return strtotime( $b['created_at'] ) - strtotime( $a['created_at'] );
+    } );
+    $refunded_count  = count( $refunded_attendees );
 
     $waitlist_count = count( $waitlist_entries );
 
@@ -259,6 +272,56 @@ $tickets = $wpdb->get_results(
 
       <details class="tta-ticket-attendees">
         <summary>
+          <?php esc_html_e( 'Refunded Attendees', 'tta' ); ?>
+          <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Members who were refunded for this ticket.', 'tta' ); ?>">
+            <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+          </span>
+          (<?php echo $refunded_count; ?>)
+        </summary>
+        <?php if ( $refunded_attendees ) : ?>
+          <div class="tta-wl-info-wrapper">
+            <table class="tta-wl-info-table">
+              <thead>
+                <tr>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee first and last name.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Name', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee contact info.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Email & Phone', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason provided with the refund request.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Note', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Amount refunded for this ticket.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Refunded', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Gateway transaction ID.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Transaction ID', 'tta' ); ?></th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php $last_gate = ''; foreach ( $refunded_attendees as $a ) : ?>
+                  <?php
+                  if ( $a['gateway_id'] !== $last_gate ) :
+                    $last_gate = $a['gateway_id'];
+                    $txid   = $a['gateway_id'] ? ' - ' . __( 'Transaction ID', 'tta' ) . ' ' . $a['gateway_id'] : '';
+                    $txdate = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
+                  ?>
+                    <tr class="tta-transaction-group">
+                      <td colspan="5" style="background:#f9f9f9;font-weight:bold;">
+                        <?php echo esc_html( sprintf( __( 'Refund%s%s', 'tta' ), $txid, $txdate ) ); ?>
+                      </td>
+                    </tr>
+                  <?php endif; ?>
+                  <tr>
+                    <td><?php echo esc_html( trim( $a['first_name'] . ' ' . $a['last_name'] ) ); ?></td>
+                    <td><?php echo esc_html( $a['email'] ); ?><?php echo $a['phone'] ? '<br>' . esc_html( $a['phone'] ) : ''; ?></td>
+                    <td><?php echo esc_html( $a['reason'] ); ?></td>
+                    <td><?php echo sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $a['amount_paid'], 2 ) ); ?></td>
+                    <td><?php echo esc_html( $a['gateway_id'] ); ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php else : ?>
+          <p class="no-waitlist"><?php esc_html_e( 'No refunded attendees.', 'tta' ); ?></p>
+        <?php endif; ?>
+      </details>
+
+      <details class="tta-ticket-attendees">
+        <summary>
           <?php esc_html_e( 'Verified Attendees', 'tta' ); ?>
           <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'People who purchased this ticket.', 'tta' ); ?>">
             <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
@@ -378,16 +441,16 @@ $tickets = $wpdb->get_results(
                     <?php esc_html_e( 'Name', 'tta' ); ?>
                   </th>
                   <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee email address.', 'tta' ); ?>">
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Attendee contact info.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
-                    <?php esc_html_e( 'Email', 'tta' ); ?>
+                    <?php esc_html_e( 'Email & Phone', 'tta' ); ?>
                   </th>
                   <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Phone number provided at checkout.', 'tta' ); ?>">
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason provided with the refund request.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
-                    <?php esc_html_e( 'Phone', 'tta' ); ?>
+                    <?php esc_html_e( 'Note', 'tta' ); ?>
                   </th>
                   <th>
                     <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Amount charged for this ticket.', 'tta' ); ?>">
@@ -425,14 +488,15 @@ $tickets = $wpdb->get_results(
                   <?php endif; ?>
                   <?php
                   $name  = trim( $a['first_name'] . ' ' . $a['last_name'] );
-                  $email = $a['email'];
-                  $phone = $a['phone'];
-                  $paid  = floatval( $a['amount_paid'] );
+                  $email  = $a['email'];
+                  $phone  = $a['phone'];
+                  $reason = $a['reason'];
+                  $paid   = floatval( $a['amount_paid'] );
                   ?>
                   <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
                     <td><?php echo esc_html( $name ); ?></td>
-                    <td><?php echo esc_html( $email ); ?></td>
-                    <td><?php echo esc_html( $phone ); ?></td>
+                    <td><?php echo esc_html( $email ); ?><?php echo $phone ? '<br>' . esc_html( $phone ) : ''; ?></td>
+                    <td><?php echo esc_html( $reason ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
                     <td>
                       <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">

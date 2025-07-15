@@ -1,6 +1,6 @@
 ## Ticket Attendees
 
-The ticket editor now shows two attendee tables for each ticket. **Verified Attendees** lists everyone who has successfully purchased the ticket. **Attendees With Pending Refund Requests** appears below it and shows members who cancelled and are waiting for another purchase before their refund is issued. Admins can process these requests immediately using the action buttons in this section. Both tables display the same columns: **Name**, **Email**, **Phone**, **Paid**, **Refund $** and **Actions**. Transactions are grouped by their numeric ID with the gateway transaction ID and purchase date displayed in the group heading.
+The ticket editor now shows three attendee tables for each ticket. **Verified Attendees** lists everyone who has successfully purchased the ticket. **Attendees With Pending Refund Requests** appears below it and shows members who cancelled and are waiting for another purchase before their refund is issued. The new **Refunded Attendees** table lists those whose refunds have already been processed. Admins can process or review these entries using the action buttons provided. Any notes submitted with the original request are stored and displayed here so admins know why the attendee cancelled. Notes also persist when refunds are issued automatically once another member purchases the ticket. The **Verified Attendees** table lists **Name**, **Email**, **Phone**, **Paid**, **Refund $** and **Actions**. The pending and refunded tables instead show **Name**, **Email & Phone**, **Note**, **Refunded/Paid**, and **Transaction ID** so staff can view the member's contact details and their reason for cancelling. Transactions are grouped by their numeric ID with the gateway transaction ID and purchase date displayed in the group heading.
 
 The **Paid** column shows the amount charged for that attendee's ticket. The
 **Refund $** field lets admins specify a partial refund before clicking either
@@ -9,8 +9,7 @@ both issues the refund and removes the attendee from the event while increasing
 the available ticket count. The second option refunds the amount but leaves the
 attendee registered. For cases where no refund is needed, a **Cancel Attendance
 (No Refund)** button simply frees the ticket and removes the attendee. Any refund or cancellation also reduces the member's purchase tally so they can buy additional tickets up to the limit. If the
-transaction has not yet settled, the plugin now checks the transaction status
-and automatically voids the original charge. Leaving the **Refund $** field blank refunds the full amount paid for
+transaction has not yet settled, the refund is stored and reattempted automatically by a cron job each day at roughly 1:15&nbsp;AM and 8:15&nbsp;AM rather than voiding the entire transaction. Leaving the **Refund $** field blank refunds the full amount paid for
 that attendee only, not the entire transaction.
 
 ## Waitlist Entries

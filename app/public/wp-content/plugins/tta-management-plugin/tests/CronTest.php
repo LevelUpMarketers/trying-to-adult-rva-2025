@@ -9,6 +9,8 @@ class CronTest extends TestCase {
         if (!function_exists('wp_clear_scheduled_hook')) { function wp_clear_scheduled_hook($hook){ $GLOBALS['cleared'][] = $hook; } }
         if (!function_exists('add_filter')) { function add_filter($h,$cb){ $GLOBALS['filters'][] = [$h,$cb]; return true; } }
         require_once __DIR__ . '/../includes/cart/class-cart-cleanup.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-refund-processor.php';
+        if (!defined('DAY_IN_SECONDS')) { define('DAY_IN_SECONDS', 86400); }
     }
 
     protected function tearDown(): void {
@@ -29,5 +31,15 @@ class CronTest extends TestCase {
         TTA_Cart_Cleanup::clear_event();
         $this->assertContains('tta_cart_cleanup_event', $GLOBALS['cleared']);
         $this->assertContains('tta_cart_item_cleanup_event', $GLOBALS['cleared']);
+    }
+
+    public function test_refund_retry_schedule_and_clear() {
+        TTA_Refund_Processor::schedule_retry_events();
+        $hooks = array_column($GLOBALS['scheduled'], 2);
+        $this->assertContains('tta_refund_retry_morning', $hooks);
+        $this->assertContains('tta_refund_retry_night', $hooks);
+        TTA_Refund_Processor::clear_retry_events();
+        $this->assertContains('tta_refund_retry_morning', $GLOBALS['cleared']);
+        $this->assertContains('tta_refund_retry_night', $GLOBALS['cleared']);
     }
 }

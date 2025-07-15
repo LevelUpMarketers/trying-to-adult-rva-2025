@@ -34,16 +34,17 @@ class TTA_Ajax_Refund {
         $amount      = 0;
         if ( $att ) {
             $att_details = [
-                'first_name'  => $att['first_name'],
-                'last_name'   => $att['last_name'],
-                'email'       => $att['email'],
-                'phone'       => $att['phone'],
+                'id'         => intval( $att['id'] ),
+                'first_name' => $att['first_name'],
+                'last_name'  => $att['last_name'],
+                'email'      => $att['email'],
+                'phone'      => $att['phone'],
             ];
             $tx_row  = tta_get_transaction_by_gateway_id( $tx_id );
             if ( $tx_row ) {
                 $amount = tta_get_ticket_price_from_transaction( $tx_row, $ticket_id );
             }
-            tta_cancel_attendance_internal( intval( $att['id'] ), false );
+            tta_cancel_attendance_internal( intval( $att['id'] ), false, false );
         }
 
         $action_data = [
@@ -61,7 +62,7 @@ class TTA_Ajax_Refund {
             'action_data' => wp_json_encode( $action_data ),
         ], [ '%d','%d','%d','%s','%s' ] );
         TTA_Cache::delete( 'tta_refund_requests' );
-        wp_send_json_success( [ 'message' => __( 'Your refund request has been submitted! Per our Refund Policy, you will be automatically refunded when another attendee purchases your ticket. There\'s nothing else for you to do! Check back here periodically to see the status of your refund request.', 'tta' ) ] );
+        wp_send_json_success( [ 'message' => __( 'Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it\'s sold, you\'ll automatically receive a refund. There\'s nothing else for you to do! Check back here periodically to see the status of your refund request.', 'tta' ) ] );
     }
 
     /**
