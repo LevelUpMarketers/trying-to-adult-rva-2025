@@ -16,9 +16,7 @@ class TTA_Ajax_Attendance {
         if ( ! $ute ) {
             wp_send_json_error( [ 'message' => 'missing id' ] );
         }
-        global $wpdb;
-        $events_table = $wpdb->prefix . 'tta_events';
-        $event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$events_table} WHERE ute_id = %s", $ute ), ARRAY_A );
+        $event = tta_get_event_for_email( $ute );
         if ( ! $event ) {
             wp_send_json_error( [ 'message' => 'not found' ] );
         }

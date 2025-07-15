@@ -14,4 +14,4 @@ update each record via AJAX. Attendance status writes back to the
 - A new **# of Expected Attendees** column shows how many approved attendees are expected for each event.
 - The **Date & Time** column uses the same human-friendly format as the event header.
 - Clicking the **Check In** or **No-Show** buttons now updates the status label with proper capitalization.
-- Event headers display the date and time in a friendly format like `Saturday July 19, 2025 - 6:00 PM to 8:00 PM`. The venue name links to its website and the address links directly to Google Maps for quick directions.
+- Event headers display the date and time in a friendly format like `Saturday July 19, 2025 - 6:00 PM to 8:00 PM`. The venue name links to its website and the address links directly to Google Maps for quick directions. Event details are loaded via `tta_get_event_for_email()` so the venue information always appears.
