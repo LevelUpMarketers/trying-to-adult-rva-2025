@@ -283,6 +283,26 @@ function tta_build_discount_data( $code, $type = 'percent', $amount = 0 ) {
 }
 
 /**
+ * Convert stored discount data into a human-readable string.
+ *
+ * @param string $raw Discount data from the database.
+ * @return string Formatted description or empty string.
+ */
+function tta_format_discount_display( $raw ) {
+    $info = tta_parse_discount_data( $raw );
+    if ( '' === $info['code'] ) {
+        return '';
+    }
+
+    $amount = number_format( floatval( $info['amount'] ), 2 );
+    if ( 'flat' === $info['type'] ) {
+        return sprintf( '%s - %s %s%s', $info['code'], __( 'Flat Discount of', 'tta' ), '$', $amount );
+    }
+
+    return sprintf( '%s - %s%% %s', $info['code'], $amount, __( 'Discount', 'tta' ) );
+}
+
+/**
  * Store a notice to display on the cart page.
  *
  * @param string $message
@@ -4720,16 +4740,85 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
         wp_die( esc_html__( 'No events found for that range.', 'tta' ) );
     }
 
-    $headers = array_keys( $events[0] );
-    $metric_headers = [ 'expected_attendees', 'checked_in', 'no_show', 'refund_requests', 'refunded_amount', 'revenue', 'waitlist_count' ];
+    $remove_cols = [ 'page_id', 'ticket_id', 'refundsavailable', 'created_at', 'updated_at', 'ute_id' ];
+    $bool_cols   = [ 'waitlistavailable', 'all_day_event', 'virtual_event' ];
+
+    $header_labels = [
+        'id'                    => 'ID',
+        'name'                  => 'Event Name',
+        'date'                  => 'Date',
+        'time'                  => 'Time',
+        'baseeventcost'         => 'Base Event Cost',
+        'discountedmembercost'  => 'Discounted Member Cost',
+        'premiummembercost'     => 'Premium Member Cost',
+        'address'               => 'Address',
+        'type'                  => 'Type',
+        'venuename'             => 'Venue Name',
+        'venueurl'              => 'Venue URL',
+        'url2'                  => 'URL 2',
+        'url3'                  => 'URL 3',
+        'url4'                  => 'URL 4',
+        'mainimageid'           => 'Main Image ID',
+        'otherimageids'         => 'Other Image IDs',
+        'waitlistavailable'     => 'Waitlist Available',
+        'waitlist_id'           => 'Waitlist ID',
+        'discountcode'          => 'Discount',
+        'all_day_event'         => 'All Day Event',
+        'virtual_event'         => 'Virtual Event',
+        'hosts'                 => 'Hosts',
+        'volunteers'            => 'Volunteers',
+        'host_notes'            => 'Host Notes',
+    ];
+
+    $metric_headers = [
+        'expected_attendees' => 'Tickets Sold',
+        'checked_in'        => 'Checked In',
+        'no_show'           => 'No Show',
+        'refund_requests'   => 'Refund Requests',
+        'refunded_amount'   => 'Refunded Amount',
+        'revenue'           => 'Revenue',
+        'waitlist_count'    => 'Waitlist Count',
+    ];
+
+    // Prepare header list after removing unwanted columns.
+    $headers = array_diff( array_keys( $events[0] ), $remove_cols );
+    $display_headers = [];
+    foreach ( $headers as $h ) {
+        $display_headers[] = $header_labels[ $h ] ?? $h;
+    }
+    foreach ( $metric_headers as $h => $label ) {
+        $display_headers[] = $label;
+    }
 
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->fromArray( array_merge( $headers, $metric_headers ), null, 'A1' );
+    $sheet->fromArray( $display_headers, null, 'A1' );
 
     $row = 2;
     foreach ( $events as $ev ) {
         $metrics = tta_get_event_metrics( $ev['ute_id'] );
+
+        foreach ( $remove_cols as $c ) {
+            unset( $ev[ $c ] );
+        }
+
+        foreach ( $bool_cols as $c ) {
+            if ( isset( $ev[ $c ] ) ) {
+                $ev[ $c ] = $ev[ $c ] ? 'Yes' : 'No';
+            }
+        }
+
+        $ev['address']              = tta_format_address( $ev['address'] );
+        $ev['date']                 = tta_format_event_date( $ev['date'] );
+        $ev['time']                 = tta_format_event_time( $ev['time'] );
+        $ev['baseeventcost']        = '$' . number_format( floatval( $ev['baseeventcost'] ), 2 );
+        $ev['discountedmembercost'] = '$' . number_format( floatval( $ev['discountedmembercost'] ), 2 );
+        $ev['premiummembercost']    = '$' . number_format( floatval( $ev['premiummembercost'] ), 2 );
+        $ev['discountcode']         = tta_format_discount_display( $ev['discountcode'] );
+
+        $metrics['refunded_amount'] = '$' . number_format( $metrics['refunded_amount'], 2 );
+        $metrics['revenue']         = '$' . number_format( $metrics['revenue'], 2 );
+
         $sheet->fromArray( array_merge( array_values( $ev ), array_values( $metrics ) ), null, 'A' . $row );
         $row++;
     }
