@@ -61,7 +61,7 @@ if ( is_admin() ) {
     } );
 }
 
-// Load Composer autoloader if present
+// Load Composer autoloader if present within the plugin directory.
 if ( file_exists( TTA_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once TTA_PLUGIN_DIR . 'vendor/autoload.php';
 }

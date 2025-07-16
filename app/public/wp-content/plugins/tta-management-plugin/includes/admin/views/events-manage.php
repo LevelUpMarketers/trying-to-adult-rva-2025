@@ -4,6 +4,7 @@
 global $wpdb;
 $table = $wpdb->prefix . 'tta_events';
 
+
 // Handle deletion
 if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['event_id'] ) ) {
     if ( check_admin_referer( 'tta_event_delete_nonce' ) ) {
@@ -85,22 +86,34 @@ if ( $search ) {
 $per_page = 20;
 $paged    = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
 $offset   = ( $paged - 1 ) * $per_page;
+$orderby_param = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : '';
+$orderby       = $orderby_param ? $orderby_param : 'upcoming';
 
 // Total count
 $total = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" );
 
 // Fetch events in desired order
-$sql = "
-    SELECT *
-      FROM {$table}
-      {$where}
- ORDER
+switch ( $orderby ) {
+    case 'date_asc':
+        $order_sql = 'ORDER BY `date` ASC';
+        break;
+    case 'date_desc':
+        $order_sql = 'ORDER BY `date` DESC';
+        break;
+    case 'name':
+        $order_sql = 'ORDER BY name ASC';
+        break;
+    case 'upcoming':
+    default:
+        $order_sql = 'ORDER
     BY
       CASE WHEN `date` >= CURDATE() THEN 0 ELSE 1 END ASC,
       CASE WHEN `date` >= CURDATE() THEN `date` ELSE NULL END ASC,
-      CASE WHEN `date` <  CURDATE() THEN `date` ELSE NULL END DESC
-    LIMIT %d, %d
-";
+      CASE WHEN `date` <  CURDATE() THEN `date` ELSE NULL END DESC';
+        break;
+}
+
+$sql = "SELECT * FROM {$table} {$where} {$order_sql} LIMIT %d, %d";
 $events = $wpdb->get_results(
     $wpdb->prepare( $sql, $offset, $per_page ),
     ARRAY_A
@@ -114,7 +127,27 @@ $events = $wpdb->get_results(
         <label for="event-search-input" class="screen-reader-text">Search Events:</label>
         <input type="search" id="event-search-input" name="s" value="<?php echo esc_attr( $search ); ?>">
         <button class="button" type="submit">Search Events</button>
+        <select name="orderby" onchange="this.form.submit()">
+            <option value="" disabled <?php selected( $orderby_param, '' ); ?>><?php esc_html_e( 'Sort By…', 'tta' ); ?></option>
+            <option value="upcoming" <?php selected( $orderby_param, 'upcoming' ); ?>><?php esc_html_e( 'Upcoming First', 'tta' ); ?></option>
+            <option value="date_asc" <?php selected( $orderby_param, 'date_asc' ); ?>><?php esc_html_e( 'Date Ascending', 'tta' ); ?></option>
+            <option value="date_desc" <?php selected( $orderby_param, 'date_desc' ); ?>><?php esc_html_e( 'Date Descending', 'tta' ); ?></option>
+            <option value="name" <?php selected( $orderby_param, 'name' ); ?>><?php esc_html_e( 'Event Name', 'tta' ); ?></option>
+        </select>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-events&tab=manage' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
     </p>
+</form>
+
+<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:1em;">
+    <?php wp_nonce_field( 'tta_export_events_nonce' ); ?>
+    <input type="hidden" name="action" value="tta_export_event_metrics">
+    <label><?php esc_html_e( 'Start Date', 'tta' ); ?>
+        <input type="date" name="start_date">
+    </label>
+    <label><?php esc_html_e( 'End Date', 'tta' ); ?>
+        <input type="date" name="end_date">
+    </label>
+    <button class="button" type="submit"><?php esc_html_e( 'Export Metrics', 'tta' ); ?></button>
 </form>
 
 <table class="widefat striped">
@@ -221,6 +254,8 @@ echo paginate_links( [
     'total'     => ceil( $total / $per_page ),
     'prev_text' => '&laquo;',
     'next_text' => '&raquo;',
+    'end_size'  => 1,
+    'mid_size'  => $paged === 1 ? 19 : 2,
 ] );
 echo '</div></div>';
 ?>

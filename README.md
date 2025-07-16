@@ -27,6 +27,8 @@ If these constants are not defined, checkout will fail and an admin notice will 
 - [Membership Benefits](docs/MembershipBenefits.md)
 - [Member Dashboard](docs/MemberDashboard.md)
 - [Member History Admin](docs/MemberHistoryAdmin.md)
+- [Admin List Sorting Options](docs/AdminListSorting.md)
+- [Event Metrics Export](docs/EventMetricsExport.md)
 - [TTA Refund Requests Admin](docs/RefundRequestsAdmin.md)
 - [TTA Ads Admin](docs/AdsAdmin.md)
 - [Event Check-In Page](docs/EventCheckInAdmin.md)
@@ -57,3 +59,7 @@ Whenever the structure of `tta_events` changes, mirror those updates to `tta_eve
 
 After installing PHP and Composer, execute `composer install` followed by
 `vendor/bin/phpunit` to run the plugin's unit tests.
+The plugin itself includes its own `composer.json` under
+`app/public/wp-content/plugins/tta-management-plugin`. Run `composer install`
+inside that directory as well to install libraries like PhpSpreadsheet used for
+the Event Metrics export feature.
