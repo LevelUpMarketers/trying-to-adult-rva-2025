@@ -6,6 +6,8 @@ This document collects helpful SQL snippets for testing and development. They ar
 
 The plugin automatically runs `dbDelta()` when its database version changes. Any new columns introduced in updates are created without manual intervention. The current version is stored in the `tta_db_version` option.
 
+WordPress's `dbDelta()` does not reliably manage `FOREIGN KEY` constraints. The plugin no longer defines them in table schemas to avoid upgrade errors. Relationships are maintained in application logic instead.
+
 ## Import WordPress users into `tta_members` & assign hosts & volunteers
 
 Use the following SQL to copy existing WordPress users into the `tta_members`
