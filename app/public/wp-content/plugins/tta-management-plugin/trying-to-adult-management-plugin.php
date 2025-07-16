@@ -61,9 +61,26 @@ if ( is_admin() ) {
     } );
 }
 
-// Load Composer autoloader if present
-if ( file_exists( TTA_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
-    require_once TTA_PLUGIN_DIR . 'vendor/autoload.php';
+// Load Composer autoloader if present.
+// Dependencies are normally installed within this plugin's vendor directory.
+// However when running inside the monorepo the vendor folder lives at the
+// repository root, so fall back upward through parent directories.
+$autoload_paths = [
+    TTA_PLUGIN_DIR . 'vendor/autoload.php',
+];
+
+// Traverse up to five levels looking for a shared vendor directory.
+$parent = TTA_PLUGIN_DIR;
+for ( $i = 0; $i < 5; $i++ ) {
+    $parent = dirname( $parent );
+    $autoload_paths[] = trailingslashit( $parent ) . 'vendor/autoload.php';
+}
+
+foreach ( $autoload_paths as $autoload ) {
+    if ( file_exists( $autoload ) ) {
+        require_once $autoload;
+        break;
+    }
 }
 
 // Autoload TTA_ classes
