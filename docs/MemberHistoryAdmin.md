@@ -2,7 +2,7 @@
 
 The **Member History** tab is available under **Members** in the WordPress admin. It lists all members just like the Manage Members tab. Clicking a member row loads a detailed history view showing:
 
-Members can now be sorted by the length of their membership, the number of events they've attended or the total amount they've spent. Use the dropdown above the table to choose a sort order.
+Members can now be sorted by membership length, events attended, total amount spent or alphabetically by first or last name. Use the dropdown above the table to choose a sort order.
 
 - Total amount spent across all transactions, including membership purchases and recurring charges
 - Count of events they have purchased

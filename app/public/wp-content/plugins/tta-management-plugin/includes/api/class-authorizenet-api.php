@@ -13,15 +13,15 @@ class TTA_AuthorizeNet_API {
     protected $environment;
 
     /**
-     * Log raw API responses to the PHP error log and debug log.
+     * Log raw API responses to the internal debug log.
      *
-     * @param string $context Context label describing the request.
+     * @param string $context  Context label describing the request.
      * @param mixed  $response Response object returned by the SDK.
      * @return void
      */
     protected function log_response( $context, $response ) {
         $msg = $context . ': ' . print_r( $response, true );
-        error_log( '[TTA] ' . $msg );
+        TTA_Debug_Logger::log( $msg );
     }
 
     /**

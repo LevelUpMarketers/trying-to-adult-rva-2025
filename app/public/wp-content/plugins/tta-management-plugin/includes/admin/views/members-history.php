@@ -58,6 +58,10 @@ usort( $members, function ( $a, $b ) use ( $orderby ) {
             return $b['__attended'] <=> $a['__attended'];
         case 'spent':
             return $b['__total_spent'] <=> $a['__total_spent'];
+        case 'first':
+            return strcasecmp( $a['first_name'], $b['first_name'] );
+        case 'last':
+            return strcasecmp( $a['last_name'], $b['last_name'] );
         case 'joined':
         default:
             return strtotime( $b['joined_at'] ) - strtotime( $a['joined_at'] );
@@ -95,6 +99,8 @@ $total_pages   = ceil( $total_members / $per_page );
           <option value="length" <?php selected( $orderby, 'length' ); ?>><?php esc_html_e( 'Membership Length', 'tta' ); ?></option>
           <option value="attended" <?php selected( $orderby, 'attended' ); ?>><?php esc_html_e( 'Events Attended', 'tta' ); ?></option>
           <option value="spent" <?php selected( $orderby, 'spent' ); ?>><?php esc_html_e( 'Total Spent', 'tta' ); ?></option>
+          <option value="first" <?php selected( $orderby, 'first' ); ?>><?php esc_html_e( 'First Name', 'tta' ); ?></option>
+          <option value="last" <?php selected( $orderby, 'last' ); ?>><?php esc_html_e( 'Last Name', 'tta' ); ?></option>
         </select>
         <button class="button" type="submit"><?php esc_html_e( 'Search Members', 'tta' ); ?></button>
       </p>

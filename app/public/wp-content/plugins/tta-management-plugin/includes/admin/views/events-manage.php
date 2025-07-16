@@ -85,22 +85,33 @@ if ( $search ) {
 $per_page = 20;
 $paged    = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
 $offset   = ( $paged - 1 ) * $per_page;
+$orderby  = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : 'upcoming';
 
 // Total count
 $total = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" );
 
 // Fetch events in desired order
-$sql = "
-    SELECT *
-      FROM {$table}
-      {$where}
- ORDER
+switch ( $orderby ) {
+    case 'date_asc':
+        $order_sql = 'ORDER BY `date` ASC';
+        break;
+    case 'date_desc':
+        $order_sql = 'ORDER BY `date` DESC';
+        break;
+    case 'name':
+        $order_sql = 'ORDER BY name ASC';
+        break;
+    case 'upcoming':
+    default:
+        $order_sql = 'ORDER
     BY
       CASE WHEN `date` >= CURDATE() THEN 0 ELSE 1 END ASC,
       CASE WHEN `date` >= CURDATE() THEN `date` ELSE NULL END ASC,
-      CASE WHEN `date` <  CURDATE() THEN `date` ELSE NULL END DESC
-    LIMIT %d, %d
-";
+      CASE WHEN `date` <  CURDATE() THEN `date` ELSE NULL END DESC';
+        break;
+}
+
+$sql = "SELECT * FROM {$table} {$where} {$order_sql} LIMIT %d, %d";
 $events = $wpdb->get_results(
     $wpdb->prepare( $sql, $offset, $per_page ),
     ARRAY_A
@@ -113,6 +124,12 @@ $events = $wpdb->get_results(
     <p class="search-box">
         <label for="event-search-input" class="screen-reader-text">Search Events:</label>
         <input type="search" id="event-search-input" name="s" value="<?php echo esc_attr( $search ); ?>">
+        <select name="orderby" onchange="this.form.submit()">
+            <option value="upcoming" <?php selected( $orderby, 'upcoming' ); ?>><?php esc_html_e( 'Upcoming First', 'tta' ); ?></option>
+            <option value="date_asc" <?php selected( $orderby, 'date_asc' ); ?>><?php esc_html_e( 'Date Ascending', 'tta' ); ?></option>
+            <option value="date_desc" <?php selected( $orderby, 'date_desc' ); ?>><?php esc_html_e( 'Date Descending', 'tta' ); ?></option>
+            <option value="name" <?php selected( $orderby, 'name' ); ?>><?php esc_html_e( 'Event Name', 'tta' ); ?></option>
+        </select>
         <button class="button" type="submit">Search Events</button>
     </p>
 </form>
