@@ -553,6 +553,24 @@ class HelpersTest extends TestCase {
         $out = tta_format_event_datetime('2025-07-19', '18:00|');
         $this->assertSame('Saturday July 19, 2025 - 6:00 PM', $out);
     }
+
+    public function test_parse_address_preserves_hyphenated_street() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $raw = '1234 E-State St - Apt A - Richmond - VA - 23231';
+        $parts = tta_parse_address($raw);
+        $this->assertSame('1234 E-State St', $parts['street']);
+        $this->assertSame('Apt A', $parts['address2']);
+        $this->assertSame('Richmond', $parts['city']);
+        $this->assertSame('VA', $parts['state']);
+        $this->assertSame('23231', $parts['zip']);
+    }
+
+    public function test_format_address_preserves_hyphenated_street() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $raw = '1234 E-State St -  - Richmond - VA - 23231';
+        $formatted = tta_format_address($raw);
+        $this->assertSame('1234 E-State St Richmond, VA 23231', $formatted);
+    }
     public function test_get_member_waitlist_events_returns_entries() {
         global $wpdb;
         $this->wpdb->results_calls = 0;
