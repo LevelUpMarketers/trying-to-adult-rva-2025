@@ -20,6 +20,8 @@ $members_table = $wpdb->prefix . 'tta_members';
 $per_page = 10;
 $page      = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
 $offset    = ( $page - 1 ) * $per_page;
+$orderby_param = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : '';
+$orderby       = $orderby_param ? $orderby_param : 'joined';
 
 // Build the WHERE clause for searching:
 $where_sql   = '';
@@ -37,14 +39,39 @@ if ( $search_term ) {
 // Fetch total count (for pagination)
 $total_members = $wpdb->get_var( "SELECT COUNT(*) FROM {$members_table} {$where_sql}" );
 
-// Fetch this page’s rows
-$members = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$members_table} {$where_sql} ORDER BY joined_at DESC LIMIT %d OFFSET %d",
-    $per_page,
-    $offset
-), ARRAY_A );
+// Fetch all rows so we can sort by metrics
+$members = $wpdb->get_results( "SELECT * FROM {$members_table} {$where_sql}", ARRAY_A );
 
-$total_pages = ceil( $total_members / $per_page );
+// Attach metrics for optional sorting
+foreach ( $members as &$m ) {
+    $summary                  = tta_get_member_history_summary( $m['id'] );
+    $m['__total_spent']       = $summary['total_spent'];
+    $m['__attended']          = $summary['attended'];
+    $m['__membership_length'] = time() - strtotime( $m['joined_at'] );
+}
+unset( $m );
+
+usort( $members, function ( $a, $b ) use ( $orderby ) {
+    switch ( $orderby ) {
+        case 'length':
+            return $b['__membership_length'] <=> $a['__membership_length'];
+        case 'attended':
+            return $b['__attended'] <=> $a['__attended'];
+        case 'spent':
+            return $b['__total_spent'] <=> $a['__total_spent'];
+        case 'first':
+            return strcasecmp( $a['first_name'], $b['first_name'] );
+        case 'last':
+            return strcasecmp( $a['last_name'], $b['last_name'] );
+        case 'joined':
+        default:
+            return strtotime( $b['joined_at'] ) - strtotime( $a['joined_at'] );
+    }
+} );
+
+$total_members = count( $members );
+$members       = array_slice( $members, $offset, $per_page );
+$total_pages   = ceil( $total_members / $per_page );
 
 ?>
 
@@ -69,6 +96,16 @@ $total_pages = ceil( $total_members / $per_page );
           placeholder="Search by first name, last name, or email…"
         >
         <button class="button" type="submit">Search Members</button>
+        <select name="orderby" id="tta-member-orderby" onchange="this.form.submit()">
+          <option value="" disabled <?php selected( $orderby_param, '' ); ?>><?php esc_html_e( 'Sort By…', 'tta' ); ?></option>
+          <option value="joined" <?php selected( $orderby_param, 'joined' ); ?>><?php esc_html_e( 'Newest Joined', 'tta' ); ?></option>
+          <option value="length" <?php selected( $orderby_param, 'length' ); ?>><?php esc_html_e( 'Membership Length', 'tta' ); ?></option>
+          <option value="attended" <?php selected( $orderby_param, 'attended' ); ?>><?php esc_html_e( 'Events Attended', 'tta' ); ?></option>
+          <option value="spent" <?php selected( $orderby_param, 'spent' ); ?>><?php esc_html_e( 'Total Spent', 'tta' ); ?></option>
+          <option value="first" <?php selected( $orderby_param, 'first' ); ?>><?php esc_html_e( 'First Name', 'tta' ); ?></option>
+          <option value="last" <?php selected( $orderby_param, 'last' ); ?>><?php esc_html_e( 'Last Name', 'tta' ); ?></option>
+        </select>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-members&tab=manage' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
       </p>
     </form>
 
@@ -143,14 +180,18 @@ $total_pages = ceil( $total_members / $per_page );
         <div class="tablenav">
             <div class="tablenav-pages">
                 <?php
-                    echo paginate_links( [
+                    $pagination_args = [
                         'base'      => add_query_arg( 'paged', '%#%' ),
                         'format'    => '',
                         'prev_text' => '&laquo;',
                         'next_text' => '&raquo;',
                         'total'     => $total_pages,
                         'current'   => $page,
-                    ] );
+                        'end_size'  => 1,
+                        'mid_size'  => $page === 1 ? 19 : 2,
+                    ];
+
+                    echo paginate_links( $pagination_args );
                 ?>
             </div>
         </div>
