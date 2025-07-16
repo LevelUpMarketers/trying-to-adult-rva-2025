@@ -82,8 +82,8 @@ if ( isset( $_POST['tta_event_save'] ) && check_admin_referer(
         'url4'                  => tta_esc_url_raw( $_POST['url4'] ),
         'mainimageid'           => intval( $_POST['mainimageid'] ),
         'otherimageids'         => tta_sanitize_text_field( $_POST['otherimageids'] ),
-        'hosts'                 => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
-        'volunteers'            => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+        'hosts'                 => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
+        'volunteers'            => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
         'host_notes'            => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
     ];
 
@@ -139,8 +139,8 @@ $member_choices = $wpdb->get_col(
     "SELECT CONCAT(first_name,' ',last_name) FROM {$wpdb->prefix}tta_members WHERE member_type IN ('volunteer','admin','super_admin') ORDER BY first_name, last_name"
 );
 $venue_choices = $wpdb->get_results( "SELECT name, address, venueurl, url2, url3, url4 FROM {$venue_table} ORDER BY name", ARRAY_A );
-$hosts      = ! empty( $event['hosts'] ) ? array_map( 'trim', explode( ',', $event['hosts'] ) ) : [''];
-$volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',', $event['volunteers'] ) ) : [''];
+$hosts      = ! empty( $event['hosts'] ) ? tta_get_member_names_by_ids( explode( ',', $event['hosts'] ) ) : [''];
+$volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( explode( ',', $event['volunteers'] ) ) : [''];
 ?>
 
 <form id="tta-event-form" method="post">
@@ -584,7 +584,20 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <button type="button" class="button" id="add-volunteer" style="margin-top:8px;">+ Add Another Volunteer</button>
+        <button type="button" class="button" id="add-volunteer" style="margin-top:8px;">+ Add Another Volunteer</button>
+            </td>
+        </tr>
+
+        <!-- Host Notes -->
+        <tr>
+            <th>
+                <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr__( 'Notes about hosts or volunteers (not public)', 'tta' ); ?>">
+                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+                </span>
+                <label for="host_notes">Host Notes</label>
+            </th>
+            <td>
+                <textarea name="host_notes" id="host_notes" rows="4" class="large-text"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
             </td>
         </tr>
 

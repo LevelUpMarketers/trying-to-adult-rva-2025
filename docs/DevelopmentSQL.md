@@ -6,6 +6,8 @@ This document collects helpful SQL snippets for testing and development. They ar
 
 The plugin automatically runs `dbDelta()` when its database version changes. Any new columns introduced in updates are created without manual intervention. The current version is stored in the `tta_db_version` option.
 
+WordPress's `dbDelta()` does not reliably manage `FOREIGN KEY` constraints. The plugin no longer defines them in table schemas to avoid upgrade errors. Relationships are maintained in application logic instead.
+
 ## Import WordPress users into `tta_members` & assign hosts & volunteers
 
 Use the following SQL to copy existing WordPress users into the `tta_members`
@@ -202,24 +204,13 @@ ALTER TABLE `wp_j9bzlz98u3_tta_events`
 
 ## Add `host_notes` Column
 
-Version 1.8.0 stores private instructions for each event. Run this if upgrading manually:
+Version 1.8.0 stores internal notes for event hosts. If upgrading manually run:
 
 ```sql
 ALTER TABLE `wp_j9bzlz98u3_tta_events`
   ADD COLUMN `host_notes` TEXT AFTER `volunteers`;
 ALTER TABLE `wp_j9bzlz98u3_tta_events_archive`
   ADD COLUMN `host_notes` TEXT AFTER `volunteers`;
-```
-
-## Add `assistance_note` Column
-
-Version 1.9.0 stores optional messages from attendees to event hosts. Run this if upgrading manually:
-
-```sql
-ALTER TABLE `wp_j9bzlz98u3_tta_attendees`
-  ADD COLUMN `assistance_note` TEXT AFTER `is_member`;
-ALTER TABLE `wp_j9bzlz98u3_tta_attendees_archive`
-  ADD COLUMN `assistance_note` TEXT AFTER `is_member`;
 ```
 
 ## Add phone and opt-in columns to `tta_attendees`

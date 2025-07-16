@@ -271,15 +271,7 @@ class TTA_DB_Setup {
             expires_at DATETIME        NOT NULL,
             PRIMARY KEY   (id),
             KEY cart_idx   (cart_id),
-            KEY ticket_idx (ticket_id),
-            CONSTRAINT fk_cart
-                FOREIGN KEY (cart_id)
-                REFERENCES {$wpdb->prefix}tta_carts(id)
-                ON DELETE CASCADE,
-            CONSTRAINT fk_ticket
-                FOREIGN KEY (ticket_id)
-                REFERENCES {$wpdb->prefix}tta_tickets(id)
-                ON DELETE CASCADE
+            KEY ticket_idx (ticket_id)
         ) $charset_collate";
 
         // ─────────────────────────────────────────────────────────────────
@@ -323,13 +315,7 @@ class TTA_DB_Setup {
             status          ENUM('pending','checked_in','no_show') DEFAULT 'pending',
             PRIMARY KEY     (id),
             KEY transaction_idx (transaction_id),
-            KEY ticket_idx      (ticket_id),
-            CONSTRAINT fk_attendee_txn FOREIGN KEY (transaction_id)
-                REFERENCES {$prefix}transactions(id)
-                ON DELETE CASCADE,
-            CONSTRAINT fk_attendee_ticket FOREIGN KEY (ticket_id)
-                REFERENCES {$wpdb->prefix}tta_tickets(id)
-                ON DELETE CASCADE
+            KEY ticket_idx      (ticket_id)
         ) $charset_collate";
 
         // ─────────────────────────────────────────────────────────────────
@@ -351,13 +337,7 @@ class TTA_DB_Setup {
             status          ENUM('pending','checked_in','no_show') DEFAULT 'pending',
             PRIMARY KEY     (id),
             KEY transaction_idx (transaction_id),
-            KEY ticket_idx      (ticket_id),
-            CONSTRAINT fk_arch_attendee_txn FOREIGN KEY (transaction_id)
-                REFERENCES {$prefix}transactions(id)
-                ON DELETE CASCADE,
-            CONSTRAINT fk_arch_attendee_ticket FOREIGN KEY (ticket_id)
-                REFERENCES {$prefix}tickets_archive(id)
-                ON DELETE CASCADE
+            KEY ticket_idx      (ticket_id)
         ) $charset_collate";
 
         // Run dbDelta on each statement

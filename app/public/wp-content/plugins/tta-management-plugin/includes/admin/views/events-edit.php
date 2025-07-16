@@ -37,8 +37,8 @@ $member_choices = $wpdb->get_col(
     "SELECT CONCAT(first_name,' ',last_name) FROM {$wpdb->prefix}tta_members WHERE member_type IN ('volunteer','admin','super_admin') ORDER BY first_name, last_name"
 );
 $venue_choices = $wpdb->get_results( "SELECT name, address, venueurl, url2, url3, url4 FROM {$venue_table} ORDER BY name", ARRAY_A );
-$hosts      = ! empty( $event['hosts'] ) ? array_map( 'trim', explode( ',', $event['hosts'] ) ) : [''];
-$volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',', $event['volunteers'] ) ) : [''];
+$hosts      = ! empty( $event['hosts'] ) ? tta_get_member_names_by_ids( explode( ',', $event['hosts'] ) ) : [''];
+$volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( explode( ',', $event['volunteers'] ) ) : [''];
 ?>
 
 <form method="post" id="tta-event-edit-form">
@@ -539,19 +539,22 @@ $volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',',
                             </div>
                         <?php endforeach; ?>
                     </div>
-                <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
-            </td>
-        </tr>
+            <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
+                </td>
+            </tr>
 
-        <!-- Host Notes -->
-        <tr>
-            <th>
-                <label for="host_notes_edit">Event Host Notes</label>
-            </th>
-            <td>
-                <textarea name="host_notes" id="host_notes_edit" rows="4" class="large-text" placeholder="Notes for hosts and volunteers" <?php echo $readonly ? 'readonly' : ''; ?>><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
-            </td>
-        </tr>
+            <!-- Host Notes -->
+            <tr>
+                <th>
+                    <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr__( 'Notes about hosts or volunteers (not public)', 'tta' ); ?>" style="margin-left:4px;">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help" />
+                    </span>
+                    <label for="host_notes">Host Notes</label>
+                </th>
+                <td>
+                    <textarea name="host_notes" id="host_notes" rows="4" class="large-text" placeholder="Notes…"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
+                </td>
+            </tr
 
         </tbody>
 
