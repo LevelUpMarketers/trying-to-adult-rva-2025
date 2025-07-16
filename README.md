@@ -20,6 +20,7 @@ If these constants are not defined, checkout will fail and an admin notice will 
 - [Address Helper Functions](docs/AddressHelpers.md)
 - [Event Page Context](docs/EventPage.md)
 - [Event Hosts & Volunteers](docs/EventPage.md#event-hosts-and-volunteers)
+- [Event Creation Admin](docs/EventCreationAdmin.md)
 - [Event Type Options](docs/EventTypes.md)
 - [Testing Information](docs/TestingInformation.md) (includes sandbox credit card numbers)
 - [Member Privacy Options](docs/MemberPrivacy.md)

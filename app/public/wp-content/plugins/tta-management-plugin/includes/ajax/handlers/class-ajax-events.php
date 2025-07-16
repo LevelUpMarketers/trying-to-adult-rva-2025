@@ -63,8 +63,8 @@ class TTA_Ajax_Events {
             'url4'                 => tta_esc_url_raw( $_POST['url4']                ?? '' ),
             'mainimageid'          => intval( $_POST['mainimageid']         ?? 0 ),
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
-            'hosts'                => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
-            'volunteers'           => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+            'hosts'                => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
+            'volunteers'           => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
         ];
 
         // Save venue if new when updating
@@ -227,8 +227,8 @@ class TTA_Ajax_Events {
             'url4'                 => tta_esc_url_raw( $_POST['url4']                ?? '' ),
             'mainimageid'          => intval( $_POST['mainimageid']         ?? 0 ),
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
-            'hosts'                => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['hosts'] ?? [] ) ) ),
-            'volunteers'           => implode( ',', array_filter( array_map( 'sanitize_text_field', $_POST['volunteers'] ?? [] ) ) ),
+            'hosts'                => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
+            'volunteers'           => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
         ];
 
         $updated = $wpdb->update( $events_table, $event_data, [ 'id' => $id ] );

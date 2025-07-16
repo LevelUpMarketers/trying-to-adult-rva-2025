@@ -37,8 +37,8 @@ $member_choices = $wpdb->get_col(
     "SELECT CONCAT(first_name,' ',last_name) FROM {$wpdb->prefix}tta_members WHERE member_type IN ('volunteer','admin','super_admin') ORDER BY first_name, last_name"
 );
 $venue_choices = $wpdb->get_results( "SELECT name, address, venueurl, url2, url3, url4 FROM {$venue_table} ORDER BY name", ARRAY_A );
-$hosts      = ! empty( $event['hosts'] ) ? array_map( 'trim', explode( ',', $event['hosts'] ) ) : [''];
-$volunteers = ! empty( $event['volunteers'] ) ? array_map( 'trim', explode( ',', $event['volunteers'] ) ) : [''];
+$hosts      = ! empty( $event['hosts'] ) ? tta_get_member_names_by_ids( explode( ',', $event['hosts'] ) ) : [''];
+$volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( explode( ',', $event['volunteers'] ) ) : [''];
 ?>
 
 <form method="post" id="tta-event-edit-form">

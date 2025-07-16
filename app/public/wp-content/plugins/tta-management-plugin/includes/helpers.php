@@ -691,10 +691,21 @@ function tta_get_event_attendee_profiles( $event_id ) {
         );
     }
     $ute_id     = $event_row['ute_id'] ?? null;
-    $host_names = array_filter( array_map( 'trim', explode( ',', $event_row['hosts'] ?? '' ) ) );
-    $vol_names  = array_filter( array_map( 'trim', explode( ',', $event_row['volunteers'] ?? '' ) ) );
-    $host_lower = array_map( 'strtolower', $host_names );
-    $vol_lower  = array_map( 'strtolower', $vol_names );
+    $parse_roles = static function( $list ) {
+        $ids = [];
+        $names = [];
+        foreach ( array_filter( array_map( 'trim', explode( ',', (string) $list ) ) ) as $item ) {
+            if ( ctype_digit( $item ) ) {
+                $ids[] = intval( $item );
+            } else {
+                $names[] = strtolower( $item );
+            }
+        }
+        return [ $ids, $names ];
+    };
+
+    list( $host_ids, $host_lower ) = $parse_roles( $event_row['hosts'] ?? '' );
+    list( $vol_ids,  $vol_lower  ) = $parse_roles( $event_row['volunteers'] ?? '' );
 
     if ( ! $ute_id ) {
         TTA_Cache::set( $cache_key, [], 60 );
@@ -706,18 +717,20 @@ function tta_get_event_attendee_profiles( $event_id ) {
                     COALESCE(m.last_name,  a.last_name)  AS last_name,
                     m.profileimgid,
                     m.hide_event_attendance,
-                    m.membership_level
+                    m.membership_level,
+                    m.wpuserid
                FROM {$att_table} a
                JOIN {$tickets_table} t ON a.ticket_id = t.id
                LEFT JOIN {$members_table} m ON a.email = m.email
               WHERE t.event_ute_id = %s)
-            UNION ALL
-            (SELECT a.email,
-                    COALESCE(m.first_name, a.first_name) AS first_name,
-                    COALESCE(m.last_name,  a.last_name)  AS last_name,
-                    m.profileimgid,
-                    m.hide_event_attendance,
-                    m.membership_level
+           UNION ALL
+           (SELECT a.email,
+                   COALESCE(m.first_name, a.first_name) AS first_name,
+                   COALESCE(m.last_name,  a.last_name)  AS last_name,
+                   m.profileimgid,
+                   m.hide_event_attendance,
+                    m.membership_level,
+                    m.wpuserid
                FROM {$att_archive} a
                JOIN {$tickets_archive} t ON a.ticket_id = t.id
                LEFT JOIN {$members_table} m ON a.email = m.email
@@ -732,18 +745,19 @@ function tta_get_event_attendee_profiles( $event_id ) {
             continue;
         }
         $hide   = ! empty( $row['hide_event_attendance'] );
-        $fn     = sanitize_text_field( $row['first_name'] ?? '' );
-        $ln     = sanitize_text_field( $row['last_name']  ?? '' );
-        $name   = trim( $fn . ' ' . $ln );
-        $lower  = strtolower( $name );
+        $fn      = sanitize_text_field( $row['first_name'] ?? '' );
+        $ln      = sanitize_text_field( $row['last_name']  ?? '' );
+        $name    = trim( $fn . ' ' . $ln );
+        $lower   = strtolower( $name );
+        $wp_id   = intval( $row['wpuserid'] ?? 0 );
         $profiles[ $email ] = [
             'first_name'       => $hide ? '' : $fn,
             'last_name'        => $hide ? '' : $ln,
             'img_id'           => $hide ? 0 : intval( $row['profileimgid'] ),
             'hide'             => $hide,
             'membership_level' => tta_get_membership_level_by_email( $email ),
-            'is_host'          => in_array( $lower, $host_lower, true ),
-            'is_volunteer'     => in_array( $lower, $vol_lower, true ),
+            'is_host'          => ( $wp_id && in_array( $wp_id, $host_ids, true ) ) || in_array( $lower, $host_lower, true ),
+            'is_volunteer'     => ( $wp_id && in_array( $wp_id, $vol_ids, true ) ) || in_array( $lower, $vol_lower, true ),
         ];
     }
 
@@ -759,6 +773,140 @@ function tta_get_event_attendee_image_ids( $event_id ) {
     $profiles = tta_get_event_attendee_profiles( $event_id );
     $ids = array_map( function( $p ) { return intval( $p['img_id'] ); }, $profiles );
     return array_values( array_filter( $ids ) );
+}
+
+/**
+ * Retrieve email addresses for all hosts and volunteers of an event.
+ *
+ * Supports both numeric user IDs and legacy name-based values.
+ *
+ * @param int $event_id Event ID.
+ * @return string[] List of unique emails.
+ */
+function tta_get_event_host_volunteer_emails( $event_id ) {
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return [];
+    }
+
+    $cache_key = 'event_host_vol_emails_' . $event_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $members_table = $wpdb->prefix . 'tta_members';
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare( "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d", $event_id ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        $row = $wpdb->get_row(
+            $wpdb->prepare( "SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d", $event_id ),
+            ARRAY_A
+        );
+    }
+    if ( ! $row ) {
+        TTA_Cache::set( $cache_key, [], 60 );
+        return [];
+    }
+
+    $parse = static function( $list ) {
+        $ids = [];
+        $names = [];
+        foreach ( array_filter( array_map( 'trim', explode( ',', (string) $list ) ) ) as $val ) {
+            if ( ctype_digit( $val ) ) {
+                $ids[] = intval( $val );
+            } else {
+                $names[] = strtolower( $val );
+            }
+        }
+        return [ $ids, $names ];
+    };
+
+    list( $host_ids, $host_names ) = $parse( $row['hosts'] ?? '' );
+    list( $vol_ids,  $vol_names  ) = $parse( $row['volunteers'] ?? '' );
+
+    $emails = [];
+
+    $id_list = array_unique( array_merge( $host_ids, $vol_ids ) );
+    if ( $id_list ) {
+        $placeholders = implode( ',', array_fill( 0, count( $id_list ), '%d' ) );
+        $rows = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$members_table} WHERE wpuserid IN ($placeholders)", $id_list ) );
+        foreach ( $rows as $em ) {
+            $emails[] = sanitize_email( $em );
+        }
+    }
+
+    $name_list = array_unique( array_merge( $host_names, $vol_names ) );
+    foreach ( $name_list as $nm ) {
+        $rows = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$members_table} WHERE LOWER(CONCAT(first_name,' ',last_name)) = %s", $nm ) );
+        foreach ( $rows as $em ) {
+            $emails[] = sanitize_email( $em );
+        }
+    }
+
+    $emails = array_values( array_unique( array_filter( $emails ) ) );
+    $ttl = empty( $emails ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $emails, $ttl );
+    return $emails;
+}
+
+/**
+ * Convert an array of member names to WordPress user IDs.
+ *
+ * Matching is case-insensitive on the concatenated first and last name.
+ *
+ * @param string[] $names Full names.
+ * @return int[]  User IDs.
+ */
+function tta_get_member_ids_by_names( array $names ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $ids = [];
+    foreach ( array_filter( $names ) as $name ) {
+        $name = strtolower( trim( $name ) );
+        if ( '' === $name ) {
+            continue;
+        }
+        $rows = $wpdb->get_col( $wpdb->prepare( "SELECT wpuserid FROM {$members_table} WHERE LOWER(CONCAT(first_name,' ',last_name)) = %s", $name ) );
+        foreach ( $rows as $id ) {
+            $ids[] = intval( $id );
+        }
+    }
+    return array_values( array_unique( $ids ) );
+}
+
+/**
+ * Convert an array of WordPress user IDs to full member names.
+ *
+ * @param int[] $user_ids User IDs.
+ * @return string[] Names in the same order as provided IDs.
+ */
+function tta_get_member_names_by_ids( array $user_ids ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $user_ids = array_filter( array_map( 'intval', $user_ids ) );
+    if ( empty( $user_ids ) ) {
+        return [];
+    }
+    $placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+    $rows = $wpdb->get_results( $wpdb->prepare( "SELECT wpuserid, first_name, last_name FROM {$members_table} WHERE wpuserid IN ($placeholders)", $user_ids ), ARRAY_A );
+    $map = [];
+    foreach ( $rows as $r ) {
+        $map[ intval( $r['wpuserid'] ) ] = trim( sanitize_text_field( $r['first_name'] ) . ' ' . sanitize_text_field( $r['last_name'] ) );
+    }
+    $names = [];
+    foreach ( $user_ids as $id ) {
+        if ( isset( $map[ $id ] ) ) {
+            $names[] = $map[ $id ];
+        }
+    }
+    return $names;
 }
 
 /**

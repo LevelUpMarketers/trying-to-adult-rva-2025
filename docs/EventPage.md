@@ -86,7 +86,7 @@ Attendee thumbnails use the same popup script as the Events List page. Clicking 
 
 ## Event Hosts and Volunteers
 
-Admins can assign one or more hosts and volunteers when creating or editing an event. The autocomplete fields pull from members whose type is Volunteer, Admin, or Super Admin. Selected names are stored in the `hosts` and `volunteers` columns of `tta_events`. On the front end, hosts appear first in the attendee gallery followed by volunteers. Each badge is labelled “Host” or “Volunteer.”
+Admins can assign one or more hosts and volunteers when creating or editing an event. The autocomplete fields pull from members whose type is Volunteer, Admin, or Super Admin. Selected user IDs are stored in the `hosts` and `volunteers` columns of `tta_events` (legacy name entries are still recognized). On the front end, hosts appear first in the attendee gallery followed by volunteers. Each badge is labelled “Host” or “Volunteer.”
 
 ## SEO and Schema Markup
 
