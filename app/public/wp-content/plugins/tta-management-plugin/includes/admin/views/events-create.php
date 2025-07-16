@@ -64,6 +64,7 @@ if ( isset( $_POST['tta_event_save'] ) && check_admin_referer(
         'otherimageids'         => tta_sanitize_text_field( $_POST['otherimageids'] ),
         'hosts'                 => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
         'volunteers'            => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
+        'host_notes'            => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
     ];
 
     // Store venue if new
@@ -562,7 +563,20 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <button type="button" class="button" id="add-volunteer" style="margin-top:8px;">+ Add Another Volunteer</button>
+        <button type="button" class="button" id="add-volunteer" style="margin-top:8px;">+ Add Another Volunteer</button>
+            </td>
+        </tr>
+
+        <!-- Host Notes -->
+        <tr>
+            <th>
+                <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr__( 'Notes about hosts or volunteers (not public)', 'tta' ); ?>">
+                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help">
+                </span>
+                <label for="host_notes">Host Notes</label>
+            </th>
+            <td>
+                <textarea name="host_notes" id="host_notes" rows="4" class="large-text"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
             </td>
         </tr>
 

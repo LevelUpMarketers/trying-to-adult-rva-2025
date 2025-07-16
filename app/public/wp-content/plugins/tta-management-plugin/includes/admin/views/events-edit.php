@@ -539,7 +539,20 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                             </div>
                         <?php endforeach; ?>
                     </div>
-                    <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
+            <button type="button" class="button" id="add-volunteer-edit" style="margin-top:8px;">+ Add Another Volunteer</button>
+                </td>
+            </tr>
+
+            <!-- Host Notes -->
+            <tr>
+                <th>
+                    <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr__( 'Notes about hosts or volunteers (not public)', 'tta' ); ?>" style="margin-left:4px;">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="Help" />
+                    </span>
+                    <label for="host_notes">Host Notes</label>
+                </th>
+                <td>
+                    <textarea name="host_notes" id="host_notes" rows="4" class="large-text" placeholder="Notes…"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
                 </td>
             </tr>
 
