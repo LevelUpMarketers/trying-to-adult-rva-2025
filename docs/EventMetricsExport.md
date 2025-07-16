@@ -4,14 +4,15 @@ Administrators can export a spreadsheet of event metrics from either the **Manag
 
 This feature relies on the PhpSpreadsheet library installed via Composer inside the plugin directory. Run `composer install` within `app/public/wp-content/plugins/tta-management-plugin` after cloning the repository. If the library has not been installed, the export form displays an admin notice explaining how to install it.
 
-The spreadsheet excludes internal IDs like `page_id` and `ticket_id` and formats the remaining columns for readability. Boolean values become **Yes** or **No** and discount codes are shown in plain English. Additional metrics are included:
+The spreadsheet excludes internal IDs like `id`, `page_id`, `ticket_id` and other implementation columns. Boolean values become **Yes** or **No** and discount codes are shown in plain English. Event type values are capitalized and the featured image column links directly to the full image. Additional metrics appear at the end of each row:
 
 - `expected_attendees` – number of purchased tickets (after refunds)
 - `checked_in` – count of attendees marked as checked in
 - `no_show` – count of attendees marked as no show
 - `refund_requests` – number of pending refund requests
 - `refunded_amount` – total amount refunded
-- `revenue` – gross revenue from ticket sales
+- `revenue` – total revenue from ticket sales
+- `revenue_minus_refunds` – total revenue after subtracting refunds
 - `waitlist_count` – current waitlist entries
 
 Press **Export Metrics** and an `.xlsx` file downloads immediately. The form

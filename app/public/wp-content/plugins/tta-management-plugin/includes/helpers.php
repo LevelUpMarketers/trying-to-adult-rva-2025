@@ -4740,28 +4740,26 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
         wp_die( esc_html__( 'No events found for that range.', 'tta' ) );
     }
 
-    $remove_cols = [ 'page_id', 'ticket_id', 'refundsavailable', 'created_at', 'updated_at', 'ute_id' ];
+    $remove_cols = [ 'id', 'page_id', 'ticket_id', 'refundsavailable', 'created_at', 'updated_at', 'ute_id', 'otherimageids', 'waitlist_id' ];
     $bool_cols   = [ 'waitlistavailable', 'all_day_event', 'virtual_event' ];
 
     $header_labels = [
         'id'                    => 'ID',
         'name'                  => 'Event Name',
-        'date'                  => 'Date',
         'time'                  => 'Time',
+        'date'                  => 'Date',
         'baseeventcost'         => 'Base Event Cost',
         'discountedmembercost'  => 'Discounted Member Cost',
         'premiummembercost'     => 'Premium Member Cost',
         'address'               => 'Address',
-        'type'                  => 'Type',
+        'type'                  => 'Event Type',
         'venuename'             => 'Venue Name',
         'venueurl'              => 'Venue URL',
         'url2'                  => 'URL 2',
         'url3'                  => 'URL 3',
         'url4'                  => 'URL 4',
-        'mainimageid'           => 'Main Image ID',
-        'otherimageids'         => 'Other Image IDs',
+        'mainimageid'           => 'Featured Image',
         'waitlistavailable'     => 'Waitlist Available',
-        'waitlist_id'           => 'Waitlist ID',
         'discountcode'          => 'Discount',
         'all_day_event'         => 'All Day Event',
         'virtual_event'         => 'Virtual Event',
@@ -4771,17 +4769,30 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     ];
 
     $metric_headers = [
-        'expected_attendees' => 'Tickets Sold',
-        'checked_in'        => 'Checked In',
-        'no_show'           => 'No Show',
-        'refund_requests'   => 'Refund Requests',
-        'refunded_amount'   => 'Refunded Amount',
-        'revenue'           => 'Revenue',
-        'waitlist_count'    => 'Waitlist Count',
+        'expected_attendees'   => 'Tickets Sold',
+        'waitlist_count'       => 'Waitlist',
+        'checked_in'           => 'Checked In',
+        'no_show'              => 'No Shows',
+        'refund_requests'      => 'Refund Requests',
+        'refunded_amount'      => 'Refunded Amount',
+        'revenue'              => 'Total Revenue',
+        'revenue_minus_refunds'=> 'Revenue Minus Refunds',
     ];
 
     // Prepare header list after removing unwanted columns.
-    $headers = array_diff( array_keys( $events[0] ), $remove_cols );
+    $headers = array_values( array_diff( array_keys( $events[0] ), $remove_cols ) );
+    $reordered = [];
+    foreach ( $headers as $col ) {
+        if ( 'date' === $col ) {
+            if ( in_array( 'time', $headers, true ) ) {
+                $reordered[] = 'time';
+            }
+            $reordered[] = 'date';
+        } elseif ( 'time' !== $col ) {
+            $reordered[] = $col;
+        }
+    }
+    $headers = $reordered;
     $display_headers = [];
     foreach ( $headers as $h ) {
         $display_headers[] = $header_labels[ $h ] ?? $h;
@@ -4811,15 +4822,29 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
         $ev['address']              = tta_format_address( $ev['address'] );
         $ev['date']                 = tta_format_event_date( $ev['date'] );
         $ev['time']                 = tta_format_event_time( $ev['time'] );
+        $ev['type']                 = ucfirst( strtolower( $ev['type'] ) );
+        if ( ! empty( $ev['mainimageid'] ) ) {
+            $url = wp_get_attachment_url( intval( $ev['mainimageid'] ) );
+            $ev['mainimageid'] = $url ? $url : '';
+        } else {
+            $ev['mainimageid'] = '';
+        }
         $ev['baseeventcost']        = '$' . number_format( floatval( $ev['baseeventcost'] ), 2 );
         $ev['discountedmembercost'] = '$' . number_format( floatval( $ev['discountedmembercost'] ), 2 );
         $ev['premiummembercost']    = '$' . number_format( floatval( $ev['premiummembercost'] ), 2 );
         $ev['discountcode']         = tta_format_discount_display( $ev['discountcode'] );
 
-        $metrics['refunded_amount'] = '$' . number_format( $metrics['refunded_amount'], 2 );
-        $metrics['revenue']         = '$' . number_format( $metrics['revenue'], 2 );
+        $metrics['revenue_minus_refunds'] = max( 0, $metrics['revenue'] - $metrics['refunded_amount'] );
+        $metrics['refunded_amount']       = '$' . number_format( $metrics['refunded_amount'], 2 );
+        $metrics['revenue']               = '$' . number_format( $metrics['revenue'], 2 );
+        $metrics['revenue_minus_refunds'] = '$' . number_format( $metrics['revenue_minus_refunds'], 2 );
 
-        $sheet->fromArray( array_merge( array_values( $ev ), array_values( $metrics ) ), null, 'A' . $row );
+        $ordered_metrics = [];
+        foreach ( array_keys( $metric_headers ) as $mk ) {
+            $ordered_metrics[] = $metrics[ $mk ] ?? '';
+        }
+
+        $sheet->fromArray( array_merge( array_values( $ev ), $ordered_metrics ), null, 'A' . $row );
         $row++;
     }
 
