@@ -1444,7 +1444,8 @@ function tta_user_had_membership( $wp_user_id ) {
  * @return string Formatted address.
  */
 function tta_format_address( $raw ) {
-    $parts  = preg_split( '/\s*[-–]\s*/u', $raw );
+    $raw    = trim( $raw );
+    $parts  = preg_split( '/\s[-–]\s/u', $raw );
     $street = trim( $parts[0] ?? '' );
     $addr2  = trim( $parts[1] ?? '' );
     $city   = trim( $parts[2] ?? '' );
@@ -1468,7 +1469,8 @@ function tta_format_address( $raw ) {
  * @return array{street:string,address2:string,city:string,state:string,zip:string}
  */
 function tta_parse_address( $raw ) {
-    $parts = preg_split( '/\s*[-–]\s*/u', $raw );
+    $raw   = trim( $raw );
+    $parts = preg_split( '/\s[-–]\s/u', $raw );
     return [
         'street'   => trim( $parts[0] ?? '' ),
         'address2' => trim( $parts[1] ?? '' ),
