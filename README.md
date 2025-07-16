@@ -59,3 +59,7 @@ Whenever the structure of `tta_events` changes, mirror those updates to `tta_eve
 
 After installing PHP and Composer, execute `composer install` followed by
 `vendor/bin/phpunit` to run the plugin's unit tests.
+The plugin itself includes its own `composer.json` under
+`app/public/wp-content/plugins/tta-management-plugin`. Run `composer install`
+inside that directory as well to install libraries like PhpSpreadsheet used for
+the Event Metrics export feature.
