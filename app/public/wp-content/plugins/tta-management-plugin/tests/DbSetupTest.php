@@ -46,6 +46,7 @@ class DbSetupTest extends TestCase {
         $this->assertStringContainsString('KEY date_idx (date)', $sql);
         $this->assertStringContainsString('KEY expires_at_idx (expires_at)', $sql);
         $this->assertStringContainsString('KEY name_idx (last_name, first_name)', $sql);
+        $this->assertStringContainsString('KEY email_idx (email)', $sql);
     }
 
     public function test_maybe_upgrade_runs_install_when_version_differs() {
