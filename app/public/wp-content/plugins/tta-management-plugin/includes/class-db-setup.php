@@ -315,7 +315,8 @@ class TTA_DB_Setup {
             status          ENUM('pending','checked_in','no_show') DEFAULT 'pending',
             PRIMARY KEY     (id),
             KEY transaction_idx (transaction_id),
-            KEY ticket_idx      (ticket_id)
+            KEY ticket_idx      (ticket_id),
+            KEY email_idx (email)
         ) $charset_collate";
 
         // ─────────────────────────────────────────────────────────────────
@@ -337,7 +338,8 @@ class TTA_DB_Setup {
             status          ENUM('pending','checked_in','no_show') DEFAULT 'pending',
             PRIMARY KEY     (id),
             KEY transaction_idx (transaction_id),
-            KEY ticket_idx      (ticket_id)
+            KEY ticket_idx      (ticket_id),
+            KEY email_idx (email)
         ) $charset_collate";
 
         // Run dbDelta on each statement

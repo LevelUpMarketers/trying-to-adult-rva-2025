@@ -259,3 +259,15 @@ Version 1.4.0 adds a `subscription_status` column to `tta_members` which stores 
 ALTER TABLE `wp_j9bzlz98u3_tta_members`
   ADD COLUMN `subscription_status` ENUM('active','cancelled') DEFAULT 'active' AFTER `subscription_id`;
 ```
+
+## Add attendee email indexes
+
+Version 1.10.0 adds an index on the `email` column of both `tta_attendees` and `tta_attendees_archive` tables.
+This improves lookup performance. Existing installs update automatically, or you can run:
+
+```sql
+ALTER TABLE `wp_j9bzlz98u3_tta_attendees`
+  ADD KEY `email_idx` (`email`);
+ALTER TABLE `wp_j9bzlz98u3_tta_attendees_archive`
+  ADD KEY `email_idx` (`email`);
+```
