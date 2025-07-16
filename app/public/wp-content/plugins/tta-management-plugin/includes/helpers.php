@@ -4738,6 +4738,9 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     $tmp_file = wp_tempnam();
     $writer->save( $tmp_file );
 
+    nocache_headers();
+    header( 'X-Content-Type-Options: nosniff' );
+    header( 'Content-Transfer-Encoding: binary' );
     header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
     header( 'Content-Disposition: attachment; filename="event-report.xlsx"' );
     readfile( $tmp_file );

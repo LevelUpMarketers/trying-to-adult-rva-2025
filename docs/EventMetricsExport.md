@@ -18,3 +18,5 @@ Press **Export Metrics** and an `.xlsx` file downloads immediately. The form
 submits to WordPress's `admin-post.php` endpoint so the file is generated
 before any admin page markup is sent, preventing the "Cannot modify header"
 warnings that appear if the export is triggered after output has started.
+The export response includes caching and MIME headers so modern browsers
+recognize the download as safe.
