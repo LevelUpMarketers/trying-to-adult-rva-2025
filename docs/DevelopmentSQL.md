@@ -200,6 +200,17 @@ ALTER TABLE `wp_j9bzlz98u3_tta_events`
   ADD COLUMN `volunteers` TEXT AFTER `hosts`;
 ```
 
+## Add `host_notes` Column
+
+Version 1.8.0 stores internal notes for event hosts. If upgrading manually run:
+
+```sql
+ALTER TABLE `wp_j9bzlz98u3_tta_events`
+  ADD COLUMN `host_notes` TEXT AFTER `volunteers`;
+ALTER TABLE `wp_j9bzlz98u3_tta_events_archive`
+  ADD COLUMN `host_notes` TEXT AFTER `volunteers`;
+```
+
 ## Add phone and opt-in columns to `tta_attendees`
 
 If you updated from a version prior to 1.0.0, these columns will be added automatically when the plugin loads. If you prefer to run the SQL manually, use:
