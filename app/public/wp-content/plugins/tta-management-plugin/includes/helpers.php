@@ -4780,19 +4780,24 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     ];
 
     // Prepare header list after removing unwanted columns.
-    $headers = array_values( array_diff( array_keys( $events[0] ), $remove_cols ) );
-    $reordered = [];
-    foreach ( $headers as $col ) {
-        if ( 'date' === $col ) {
-            if ( in_array( 'time', $headers, true ) ) {
-                $reordered[] = 'time';
-            }
-            $reordered[] = 'date';
-        } elseif ( 'time' !== $col ) {
-            $reordered[] = $col;
-        }
+    $first_event = $events[0];
+    foreach ( $remove_cols as $rc ) {
+        unset( $first_event[ $rc ] );
     }
-    $headers = $reordered;
+    $headers = array_keys( $first_event );
+    // Move "time" directly before "date" if both exist.
+    $time_index = array_search( 'time', $headers, true );
+    if ( false !== $time_index ) {
+        unset( $headers[ $time_index ] );
+    }
+    $date_index = array_search( 'date', $headers, true );
+    if ( false !== $date_index ) {
+        array_splice( $headers, $date_index, 0, 'time' );
+    } elseif ( false !== $time_index ) {
+        // If date is missing but time exists, append time.
+        $headers[] = 'time';
+    }
+    $headers = array_values( $headers );
     $display_headers = [];
     foreach ( $headers as $h ) {
         $display_headers[] = $header_labels[ $h ] ?? $h;
@@ -4844,7 +4849,12 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
             $ordered_metrics[] = $metrics[ $mk ] ?? '';
         }
 
-        $sheet->fromArray( array_merge( array_values( $ev ), $ordered_metrics ), null, 'A' . $row );
+        $row_values = [];
+        foreach ( $headers as $col ) {
+            $row_values[] = $ev[ $col ] ?? '';
+        }
+
+        $sheet->fromArray( array_merge( $row_values, $ordered_metrics ), null, 'A' . $row );
         $row++;
     }
 
