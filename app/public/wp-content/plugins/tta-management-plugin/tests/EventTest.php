@@ -143,6 +143,9 @@ class EventTest extends TestCase {
         }
         if (!function_exists('wp_enqueue_media')) { function wp_enqueue_media(){} }
         if (!function_exists('wp_enqueue_editor')) { function wp_enqueue_editor(){} }
+        if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
+        if (!function_exists('add_filter')) { function add_filter($t,$c,$p=10,$a=1){} }
+        if (!function_exists('sanitize_textarea_field')) { function sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
 
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/ajax/handlers/class-ajax-events.php';
@@ -169,6 +172,7 @@ class EventTest extends TestCase {
             'city' => 'Town',
             'state' => 'VA',
             'zip' => '12345',
+            'venuename' => 'The Venue',
             'type' => 'free',
             'baseeventcost' => 50,
             'discountedmembercost' => 40,
@@ -183,6 +187,7 @@ class EventTest extends TestCase {
             'url4' => '',
             'mainimageid' => 0,
             'otherimageids' => '',
+            'host_notes' => 'Test notes',
             'tta_event_save_nonce' => 'yes',
         ];
     }
@@ -200,6 +205,7 @@ class EventTest extends TestCase {
         $ticket = $this->wpdb->data[$tickets_table][$ticket_id];
         $this->assertSame('Test Event', $event['name']);
         $this->assertSame('123 St -  - Town - VA - 12345', $event['address']);
+        $this->assertSame('Test notes', $event['host_notes']);
         $this->assertSame($event['ute_id'], $ticket['event_ute_id']);
         $this->assertSame('General Admission', $ticket['ticket_name']);
     }
@@ -214,6 +220,7 @@ class EventTest extends TestCase {
         $_POST['tta_event_id'] = $id;
         $_POST['name'] = 'Updated';
         $_POST['date'] = '2025-02-02';
+        $_POST['host_notes'] = 'Updated note';
         TTA_Ajax_Events::update_event();
         $result = $GLOBALS['_last_json'];
         $this->assertTrue($result['success']);
@@ -221,5 +228,14 @@ class EventTest extends TestCase {
         $event  = $this->wpdb->data[$events_table][$id];
         $this->assertSame('Updated', $event['name']);
         $this->assertSame('2025-02-02', $event['date']);
+        $this->assertSame('Updated note', $event['host_notes']);
+    }
+
+    public function test_save_event_requires_fields() {
+        $_POST = $this->basePost();
+        unset($_POST['name']);
+        TTA_Ajax_Events::save_event();
+        $result = $GLOBALS['_last_json'];
+        $this->assertFalse($result['success']);
     }
 }

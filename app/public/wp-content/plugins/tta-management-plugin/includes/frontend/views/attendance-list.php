@@ -5,15 +5,30 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 ?>
 <div class="tta-attendance-details">
   <h4><?php echo esc_html( $event['name'] ); ?></h4>
-  <p><?php echo esc_html( date_i18n( 'F j, Y', strtotime( $event['date'] ) ) ); ?>
-     <?php echo esc_html( $event['time'] ); ?></p>
-  <p><?php echo esc_html( tta_format_address( $event['address'] ) ); ?></p>
+  <p><?php echo esc_html( tta_format_event_datetime( $event['date'], $event['time'] ) ); ?></p>
+  <p>
+    <a href="<?php echo esc_url( $event['venue_url'] ); ?>" target="_blank" rel="noopener">
+      <?php echo esc_html( $event['venue_name'] ); ?>
+    </a>
+  </p>
+  <p>
+    <a href="<?php echo esc_url( tta_get_google_maps_url( $event['address'] ) ); ?>" target="_blank" rel="noopener">
+      <?php echo esc_html( tta_format_address( $event['address'] ) ); ?>
+    </a>
+  </p>
+  <?php if ( ! empty( $event['host_notes'] ) ) : ?>
+  <p class="tta-host-notes">
+    <?php echo nl2br( esc_html( $event['host_notes'] ) ); ?>
+  </p>
+  <?php endif; ?>
 </div>
 <table class="widefat striped tta-attendance-table">
   <thead>
     <tr>
       <th><?php esc_html_e( 'Attendee', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
+      <th><?php esc_html_e( 'Events Attended', 'tta' ); ?></th>
+      <th><?php esc_html_e( 'Needs Assistance', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Status', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Actions', 'tta' ); ?></th>
     </tr>
@@ -24,6 +39,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
     <tr data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>">
       <td><?php echo esc_html( $a['first_name'] . ' ' . $a['last_name'] ); ?></td>
       <td><?php echo esc_html( $a['email'] ); ?></td>
+      <td><?php echo intval( $a['attended_count'] ); ?></td>
+      <td><?php echo isset( $a['assistance_note'] ) ? esc_html( $a['assistance_note'] ) : '-'; ?></td>
       <td class="status-label"><?php echo esc_html( ucwords( str_replace('_',' ', $a['status'] ) ) ); ?></td>
       <td>
         <button class="button tta-mark-attendance" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="checked_in"><?php esc_html_e( 'Check In', 'tta' ); ?></button>
@@ -31,7 +48,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
       </td>
     </tr>
   <?php endforeach; else : ?>
-    <tr><td colspan="4"><?php esc_html_e( 'No attendees found.', 'tta' ); ?></td></tr>
+    <tr><td colspan="6"><?php esc_html_e( 'No attendees found.', 'tta' ); ?></td></tr>
   <?php endif; ?>
   </tbody>
 </table>

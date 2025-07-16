@@ -57,6 +57,7 @@ for ($i = 1; $i <= 24; $i++) {
         'refundsavailable'     => 1,
         'hosts'                => 'Host ' . $i,
         'volunteers'           => 'Volunteer ' . $i,
+        'host_notes'           => '',
         'discountcode'         => '{"code":"SAVE' . $i . '","type":"flat","amount":2}',
         'created_at'           => date('Y-m-d H:i:s'),
         'updated_at'           => date('Y-m-d H:i:s'),

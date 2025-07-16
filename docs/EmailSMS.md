@@ -18,6 +18,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `host_reminder_2hr` | Reminder to event hosts two hours before their event. |
 | `volunteer_reminder_24hr` | Reminder to volunteers 24 hours before their event. |
 | `volunteer_reminder_2hr` | Reminder to volunteers two hours before their event. |
+| `assistance_request` | Sent to event hosts when a member asks for help finding the group. |
 
 Each template stores:
 
@@ -138,7 +139,8 @@ Template text can include Markdown-style links in the form `[Link Text](https://
 
 The helpers `tta_format_event_date()` and `tta_format_event_time()` convert raw
 database values into the human-friendly strings shown by `{event_date}` and
-`{event_time}`.
+`{event_time}`. `tta_format_event_datetime()` is a convenience wrapper that
+returns both values combined in a single string.
 
 ## Email Delivery
 

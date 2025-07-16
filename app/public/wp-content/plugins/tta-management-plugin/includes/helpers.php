@@ -146,6 +146,29 @@ function tta_get_membership_level_by_email( $email ) {
 }
 
 /**
+ * Get a member row by email address.
+ *
+ * @param string $email Email to search.
+ * @return array|null   Array with id and wpuserid or null if not found.
+ */
+function tta_get_member_row_by_email( $email ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $email         = sanitize_email( $email );
+    if ( ! $email ) {
+        return null;
+    }
+
+    return $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT id, wpuserid FROM {$members_table} WHERE LOWER(email) = %s LIMIT 1",
+            strtolower( $email )
+        ),
+        ARRAY_A
+    );
+}
+
+/**
  * Sanitize a URL input preserving apostrophes.
  *
  * @param mixed $value
@@ -496,31 +519,93 @@ function tta_get_event_attendees( $event_ute_id ) {
  */
 function tta_get_event_attendees_with_status( $event_ute_id ) {
     global $wpdb;
+
     $att_table       = $wpdb->prefix . 'tta_attendees';
     $att_archive     = $wpdb->prefix . 'tta_attendees_archive';
     $tickets_table   = $wpdb->prefix . 'tta_tickets';
     $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
-    $sql = "(SELECT a.id, a.first_name, a.last_name, a.email, a.phone, a.status
+
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.assistance_note, a.status
                FROM {$att_table} a
                JOIN {$tickets_table} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
-            UNION ALL
-            (SELECT a.id, a.first_name, a.last_name, a.email, a.phone, a.status
+           UNION ALL
+            (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.assistance_note, a.status
                FROM {$att_archive} a
                JOIN {$tickets_archive} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
             ORDER BY last_name, first_name";
 
     $rows = $wpdb->get_results( $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ), ARRAY_A );
-    foreach ( $rows as &$r ) {
-        $r['id']         = intval( $r['id'] );
-        $r['first_name'] = sanitize_text_field( $r['first_name'] );
-        $r['last_name']  = sanitize_text_field( $r['last_name'] );
-        $r['email']      = sanitize_email( $r['email'] );
-        $r['phone']      = sanitize_text_field( $r['phone'] );
-        $r['status']     = sanitize_text_field( $r['status'] );
+
+    $event_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+            $event_ute_id,
+            $event_ute_id
+        )
+    );
+
+    $exclude_emails = [];
+    if ( $event_id ) {
+        $ticket_ids = [];
+        foreach ( $rows as $r ) {
+            $ticket_ids[ intval( $r['ticket_id'] ) ] = true;
+        }
+        foreach ( array_keys( $ticket_ids ) as $tid ) {
+            foreach ( tta_get_ticket_pending_refund_attendees( $tid, $event_id ) as $req ) {
+                $exclude_emails[] = strtolower( $req['email'] );
+            }
+            foreach ( tta_get_ticket_refunded_attendees( $tid, $event_id ) as $ref ) {
+                $exclude_emails[] = strtolower( $ref['email'] );
+            }
+        }
+        $exclude_emails = array_unique( $exclude_emails );
     }
-    return $rows;
+
+    $out = [];
+    foreach ( $rows as $r ) {
+        if ( in_array( strtolower( $r['email'] ), $exclude_emails, true ) ) {
+            continue;
+        }
+        $r['id']            = intval( $r['id'] );
+        $r['first_name']    = sanitize_text_field( $r['first_name'] );
+        $r['last_name']     = sanitize_text_field( $r['last_name'] );
+        $r['email']         = sanitize_email( $r['email'] );
+        $r['phone']         = sanitize_text_field( $r['phone'] );
+        $r['status']        = sanitize_text_field( $r['status'] );
+        $r['attended_count'] = tta_get_attended_event_count_by_email( $r['email'] );
+        $note = trim( $r['assistance_note'] ?? '' );
+        $r['assistance_note'] = $note !== '' ? sanitize_textarea_field( $note ) : '-';
+        $out[] = $r;
+    }
+
+    return $out;
+}
+
+/**
+ * Get the number of expected attendees for an event.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return int Count of attendees.
+ */
+function tta_get_expected_attendee_count( $event_ute_id ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return 0;
+    }
+
+    $cache_key = 'expected_count_' . $event_ute_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    $attendees = tta_get_event_attendees_with_status( $event_ute_id );
+    $count     = count( $attendees );
+
+    TTA_Cache::set( $cache_key, $count, 60 );
+    return $count;
 }
 
 /**
@@ -563,7 +648,7 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_ids ), '%d' ) );
         $txn_rows     = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, transaction_id, created_at, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
+                "SELECT id, transaction_id, created_at, wpuserid, details FROM {$wpdb->prefix}tta_transactions WHERE id IN ($placeholders)",
                 $txn_ids
             ),
             ARRAY_A
@@ -571,9 +656,15 @@ function tta_get_ticket_attendees( $ticket_id ) {
 
         foreach ( $txn_rows as $tx ) {
             $txn_id = intval( $tx['id'] );
+            $email = '';
+            if ( ! empty( $tx['wpuserid'] ) ) {
+                $user  = get_userdata( intval( $tx['wpuserid'] ) );
+                $email = $user ? strtolower( $user->user_email ) : '';
+            }
             $txn_map[ $txn_id ] = [
-                'gateway_id' => sanitize_text_field( $tx['transaction_id'] ),
-                'created_at' => $tx['created_at'],
+                'gateway_id'      => sanitize_text_field( $tx['transaction_id'] ),
+                'created_at'      => $tx['created_at'],
+                'purchaser_email' => $email,
             ];
 
             $details = json_decode( $tx['details'], true );
@@ -599,6 +690,8 @@ function tta_get_ticket_attendees( $ticket_id ) {
         $r['amount_paid']  = $price_map[ $txid ] ?? 0;
         $r['gateway_id']   = $txn_map[ $txid ]['gateway_id'] ?? '';
         $r['created_at']   = $txn_map[ $txid ]['created_at'] ?? '';
+        $purch_email       = $txn_map[ $txid ]['purchaser_email'] ?? '';
+        $r['is_purchaser'] = $purch_email && strtolower( $r['email'] ) === $purch_email;
     }
 
     $ttl = empty( $rows ) ? 60 : 300;
@@ -1276,6 +1369,46 @@ function tta_format_event_time( $range ) {
 }
 
 /**
+ * Format event date and time together for display.
+ *
+ * @param string $date  Event date in YYYY-MM-DD format.
+ * @param string $range Time range in "HH:MM|HH:MM" format.
+ * @return string Human readable date and time.
+ */
+function tta_format_event_datetime( $date, $range ) {
+    $date_ts  = strtotime( $date );
+    $date_str = $date_ts ? date_i18n( 'l F j, Y', $date_ts ) : '';
+
+    $parts = explode( '|', $range );
+    $start = trim( $parts[0] ?? '' );
+    $end   = trim( $parts[1] ?? '' );
+
+    $time = '';
+    if ( $start ) {
+        $ts = strtotime( $start );
+        $time = $ts ? date_i18n( 'g:i A', $ts ) : $start;
+    }
+    if ( $end ) {
+        $ts2  = strtotime( $end );
+        $time .= $time ? ' to ' : '';
+        $time .= $ts2 ? date_i18n( 'g:i A', $ts2 ) : $end;
+    }
+
+    return trim( $date_str . ( $time ? ' - ' . $time : '' ) );
+}
+
+/**
+ * Build a Google Maps URL for an address string.
+ *
+ * @param string $raw Raw address.
+ * @return string URL.
+ */
+function tta_get_google_maps_url( $raw ) {
+    $address = tta_format_address( $raw );
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $address );
+}
+
+/**
  * Retrieve upcoming events purchased by a user.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -1402,15 +1535,17 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
         $placeholders = implode( ',', array_fill( 0, count( $txn_map ), '%s' ) );
         $tx_rows      = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT id, transaction_id FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
+                "SELECT id, transaction_id, wpuserid FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
                 ...array_keys( $txn_map )
             ),
             ARRAY_A
         );
 
-        $tx_ids = [];
+        $tx_ids   = [];
+        $tx_users = [];
         foreach ( $tx_rows as $tr ) {
             $tx_ids[ $tr['transaction_id'] ] = intval( $tr['id'] );
+            $tx_users[ $tr['transaction_id'] ] = intval( $tr['wpuserid'] );
         }
 
         if ( $tx_ids ) {
@@ -1448,6 +1583,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     continue;
                 }
                 $internal_tx = $tx_ids[ $gateway_tx ];
+                $purchaser   = $tx_users[ $gateway_tx ] ?? 0;
                 $new_items   = [];
                 foreach ( $ev['items'] as $item ) {
                     $tid = intval( $item['ticket_id'] ?? 0 );
@@ -1462,6 +1598,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     );
                     $item['attendees'] = array_values( $attendees );
                     $item['quantity']  = count( $item['attendees'] );
+                    $item['purchaser_id'] = $purchaser;
                     $item['refund_pending'] = false;
                     if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
                         foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
@@ -1560,6 +1697,67 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     TTA_Cache::set( $cache_key, $events, $ttl );
 
     return $events;
+}
+
+/**
+ * Get a summary of a member's attendance and total savings.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array {
+ *     @type int   $attended Number of events attended.
+ *     @type int   $no_show  Number of no-shows.
+ *     @type float $savings  Total amount saved from discounts.
+ * }
+ */
+function tta_get_member_attendance_summary( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
+        return [ 'attended' => 0, 'no_show' => 0, 'savings' => 0 ];
+    }
+
+    $cache_key = 'attendance_summary_' . $wp_user_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    $events   = tta_get_member_past_events( $wp_user_id );
+    $user     = get_userdata( $wp_user_id );
+    $email    = $user ? strtolower( $user->user_email ) : '';
+    $attended = 0;
+    $no_show  = 0;
+    foreach ( $events as $ev ) {
+        $found = '';
+        foreach ( $ev['items'] as $item ) {
+            foreach ( (array) ( $item['attendees'] ?? [] ) as $att ) {
+                if ( $email && strtolower( $att['email'] ) === $email ) {
+                    $found = $att['status'] ?? '';
+                    break 2;
+                }
+            }
+        }
+        if ( 'checked_in' === $found ) {
+            $attended++;
+        } elseif ( 'no_show' === $found ) {
+            $no_show++;
+        }
+    }
+
+    global $wpdb;
+    $tx_table = $wpdb->prefix . 'tta_transactions';
+    $savings  = (float) $wpdb->get_var( $wpdb->prepare(
+        "SELECT SUM(discount_saved) FROM {$tx_table} WHERE wpuserid = %d",
+        $wp_user_id
+    ) );
+
+    $summary = [
+        'attended' => $attended,
+        'no_show'  => $no_show,
+        'savings'  => $savings,
+    ];
+
+    TTA_Cache::set( $cache_key, $summary, 300 );
+    return $summary;
 }
 
 /**
@@ -1662,12 +1860,16 @@ function tta_get_member_past_events( $wp_user_id ) {
         ARRAY_A
     );
 
-    $events = [];
+    $events  = [];
+    $txn_map = [];
+    $refunds = [];
+    $approved = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
             continue;
         }
+        $txn_map[ $data['transaction_id'] ?? '' ] = 0;
         $events[] = [
             'event_id'       => intval( $row['event_id'] ),
             'name'           => sanitize_text_field( $row['name'] ),
@@ -1683,6 +1885,218 @@ function tta_get_member_past_events( $wp_user_id ) {
             'items'          => $data['items'] ?? [],
         ];
     }
+
+    $member_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}tta_members WHERE wpuserid = %d", $wp_user_id ) );
+    if ( $member_id ) {
+        foreach ( tta_get_refund_requests() as $req ) {
+            if ( intval( $req['member_id'] ) !== $member_id ) {
+                continue;
+            }
+            $tx  = $req['transaction_id'];
+            $tid = intval( $req['ticket_id'] );
+            $refunds[ $tx ][ $tid ] = $req;
+            if ( isset( $txn_map[ $tx ] ) ) {
+                $txn_map[ $tx ] += 1;
+            } else {
+                $txn_map[ $tx ] = 1;
+            }
+        }
+
+        if ( $events ) {
+            $ids = array_column( $events, 'event_id' );
+            $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+            $refund_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT event_id, action_data FROM {$hist_table} WHERE wpuserid = %d AND action_type = 'refund' AND event_id IN ($placeholders)",
+                    $wp_user_id,
+                    ...$ids
+                ),
+                ARRAY_A
+            );
+            foreach ( $refund_rows as $r ) {
+                $data = json_decode( $r['action_data'], true );
+                if ( empty( $data['cancel'] ) || floatval( $data['amount'] ?? 0 ) <= 0 ) {
+                    continue;
+                }
+                $tx  = $data['transaction_id'] ?? '';
+                $tid = intval( $data['ticket_id'] ?? 0 );
+                $email = sanitize_email( $data['attendee']['email'] ?? '' );
+                if ( ! $tx || ! $tid || ! $email ) {
+                    continue;
+                }
+                if ( ! isset( $approved[ $tx ][ $tid ][ $email ] ) ) {
+                    $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
+                }
+                $approved[ $tx ][ $tid ][ $email ] = [
+                    'first_name' => $data['attendee']['first_name'] ?? '',
+                    'last_name'  => $data['attendee']['last_name'] ?? '',
+                    'email'      => $email,
+                    'amount'     => floatval( $data['amount'] ?? 0 ),
+                ];
+            }
+            foreach ( $approved as $tx_key => &$tids ) {
+                foreach ( $tids as $tid_key => &$ap ) {
+                    $ap = array_values( $ap );
+                }
+                unset( $ap );
+            }
+            unset( $tids );
+        }
+    }
+
+    if ( $txn_map && ! property_exists( $wpdb, 'results_data' ) ) {
+        $placeholders = implode( ',', array_fill( 0, count( $txn_map ), '%s' ) );
+        $tx_rows      = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, transaction_id FROM {$wpdb->prefix}tta_transactions WHERE transaction_id IN ($placeholders)",
+                ...array_keys( $txn_map )
+            ),
+            ARRAY_A
+        );
+
+        $tx_ids = [];
+        foreach ( $tx_rows as $tr ) {
+            $tx_ids[ $tr['transaction_id'] ] = intval( $tr['id'] );
+        }
+
+        if ( $tx_ids ) {
+            $placeholders = implode( ',', array_fill( 0, count( $tx_ids ), '%d' ) );
+            $counts       = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT transaction_id, COUNT(*) AS cnt FROM {$wpdb->prefix}tta_attendees WHERE transaction_id IN ($placeholders) GROUP BY transaction_id",
+                    ...array_values( $tx_ids )
+                ),
+                ARRAY_A
+            );
+
+            foreach ( $counts as $c ) {
+                $tid = array_search( intval( $c['transaction_id'] ), $tx_ids, true );
+                if ( $tid ) {
+                    $txn_map[ $tid ] = intval( $c['cnt'] );
+                }
+            }
+        }
+
+        if ( $txn_map ) {
+            $events = array_filter(
+                $events,
+                static function ( $ev ) use ( $txn_map ) {
+                    $tx = $ev['transaction_id'] ?? '';
+                    return isset( $txn_map[ $tx ] ) && $txn_map[ $tx ] > 0;
+                }
+            );
+            $events = array_values( $events );
+
+            foreach ( $events as &$ev ) {
+                $gateway_tx = $ev['transaction_id'] ?? '';
+                if ( ! isset( $tx_ids[ $gateway_tx ] ) ) {
+                    continue;
+                }
+                $internal_tx = $tx_ids[ $gateway_tx ];
+                $new_items   = [];
+                foreach ( $ev['items'] as $item ) {
+                    $tid = intval( $item['ticket_id'] ?? 0 );
+                    if ( ! $tid ) {
+                        continue;
+                    }
+                    $attendees = array_filter(
+                        tta_get_ticket_attendees( $tid ),
+                        static function ( $a ) use ( $internal_tx ) {
+                            return intval( $a['transaction_id'] ) === $internal_tx;
+                        }
+                    );
+                    $item['attendees'] = array_values( $attendees );
+                    $item['quantity']  = count( $item['attendees'] );
+                    $item['refund_pending'] = false;
+                    if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
+                        foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
+                            $clone = $item;
+                            $clone['refund_approved'] = true;
+                            $clone['refund_amount']   = $ap['amount'];
+                            $clone['refund_attendee'] = [
+                                'first_name' => $ap['first_name'],
+                                'last_name'  => $ap['last_name'],
+                                'email'      => $ap['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
+                        }
+                    }
+                    if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
+                        $req  = $refunds[ $gateway_tx ][ $tid ];
+                        $item['refund_pending'] = true;
+                        $item['refund_attendee'] = [
+                            'first_name' => $req['first_name'],
+                            'last_name'  => $req['last_name'],
+                            'email'      => $req['email'],
+                        ];
+                        if ( 0 === $item['quantity'] ) {
+                            $item['quantity'] = 1;
+                        }
+                        $new_items[] = $item;
+                    } elseif ( $item['quantity'] > 0 ) {
+                        $new_items[] = $item;
+                    }
+                }
+                $ev['items'] = $new_items;
+            }
+            unset( $ev );
+            $events = array_filter( $events, static function ( $e ) {
+                return ! empty( $e['items'] );
+            } );
+            $events = array_values( $events );
+        }
+    }
+
+    foreach ( $events as &$ev ) {
+        $split_items = [];
+        foreach ( $ev['items'] as $item ) {
+            $attendees = $item['attendees'] ?? [];
+            if ( ! empty( $item['refund_pending'] ) ) {
+                $pending            = $item;
+                $pending['quantity'] = 1;
+                $pending['attendees'] = [];
+                $split_items[]      = $pending;
+
+                foreach ( $attendees as $att ) {
+                    $clone                     = $item;
+                    $clone['refund_pending']   = false;
+                    unset( $clone['refund_attendee'] );
+                    $clone['attendees']        = [ $att ];
+                    $clone['quantity']         = 1;
+                    $split_items[]             = $clone;
+                }
+                continue;
+            }
+
+            if ( ! empty( $item['refund_approved'] ) ) {
+                $item['quantity'] = 1;
+                $split_items[] = $item;
+                continue;
+            }
+
+            $qty = intval( $item['quantity'] ?? count( $attendees ) );
+            if ( $attendees ) {
+                foreach ( $attendees as $att ) {
+                    $clone              = $item;
+                    $clone['attendees'] = [ $att ];
+                    $clone['quantity']  = 1;
+                    $split_items[]      = $clone;
+                }
+            } elseif ( $qty > 1 ) {
+                for ( $i = 0; $i < $qty; $i++ ) {
+                    $clone              = $item;
+                    $clone['quantity']  = 1;
+                    $split_items[]      = $clone;
+                }
+            } else {
+                $split_items[] = $item;
+            }
+        }
+        $ev['items'] = $split_items;
+    }
+    unset( $ev );
 
     $ttl = empty( $events ) ? 60 : 300;
     TTA_Cache::set( $cache_key, $events, $ttl );
@@ -2118,7 +2532,7 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id
     }
 
     $ticket_sql = $ticket_id ? ' AND a.ticket_id = %d' : '';
-    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
+    $sql = "(SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status FROM {$att_table} a JOIN {$ticket_table} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) UNION ALL (SELECT a.id, a.ticket_id, a.first_name, a.last_name, a.email, a.phone, a.status FROM {$att_archive} a JOIN {$ticket_archive} t ON a.ticket_id = t.id WHERE a.transaction_id = %d AND t.event_ute_id = %s{$ticket_sql}) ORDER BY last_name, first_name";
     $params = $ticket_id ? [ $tx['id'], $ute_id, $ticket_id, $tx['id'], $ute_id, $ticket_id ] : [ $tx['id'], $ute_id, $tx['id'], $ute_id ];
     $rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ), ARRAY_A );
 
@@ -2144,6 +2558,7 @@ function tta_get_refund_request_attendees( $gateway_tx_id, $event_id, $ticket_id
             'last_name'   => sanitize_text_field( $r['last_name'] ),
             'email'       => sanitize_email( $r['email'] ),
             'phone'       => sanitize_text_field( $r['phone'] ),
+            'status'      => sanitize_text_field( $r['status'] ?? 'pending' ),
             'amount_paid' => $price_map[ $tid ] ?? 0,
             'gateway_id'  => $gateway_tx_id,
             'created_at'  => $tx['created_at'],
@@ -2358,7 +2773,12 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
         if ( intval( $req['ticket_id'] ) !== $ticket_id || intval( $req['event_id'] ) !== $event_id ) {
             continue;
         }
-        $tx = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
+        $tx      = tta_get_transaction_by_gateway_id( $req['transaction_id'] );
+        $p_email = '';
+        if ( $tx && ! empty( $tx['wpuserid'] ) ) {
+            $u       = get_userdata( intval( $tx['wpuserid'] ) );
+            $p_email = $u ? strtolower( $u->user_email ) : '';
+        }
         $attendees[] = [
             'first_name'  => sanitize_text_field( $req['first_name'] ),
             'last_name'   => sanitize_text_field( $req['last_name'] ),
@@ -2368,6 +2788,7 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
             'amount_paid' => floatval( $req['amount_paid'] ),
             'gateway_id'  => sanitize_text_field( $req['transaction_id'] ),
             'created_at'  => $tx['created_at'] ?? '',
+            'is_purchaser'=> $p_email && strtolower( $req['email'] ) === $p_email,
         ];
     }
 
@@ -2417,16 +2838,24 @@ function tta_get_ticket_refunded_attendees( $ticket_id, $event_id ) {
         if ( $amount <= 0 ) {
             continue;
         }
-        $att = $data['attendee'] ?? [];
+        $att  = $data['attendee'] ?? [];
+        $tx   = tta_get_transaction_by_gateway_id( $data['transaction_id'] ?? '' );
+        $p_em = '';
+        if ( $tx && ! empty( $tx['wpuserid'] ) ) {
+            $u    = get_userdata( intval( $tx['wpuserid'] ) );
+            $p_em = $u ? strtolower( $u->user_email ) : '';
+        }
+        $email = sanitize_email( $att['email'] ?? '' );
         $attendees[] = [
             'first_name'  => sanitize_text_field( $att['first_name'] ?? '' ),
             'last_name'   => sanitize_text_field( $att['last_name'] ?? '' ),
-            'email'       => sanitize_email( $att['email'] ?? '' ),
+            'email'       => $email,
             'phone'       => sanitize_text_field( $att['phone'] ?? '' ),
             'reason'      => sanitize_text_field( $data['reason'] ?? '' ),
             'amount_paid' => $amount,
             'gateway_id'  => sanitize_text_field( $data['transaction_id'] ?? '' ),
             'created_at'  => $r['action_date'],
+            'is_purchaser'=> $p_em && strtolower( $email ) === $p_em,
         ];
     }
 
@@ -2474,6 +2903,42 @@ function tta_get_attendee_by_tx_ticket( $gateway_tx_id, $ticket_id, $attendee_id
         $att = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$att_table} WHERE transaction_id = %d AND ticket_id = %d LIMIT 1", intval( $tx_row['id'] ), $ticket_id ), ARRAY_A );
     }
     return $att ?: null;
+}
+
+/**
+ * Get how many events an attendee has checked into.
+ *
+ * @param string $email Attendee email address.
+ * @return int Number of events attended.
+ */
+function tta_get_attended_event_count_by_email( $email ) {
+    $email = strtolower( sanitize_email( $email ) );
+    if ( '' === $email ) {
+        return 0;
+    }
+
+    $cache_key = 'attended_count_' . md5( $email );
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    global $wpdb;
+    $att_table   = $wpdb->prefix . 'tta_attendees';
+    $archive     = $wpdb->prefix . 'tta_attendees_archive';
+
+    $count = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$att_table} WHERE LOWER(email) = %s AND status = 'checked_in'",
+        $email
+    ) );
+
+    $count += (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$archive} WHERE LOWER(email) = %s AND status = 'checked_in'",
+        $email
+    ) );
+
+    TTA_Cache::set( $cache_key, $count, 300 );
+    return $count;
 }
 
 /**
@@ -2630,7 +3095,7 @@ function tta_get_event_for_email( $event_ute_id ) {
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$events_table} WHERE ute_id = %s",
+            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, host_notes FROM {$events_table} WHERE ute_id = %s",
             $event_ute_id
         ),
         ARRAY_A
@@ -2639,7 +3104,7 @@ function tta_get_event_for_email( $event_ute_id ) {
     if ( ! $row ) {
         $row = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$archive_table} WHERE ute_id = %s",
+                "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, host_notes FROM {$archive_table} WHERE ute_id = %s",
                 $event_ute_id
             ),
             ARRAY_A
@@ -2665,6 +3130,7 @@ function tta_get_event_for_email( $event_ute_id ) {
         'base_cost'    => floatval( $row['baseeventcost'] ),
         'member_cost'  => floatval( $row['discountedmembercost'] ),
         'premium_cost' => floatval( $row['premiummembercost'] ),
+        'host_notes'   => sanitize_textarea_field( $row['host_notes'] ),
     ];
 
     TTA_Cache::set( $cache_key, $event, 300 );
@@ -3757,6 +4223,162 @@ function tta_send_waitlist_notification( $entry, $event ) {
     // schedule these emails via a service like SendGrid if their API allows it.
 }
 add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
+
+/**
+ * Retrieve email addresses for all hosts and volunteers of an event.
+ *
+ * @param int $event_id Event ID.
+ * @return array List of emails.
+ */
+function tta_get_event_host_volunteer_emails( $event_id ) {
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $members_table = $wpdb->prefix . 'tta_members';
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d UNION SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d LIMIT 1",
+            $event_id,
+            $event_id
+        ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        return [];
+    }
+
+    $names = array_merge(
+        array_filter( array_map( 'trim', explode( ',', $row['hosts'] ?? '' ) ) ),
+        array_filter( array_map( 'trim', explode( ',', $row['volunteers'] ?? '' ) ) )
+    );
+
+    $emails = [];
+    foreach ( $names as $name ) {
+        $parts = array_map( 'sanitize_text_field', preg_split( '/\s+/', $name, 2 ) );
+        if ( empty( $parts[0] ) ) {
+            continue;
+        }
+        $first = $parts[0];
+        $last  = $parts[1] ?? '';
+        $email = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT email FROM {$members_table} WHERE first_name = %s AND last_name = %s LIMIT 1",
+                $first,
+                $last
+            )
+        );
+        if ( $email ) {
+            $emails[] = sanitize_email( $email );
+        }
+    }
+    return array_values( array_unique( $emails ) );
+}
+
+/**
+ * Store an assistance note for the logged in member's attendee record.
+ *
+ * @param int    $wp_user_id    WordPress user ID.
+ * @param string $event_ute_id  Event ute ID.
+ * @param string $note          Message text.
+ * @return bool True on success.
+ */
+function tta_save_assistance_note( $wp_user_id, $event_ute_id, $note ) {
+    global $wpdb;
+    $wp_user_id   = intval( $wp_user_id );
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( ! $wp_user_id || '' === $event_ute_id ) {
+        return false;
+    }
+
+    $user = get_userdata( $wp_user_id );
+    if ( ! $user ) {
+        return false;
+    }
+
+    $att_table     = $wpdb->prefix . 'tta_attendees';
+    $tx_table      = $wpdb->prefix . 'tta_transactions';
+    $tickets_table = $wpdb->prefix . 'tta_tickets';
+
+    $ids = $wpdb->get_col( $wpdb->prepare(
+        "SELECT a.id FROM {$att_table} a JOIN {$tx_table} tx ON a.transaction_id = tx.id JOIN {$tickets_table} t ON a.ticket_id = t.id WHERE tx.wpuserid = %d AND t.event_ute_id = %s AND a.email = %s",
+        $wp_user_id,
+        $event_ute_id,
+        $user->user_email
+    ) );
+
+    if ( empty( $ids ) ) {
+        return false;
+    }
+
+    $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+    $sql = $wpdb->prepare(
+        "UPDATE {$att_table} SET assistance_note = %s WHERE id IN ($placeholders)",
+        tta_sanitize_textarea_field( $note ),
+        ...$ids
+    );
+    $wpdb->query( $sql );
+    TTA_Cache::flush();
+    return true;
+}
+
+/**
+ * Email event hosts and volunteers when a member asks for assistance.
+ *
+ * @param string $event_ute_id Event ute ID.
+ * @param int    $wp_user_id   WordPress user ID submitting the note.
+ * @param string $note         Message text.
+ */
+function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['assistance_request'] ) ) {
+        return;
+    }
+    $tpl   = $templates['assistance_request'];
+    $event = tta_get_event_for_email( $event_ute_id );
+    if ( empty( $event ) ) {
+        return;
+    }
+
+    $context = tta_get_user_context_by_id( $wp_user_id );
+    $tokens = [
+        '{event_name}'           => $event['name'] ?? '',
+        '{event_address}'        => $event['address'] ?? '',
+        '{event_link}'           => $event['page_url'] ?? '',
+        '{dashboard_profile_url}'  => home_url( '/member-dashboard/?tab=profile' ),
+        '{dashboard_upcoming_url}' => home_url( '/member-dashboard/?tab=upcoming' ),
+        '{dashboard_past_url}'       => home_url( '/member-dashboard/?tab=past' ),
+        '{dashboard_billing_url}'    => home_url( '/member-dashboard/?tab=billing' ),
+        '{dashboard_waitlist_url}'   => home_url( '/member-dashboard/?tab=waitlist' ),
+        '{event_date}'           => isset( $event['date'] ) ? tta_format_event_date( $event['date'] ) : '',
+        '{event_time}'           => isset( $event['time'] ) ? tta_format_event_time( $event['time'] ) : '',
+        '{event_type}'           => $event['type'] ?? '',
+        '{venue_name}'           => $event['venue_name'] ?? '',
+        '{venue_url}'            => $event['venue_url'] ?? '',
+        '{base_cost}'            => isset( $event['base_cost'] ) ? number_format( (float) $event['base_cost'], 2 ) : '',
+        '{member_cost}'          => isset( $event['member_cost'] ) ? number_format( (float) $event['member_cost'], 2 ) : '',
+        '{premium_cost}'         => isset( $event['premium_cost'] ) ? number_format( (float) $event['premium_cost'], 2 ) : '',
+        '{first_name}'           => $context['first_name'] ?? '',
+        '{last_name}'            => $context['last_name'] ?? '',
+        '{email}'                => $context['user_email'] ?? '',
+        '{phone}'                => $context['member']['phone'] ?? '',
+        '{membership_level}'     => $context['membership_level'] ?? '',
+        '{member_type}'          => $context['member']['member_type'] ?? '',
+        '{assistance_note}'      => sanitize_textarea_field( $note ),
+    ];
+
+    $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject     = strtr( $subject_raw, $tokens );
+    $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt    = tta_convert_links( strtr( $body_raw, $tokens ) );
+    $body        = nl2br( $body_txt );
+
+    $emails = tta_get_event_host_volunteer_emails( $event['id'] );
+    $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+    foreach ( $emails as $to ) {
+        wp_mail( $to, $subject, $body, $headers );
+    }
+}
 
 /**
  * Retrieve all saved ads.

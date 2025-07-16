@@ -1,7 +1,19 @@
 # Event Check-In Page for Admins
 
 The plugin provides a dedicated check-in screen at `/event-check-in-for-admins/`.
-Administrators and volunteers can quickly mark attendees as checked in or as no-shows.
-The page loads event details, a list of ticket holders and buttons to update each
-record via AJAX. Attendance status writes back to the `tta_attendees` table and the
-interface updates instantly without a full refresh.
+Administrators and volunteers can quickly mark attendees as checked in or as
+no-shows. The page loads event details, a list of ticket holders and buttons to
+update each record via AJAX. Attendance status writes back to the
+`tta_attendees` table and the interface updates instantly without a full refresh.
+
+### Table details
+
+- Attendees who cancelled or requested a refund no longer appear in the list so
+  hosts don't accidentally mark them as no-shows.
+- Two new columns display how many events each attendee has previously checked in for and any **Needs Assistance** note they left for the host. When no note exists a simple `-` is shown.
+- Members submit these assistance notes from the Upcoming Events tab on their dashboard. The note is stored only for the member's own attendee record and emailed to all event hosts automatically.
+- A new **# of Expected Attendees** column shows how many approved attendees are expected for each event.
+- If the event has host notes, they appear beneath the address so volunteers can see any special instructions.
+- The **Date & Time** column uses the same human-friendly format as the event header.
+- Clicking the **Check In** or **No-Show** buttons now updates the status label with proper capitalization.
+- Event headers display the date and time in a friendly format like `Saturday July 19, 2025 - 6:00 PM to 8:00 PM`. The venue name links to its website and the address links directly to Google Maps for quick directions. Event details are loaded via `tta_get_event_for_email()` so the venue information always appears.

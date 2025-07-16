@@ -358,4 +358,46 @@ jQuery(function($){
       window.location.reload();
     });
   });
+
+  $(document).on('click', '.tta-assistance-submit', function(e){
+    e.preventDefault();
+    var $btn  = $(this),
+        $wrap = $btn.closest('.tta-assistance-form'),
+        ute   = $btn.data('ute'),
+        note  = $wrap.find('textarea').val(),
+        $spin = $wrap.find('.tta-admin-progress-spinner-svg'),
+        $resp = $wrap.find('.tta-admin-progress-response-p'),
+        start = Date.now();
+
+    $resp.removeClass('updated error').text('');
+    $btn.prop('disabled', true);
+    $spin.show().css({opacity:0}).fadeTo(200,1);
+
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_send_assistance_note',
+      nonce: TTA_MemberDashboard.front_nonce,
+      event_ute_id: ute,
+      message: note
+    }, function(res){
+      var delay = Math.max(0, 1000 - (Date.now()-start));
+      setTimeout(function(){
+        $spin.fadeOut(200);
+        $btn.prop('disabled', false);
+        if(res.success){
+          $resp.addClass('updated').text(res.data.message);
+          $wrap.find('textarea').prop('disabled', true);
+          $btn.hide();
+        }else{
+          $resp.addClass('error').text(res.data.message||'Error');
+        }
+      }, delay);
+    }, 'json').fail(function(){
+      var delay = Math.max(0, 1000 - (Date.now()-start));
+      setTimeout(function(){
+        $spin.fadeOut(200);
+        $btn.prop('disabled', false);
+        $resp.addClass('error').text('Request failed. Please try again.');
+      }, delay);
+    });
+  });
 });
