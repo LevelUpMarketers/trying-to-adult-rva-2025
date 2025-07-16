@@ -35,3 +35,9 @@ The following card numbers are publicly available in the [Authorize.Net testing 
 | Mastercard | 2223000010309703 |
 | Mastercard | 2223000010309711 |
 
+
+## PHPUnit Suite Notes
+
+- The `MemberTest::test_update_member_changes_data` test previously caused the suite to hang.
+- This was due to the `wp_update_user` stub looping indefinitely when updating the user email.
+- The stub now updates the `$GLOBALS['wp_users']` array without modifying it during iteration, allowing the suite to complete.
