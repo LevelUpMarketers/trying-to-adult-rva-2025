@@ -4373,57 +4373,6 @@ function tta_send_waitlist_notification( $entry, $event ) {
 add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
 
 /**
- * Retrieve email addresses for all hosts and volunteers of an event.
- *
- * @param int $event_id Event ID.
- * @return array List of emails.
- */
-function tta_get_event_host_volunteer_emails( $event_id ) {
-    global $wpdb;
-    $events_table  = $wpdb->prefix . 'tta_events';
-    $archive_table = $wpdb->prefix . 'tta_events_archive';
-    $members_table = $wpdb->prefix . 'tta_members';
-
-    $row = $wpdb->get_row(
-        $wpdb->prepare(
-            "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d UNION SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d LIMIT 1",
-            $event_id,
-            $event_id
-        ),
-        ARRAY_A
-    );
-    if ( ! $row ) {
-        return [];
-    }
-
-    $names = array_merge(
-        array_filter( array_map( 'trim', explode( ',', $row['hosts'] ?? '' ) ) ),
-        array_filter( array_map( 'trim', explode( ',', $row['volunteers'] ?? '' ) ) )
-    );
-
-    $emails = [];
-    foreach ( $names as $name ) {
-        $parts = array_map( 'sanitize_text_field', preg_split( '/\s+/', $name, 2 ) );
-        if ( empty( $parts[0] ) ) {
-            continue;
-        }
-        $first = $parts[0];
-        $last  = $parts[1] ?? '';
-        $email = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT email FROM {$members_table} WHERE first_name = %s AND last_name = %s LIMIT 1",
-                $first,
-                $last
-            )
-        );
-        if ( $email ) {
-            $emails[] = sanitize_email( $email );
-        }
-    }
-    return array_values( array_unique( $emails ) );
-}
-
-/**
  * Store an assistance note for the logged in member's attendee record.
  *
  * @param int    $wp_user_id    WordPress user ID.
