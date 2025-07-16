@@ -11,6 +11,9 @@ class CommsTest extends TestCase {
         if (!function_exists('sanitize_text_field')) { function sanitize_text_field($v){ return is_string($v)?trim($v):$v; } }
         if (!function_exists('sanitize_textarea_field')) { function sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
         if (!function_exists('sanitize_key')) { function sanitize_key($v){ return preg_replace('/[^a-zA-Z0-9_]/','',strtolower($v)); } }
+        if (!function_exists('add_action')) { function add_action($h,$c,$p=10,$a=1){} }
+        if (!function_exists('add_filter')) { function add_filter($h,$c,$p=10,$a=1){} }
+        if (!function_exists('wp_unslash')) { function wp_unslash($v){ return is_array($v)?array_map('wp_unslash',$v):str_replace('\\','',$v); } }
         require_once __DIR__.'/../includes/admin/class-comms-admin.php';
         require_once __DIR__.'/../includes/helpers.php';
         require_once __DIR__.'/../includes/ajax/handlers/class-ajax-comms.php';

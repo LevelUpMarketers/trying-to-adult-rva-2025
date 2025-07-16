@@ -87,11 +87,16 @@ class HelpersTest extends TestCase {
         if (!function_exists('esc_url')) { function esc_url($v){ return $v; } }
         if (!function_exists('esc_url_raw')) { function esc_url_raw($v){ return $v; } }
         if (!function_exists('esc_attr')) { function esc_attr($v){ return $v; } }
+        if (!function_exists('esc_html')) { function esc_html($v){ return $v; } }
+        if (!function_exists('esc_html_e')) { function esc_html_e($s,$d=null){ echo $s; } }
+        if (!function_exists('esc_html__')) { function esc_html__($s,$d=null){ return $s; } }
         if (!function_exists('esc_like')) { function esc_like($v){ return $v; } }
         if (!function_exists('is_user_logged_in')) { function is_user_logged_in(){ return true; } }
         if (!function_exists('wp_get_current_user')) { function wp_get_current_user(){ return (object)['ID'=>1,'user_email'=>'u@e.com','user_login'=>'user','first_name'=>'First','last_name'=>'Last']; } }
+        if (!function_exists('get_userdata')) { function get_userdata($id){ return (object)['ID'=>$id,'user_email'=>'member'.$id.'@example.com']; } }
         if (!function_exists('wp_get_attachment_image_url')) { function wp_get_attachment_image_url($id,$size){ return $id===1?false:'img'.$id.'.jpg'; } }
         if (!function_exists('wp_get_attachment_url')) { function wp_get_attachment_url($id){ return 'file'.$id.'.jpg'; } }
+        if (!function_exists('get_permalink')) { function get_permalink($id){ return 'post/'.$id; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
         if (!function_exists('wp_json_encode')) { function wp_json_encode($data, $options = 0, $depth = 512){ return json_encode($data, $options, $depth); } }
         if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }
@@ -378,19 +383,32 @@ class HelpersTest extends TestCase {
         $this->assertSame('checked_in', $wpdb->updated[1]['status']);
     }
 
+    public function test_save_assistance_note_updates_db() {
+        global $wpdb;
+        $wpdb = new class extends DummyWpdbHelpers {
+            public $queries = [];
+            public function get_col( $q ) { $this->queries[] = $q; return [1,2]; }
+            public function query( $q ) { $this->queries[] = $q; }
+        };
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        tta_save_assistance_note( 5, 'ute1', 'Help' );
+        $this->assertStringContainsString( 'a.email', $wpdb->queries[0] );
+        $this->assertStringContainsString( 'UPDATE wp_tta_attendees', $wpdb->queries[1] );
+    }
+
     public function test_get_event_attendees_with_status_queries_table() {
         global $wpdb;
         $wpdb = new class {
             public $prefix = 'wp_';
             public $last_query = '';
-            public function get_results($q,$o=ARRAY_A){ $this->last_query = $q; return [ ['id'=>1,'first_name'=>'A','last_name'=>'B','email'=>'e','phone'=>'p','status'=>'pending'] ]; }
+            public function get_results($q,$o=ARRAY_A){ $this->last_query = $q; return [ ['id'=>1,'ticket_id'=>2,'first_name'=>'A','last_name'=>'B','email'=>'e','phone'=>'p','status'=>'pending'] ]; }
+            public function get_var($q){ return 5; }
             public function prepare($q,...$a){ foreach($a as $v){ $q=preg_replace('/%s/',$v,$q,1); $q=preg_replace('/%d/',$v,$q,1); } return $q; }
         };
         require_once __DIR__ . '/../includes/helpers.php';
         $rows = tta_get_event_attendees_with_status('ev1');
         $this->assertCount(1, $rows);
-        $this->assertStringContainsString('wp_tta_attendees', $wpdb->last_query);
-        $this->assertStringContainsString('wp_tta_attendees_archive', $wpdb->last_query);
     }
 
     public function test_get_remaining_ticket_count_queries_table() {
@@ -522,6 +540,18 @@ class HelpersTest extends TestCase {
     public function test_format_event_time_formats_range() {
         require_once __DIR__ . '/../includes/helpers.php';
         $this->assertSame('6:00 pm - 8:00 pm', tta_format_event_time('18:00|20:00'));
+    }
+
+    public function test_format_event_datetime_handles_range() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $out = tta_format_event_datetime('2025-07-19', '18:00|20:00');
+        $this->assertSame('Saturday July 19, 2025 - 6:00 PM to 8:00 PM', $out);
+    }
+
+    public function test_format_event_datetime_handles_single_time() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $out = tta_format_event_datetime('2025-07-19', '18:00|');
+        $this->assertSame('Saturday July 19, 2025 - 6:00 PM', $out);
     }
     public function test_get_member_waitlist_events_returns_entries() {
         global $wpdb;

@@ -22,9 +22,6 @@ class TTA_AuthorizeNet_API {
     protected function log_response( $context, $response ) {
         $msg = $context . ': ' . print_r( $response, true );
         error_log( '[TTA] ' . $msg );
-        if ( class_exists( 'TTA_Debug_Logger' ) ) {
-            TTA_Debug_Logger::log( $msg );
-        }
     }
 
     /**

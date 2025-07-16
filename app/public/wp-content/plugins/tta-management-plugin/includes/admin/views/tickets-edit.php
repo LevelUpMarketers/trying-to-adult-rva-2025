@@ -288,6 +288,7 @@ $tickets = $wpdb->get_results(
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason provided with the refund request.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Note', 'tta' ); ?></th>
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Amount refunded for this ticket.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Refunded', 'tta' ); ?></th>
                   <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Gateway transaction ID.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Transaction ID', 'tta' ); ?></th>
+                  <th><span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Whether this attendee made the purchase.', 'tta' ); ?>"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?"></span><?php esc_html_e( 'Purchaser', 'tta' ); ?></th>
                 </tr>
               </thead>
               <tbody>
@@ -299,7 +300,7 @@ $tickets = $wpdb->get_results(
                     $txdate = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
                     <tr class="tta-transaction-group">
-                      <td colspan="5" style="background:#f9f9f9;font-weight:bold;">
+                      <td colspan="6" style="background:#f9f9f9;font-weight:bold;">
                         <?php echo esc_html( sprintf( __( 'Refund%s%s', 'tta' ), $txid, $txdate ) ); ?>
                       </td>
                     </tr>
@@ -310,6 +311,7 @@ $tickets = $wpdb->get_results(
                     <td><?php echo esc_html( $a['reason'] ); ?></td>
                     <td><?php echo sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $a['amount_paid'], 2 ) ); ?></td>
                     <td><?php echo esc_html( $a['gateway_id'] ); ?></td>
+                    <td><?php echo ! empty( $a['is_purchaser'] ) ? esc_html__( 'Yes', 'tta' ) : esc_html__( 'No', 'tta' ); ?></td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -358,6 +360,12 @@ $tickets = $wpdb->get_results(
                     <?php esc_html_e( 'Paid', 'tta' ); ?>
                   </th>
                   <th>
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Whether this attendee made the purchase.', 'tta' ); ?>">
+                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                    </span>
+                    <?php esc_html_e( 'Purchaser', 'tta' ); ?>
+                  </th>
+                  <th>
                     <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
@@ -381,7 +389,7 @@ $tickets = $wpdb->get_results(
                     $txdate  = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
                     <tr class="tta-transaction-group">
-                      <td colspan="6" style="background:#f9f9f9;font-weight:bold;">
+                      <td colspan="7" style="background:#f9f9f9;font-weight:bold;">
                         <?php echo esc_html( sprintf( __( 'Transaction #%d%s%s', 'tta' ), $txn_id, $txid, $txdate ) ); ?>
                       </td>
                     </tr>
@@ -397,6 +405,7 @@ $tickets = $wpdb->get_results(
                     <td><?php echo esc_html( $email ); ?></td>
                     <td><?php echo esc_html( $phone ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
+                    <td><?php echo ! empty( $a['is_purchaser'] ) ? esc_html__( 'Yes', 'tta' ) : esc_html__( 'No', 'tta' ); ?></td>
                     <td>
                       <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">
                     </td>
@@ -459,6 +468,12 @@ $tickets = $wpdb->get_results(
                     <?php esc_html_e( 'Paid', 'tta' ); ?>
                   </th>
                   <th>
+                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Whether this attendee made the purchase.', 'tta' ); ?>">
+                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                    </span>
+                    <?php esc_html_e( 'Purchaser', 'tta' ); ?>
+                  </th>
+                  <th>
                     <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
                       <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                     </span>
@@ -481,7 +496,7 @@ $tickets = $wpdb->get_results(
                     $txdate = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
                     <tr class="tta-transaction-group">
-                      <td colspan="6" style="background:#f9f9f9;font-weight:bold;">
+                      <td colspan="7" style="background:#f9f9f9;font-weight:bold;">
                         <?php echo esc_html( sprintf( __( 'Pending Refund%s%s', 'tta' ), $txid, $txdate ) ); ?>
                       </td>
                     </tr>
@@ -498,6 +513,7 @@ $tickets = $wpdb->get_results(
                     <td><?php echo esc_html( $email ); ?><?php echo $phone ? '<br>' . esc_html( $phone ) : ''; ?></td>
                     <td><?php echo esc_html( $reason ); ?></td>
                     <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
+                    <td><?php echo ! empty( $a['is_purchaser'] ) ? esc_html__( 'Yes', 'tta' ) : esc_html__( 'No', 'tta' ); ?></td>
                     <td>
                       <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">
                     </td>

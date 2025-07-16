@@ -18,13 +18,15 @@ shows:
 - Event location
 - The total amount paid for the transaction
 - Each ticket purchased with the attendee names and emails and its individual price
-- A separate link labeled **Request a Refund** for each ticket (paid events) or **Cancel Attendance** for free events which reveals a small form. When multiple of the same ticket type are purchased they appear as individual entries so refunds can be requested per attendee
+- A separate link labeled **Request a Refund** for each ticket (paid events) or **Cancel Attendance** for free events which reveals a small form. This link only appears for tickets you purchased yourself. When multiple of the same ticket type are purchased they appear as individual entries so refunds can be requested per attendee
 - Each refund link now carries the attendee ID so the correct person is removed when multiple identical tickets exist in one transaction
 - If a refund is pending for one attendee the entry remains with a pending note while any remaining attendees still appear separately with their own refund links
 - Submitting the form shows a spinner and records a `refund_request` entry in `tta_memberhistory`. The attendee is removed immediately. The refund is processed automatically once another member buys that ticket, otherwise the request expires two hours before the event. If the transaction has not settled the refund is stored and retried by a cron job around 1:15 AM and 8:15 AM each day. Administrators can review pending requests on the **TTA Refund Requests** admin page where they remain listed until processed.
 - Once a refund is approved the entry stays visible until the event date with a note showing the refunded amount and that the attendee has been cancelled. The refund link and form are removed so no further requests can be made.
 - Successful submission displays the message "Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it's sold, you'll automatically receive a refund. There's nothing else for you to do! Check back here periodically to see the status of your refund request."
 - After submitting, the page no longer reloads automatically; the refund button and link are disabled so the confirmation message stays visible.
+- Each event includes a small form to send a message to the hosts and volunteers. Submitted notes are stored with your tickets and emailed to the hosts so they can assist you on event day.
+- When a member purchases tickets on behalf of another member the additional attendee's upcoming events cache is cleared so the new event appears immediately on their dashboard.
 
 Events are loaded chronologically and the layout supports any number of events.
 Attendee details are pulled from the transaction history and stored in the
@@ -37,6 +39,9 @@ Attendee lists now reflect the database in real time. When a member requests a r
 ## Past Events Tab
 
 Past events show the same details as upcoming events. To keep the database small, events more than three days past are moved to an `tta_events_archive` table by a daily cron job. The dashboard transparently queries both the current events table and this archive so members can always view their history.
+
+- Each attendee entry also lists their final attendance status (Attended, No-Show, or Pending) along with any refund notes.
+- A summary box at the top displays how many events you've attended and no‑showed along with your total savings. The savings amount is wrapped in a `<span class="tta-savings-wow-span">` element so it can be styled prominently. The message varies by membership level—Basic members are prompted to upgrade, Premium members see a referral link, and Free members get an invitation to join.
 
 ## Billing & Membership Info
 

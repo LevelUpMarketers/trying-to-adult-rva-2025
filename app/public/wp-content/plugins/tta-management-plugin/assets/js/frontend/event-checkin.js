@@ -32,7 +32,9 @@ jQuery(function($){
     $.post(TTA_Checkin.ajax_url, { action:'tta_set_attendance', nonce:TTA_Checkin.set_nonce, attendee_id:id, status:status }, function(res){
       if(!res.success) return;
       var label = $btn.closest('tr').find('.status-label');
-      label.text(status.replace('_',' ').toUpperCase());
+      var text  = status.replace('_',' ');
+      text = text.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+      label.text(text);
     }, 'json');
   });
 });

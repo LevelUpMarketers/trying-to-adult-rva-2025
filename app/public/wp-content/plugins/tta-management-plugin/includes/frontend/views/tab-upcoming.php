@@ -74,7 +74,7 @@
               <?php endforeach; ?>
               </ul>
               <?php endif; ?>
-              <?php if ( empty( $it['refund_pending'] ) && empty( $it['refund_approved'] ) ) : ?>
+              <?php if ( empty( $it['refund_pending'] ) && empty( $it['refund_approved'] ) && intval( $it['purchaser_id'] ?? 0 ) === get_current_user_id() ) : ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
                   <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
@@ -103,6 +103,17 @@
               <?php endif; ?>
             </div>
           <?php endforeach; ?>
+          <div class="tta-assistance-form">
+            <label for="assist-<?php echo esc_attr( $ev['event_id'] ); ?>"><?php esc_html_e( 'Message the event host', 'tta' ); ?></label>
+            <textarea id="assist-<?php echo esc_attr( $ev['event_id'] ); ?>" rows="3"></textarea>
+            <button type="button" class="button tta-assistance-submit" data-ute="<?php echo esc_attr( tta_get_event_ute_id( $ev['event_id'] ) ); ?>">
+              <?php esc_html_e( 'Send', 'tta' ); ?>
+            </button>
+            <span class="tta-progress-spinner">
+              <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+            </span>
+            <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
+          </div>
       <?php endforeach; ?>
   <?php else : ?>
       <p><?php esc_html_e( 'No upcoming events found.', 'tta' ); ?></p>

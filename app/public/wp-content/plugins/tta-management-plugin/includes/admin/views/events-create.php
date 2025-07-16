@@ -25,6 +25,26 @@ if ( isset( $_GET['event_id'] ) ) {
 if ( isset( $_POST['tta_event_save'] ) && check_admin_referer(
     'tta_event_save_action', 'tta_event_save_nonce'
 ) ) {
+    $required_labels = [
+        'name'       => __( 'Event Name', 'tta' ),
+        'date'       => __( 'Date', 'tta' ),
+        'start_time' => __( 'Start Time', 'tta' ),
+        'venuename'  => __( 'Venue Name', 'tta' ),
+    ];
+    $missing = [];
+    foreach ( $required_labels as $field => $label ) {
+        if ( empty( $_POST[ $field ] ) ) {
+            $missing[] = $label;
+        }
+    }
+
+    if ( $missing ) {
+        printf(
+            '<div class="error"><p>%s %s</p></div>',
+            esc_html__( 'Please fill in the required fields:', 'tta' ),
+            esc_html( implode( ', ', $missing ) )
+        );
+    } else {
     // Combine address parts
     $address = implode(
         ' - ',
@@ -109,6 +129,7 @@ if ( isset( $_POST['tta_event_save'] ) && check_admin_referer(
             $event['discount_amount'] = $disc['amount'];
         }
     }
+    }
 }
 ?>
 
@@ -140,7 +161,7 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                 <label for="name">Event Name</label>
             </th>
             <td>
-                <input type="text" name="name" id="name" class="regular-text"
+                <input type="text" name="name" id="name" class="regular-text" required
                        value="<?php echo esc_attr( $event['name'] ?? '' ); ?>">
             </td>
         </tr>
@@ -155,7 +176,7 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                 <label for="date">Date</label>
             </th>
             <td>
-                <input type="date" name="date" id="date"
+                <input type="date" name="date" id="date" required
                        value="<?php echo esc_attr( $event['date'] ?? '' ); ?>">
             </td>
         </tr>
@@ -185,7 +206,7 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                 <label for="start_time">Start Time</label>
             </th>
             <td>
-                <input type="time" name="start_time" id="start_time" class="regular-text"
+                <input type="time" name="start_time" id="start_time" class="regular-text" required
                        value="<?php echo esc_attr( $event['start_time'] ?? '' ); ?>">
             </td>
         </tr>
@@ -318,7 +339,7 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                 <label for="venuename">Venue Name</label>
             </th>
             <td>
-                <input type="text" name="venuename" id="venuename" class="regular-text" list="tta-venue-options"
+                <input type="text" name="venuename" id="venuename" class="regular-text" list="tta-venue-options" required
                        value="<?php echo esc_attr($event['venuename'] ?? ''); ?>">
             </td>
         </tr>
@@ -577,6 +598,16 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
             </th>
             <td>
                 <textarea name="host_notes" id="host_notes" rows="4" class="large-text"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
+            </td>
+        </tr>
+
+        <!-- Host Notes -->
+        <tr>
+            <th>
+                <label for="host_notes">Event Host Notes</label>
+            </th>
+            <td>
+                <textarea name="host_notes" id="host_notes" rows="4" class="large-text" placeholder="Notes for hosts and volunteers"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
             </td>
         </tr>
 

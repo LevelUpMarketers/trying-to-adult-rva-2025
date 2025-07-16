@@ -528,8 +528,8 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                     </span>
                     <label for="volunteers">Event Volunteers</label>
                 </th>
-                <td>
-                    <div id="volunteers-container">
+            <td>
+                <div id="volunteers-container">
                         <?php foreach ( $volunteers as $i => $v ) : ?>
                             <div class="interest-item" style="margin-bottom:8px; display:flex; align-items:center;">
                                 <input type="text" name="volunteers[]" class="regular-text volunteer-field" list="tta-member-options" placeholder="Volunteer #<?php echo $i+1; ?>" value="<?php echo esc_attr( $v ); ?>" />
@@ -554,7 +554,7 @@ $volunteers = ! empty( $event['volunteers'] ) ? tta_get_member_names_by_ids( exp
                 <td>
                     <textarea name="host_notes" id="host_notes" rows="4" class="large-text" placeholder="Notes…"><?php echo esc_textarea( $event['host_notes'] ?? '' ); ?></textarea>
                 </td>
-            </tr>
+            </tr
 
         </tbody>
 

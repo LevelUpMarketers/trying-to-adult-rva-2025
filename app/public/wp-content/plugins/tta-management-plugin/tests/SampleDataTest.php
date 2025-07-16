@@ -78,6 +78,8 @@ class SampleDataTest extends TestCase {
         }
         if ( ! function_exists( 'sanitize_text_field' ) ) { function sanitize_text_field( $v ) { return $v; } }
         if ( ! function_exists( 'sanitize_email' ) ) { function sanitize_email( $v ) { return $v; } }
+        if ( ! function_exists( 'tta_waitlist_uses_csv' ) ) { function tta_waitlist_uses_csv() { return false; } }
+        if ( ! function_exists( 'wp_json_encode' ) ) { function wp_json_encode($d,$o=0,$depth=512){ return json_encode($d,$o,$depth); } }
         require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
         require_once __DIR__ . '/../includes/database-testing/class-tta-sample-data.php';
     }

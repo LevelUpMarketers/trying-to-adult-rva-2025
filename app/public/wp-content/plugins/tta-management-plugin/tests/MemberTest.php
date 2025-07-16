@@ -86,9 +86,13 @@ class MemberTest extends TestCase {
         if (!function_exists('wp_send_json_success')) { function wp_send_json_success($d){ $GLOBALS['_last_json']=['success'=>true,'data'=>$d]; return $GLOBALS['_last_json']; } }
         if (!function_exists('wp_send_json_error')) { function wp_send_json_error($d){ $GLOBALS['_last_json']=['success'=>false,'data'=>$d]; return $GLOBALS['_last_json']; } }
         if (!function_exists('sanitize_text_field')) { function sanitize_text_field($v){ return is_string($v)?trim($v):$v; } }
+        if (!function_exists('tta_sanitize_text_field')) { function tta_sanitize_text_field($v){ return is_string($v)?trim($v):$v; } }
         if (!function_exists('sanitize_textarea_field')) { function sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
+        if (!function_exists('tta_sanitize_textarea_field')) { function tta_sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
         if (!function_exists('sanitize_email')) { function sanitize_email($v){ return trim($v); } }
+        if (!function_exists('tta_sanitize_email')) { function tta_sanitize_email($v){ return trim($v); } }
         if (!function_exists('esc_url_raw')) { function esc_url_raw($v){ return $v; } }
+        if (!function_exists('tta_esc_url_raw')) { function tta_esc_url_raw($v){ return $v; } }
         if (!function_exists('sanitize_user')) { function sanitize_user($v,$s=true){ return preg_replace('/[^A-Za-z0-9]/','',$v); } }
         if (!function_exists('wp_unslash')) { function wp_unslash($v){ return is_array($v)?array_map('wp_unslash',$v):str_replace('\\','',$v); } }
         if (!function_exists('email_exists')) { function email_exists($e){ return isset($GLOBALS['wp_users'][$e]); } }
@@ -106,6 +110,7 @@ class MemberTest extends TestCase {
         if (!function_exists('media_handle_upload')) { function media_handle_upload($f,$p){ return 1; } }
 
         require_once __DIR__ . '/../includes/ajax/handlers/class-ajax-members.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
 
         global $wpdb;
         $this->wpdb = $wpdb = new DummyWpdbMembers();
