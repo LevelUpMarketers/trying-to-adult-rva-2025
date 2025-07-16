@@ -13,7 +13,7 @@ The spreadsheet excludes internal IDs like `id`, `page_id`, `ticket_id` and othe
 - `refunded_amount` – total amount refunded
 - `revenue` – total revenue from ticket sales
 - `revenue_minus_refunds` – total revenue after subtracting refunds
-- `waitlist_count` – current waitlist entries
+- `sold_out` – **Yes** if the event sold out, **No** otherwise
 
 Press **Export Metrics** and an `.xlsx` file downloads immediately. The form
 submits to WordPress's `admin-post.php` endpoint so the file is generated
@@ -21,3 +21,4 @@ before any admin page markup is sent, preventing the "Cannot modify header"
 warnings that appear if the export is triggered after output has started.
 The export response includes caching and MIME headers so modern browsers
 recognize the download as safe.
+Columns automatically resize to fit the header text for readability.

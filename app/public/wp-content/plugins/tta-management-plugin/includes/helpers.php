@@ -4607,7 +4607,8 @@ add_filter( 'login_redirect', 'tta_login_redirect', 10, 3 );
  *     refund_requests:int,
  *     refunded_amount:float,
  *     revenue:float,
- *     waitlist_count:int
+ *     waitlist_count:int,
+ *     sold_out:bool
  * }
  */
 function tta_get_event_metrics( $event_ute_id ) {
@@ -4623,6 +4624,7 @@ function tta_get_event_metrics( $event_ute_id ) {
             'refunded_amount'   => 0,
             'revenue'           => 0,
             'waitlist_count'    => 0,
+            'sold_out'          => false,
         ];
     }
 
@@ -4635,6 +4637,7 @@ function tta_get_event_metrics( $event_ute_id ) {
         'refunded_amount'   => 0,
         'revenue'           => 0,
         'waitlist_count'    => 0,
+        'sold_out'          => false,
     ];
     foreach ( $attendees as $a ) {
         if ( 'checked_in' === $a['status'] ) {
@@ -4699,6 +4702,20 @@ function tta_get_event_metrics( $event_ute_id ) {
             $event_ute_id
         )
     );
+
+    $open_tickets = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_tickets WHERE event_ute_id = %s AND ticketlimit > 0",
+            $event_ute_id
+        )
+    );
+    $open_tickets += (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_tickets_archive WHERE event_ute_id = %s AND ticketlimit > 0",
+            $event_ute_id
+        )
+    );
+    $metrics['sold_out'] = ( $open_tickets === 0 );
 
     return $metrics;
 }
@@ -4770,7 +4787,7 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
 
     $metric_headers = [
         'expected_attendees'   => 'Tickets Sold',
-        'waitlist_count'       => 'Waitlist',
+        'sold_out'             => 'Sold Out',
         'checked_in'           => 'Checked In',
         'no_show'              => 'No Shows',
         'refund_requests'      => 'Refund Requests',
@@ -4809,6 +4826,9 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->fromArray( $display_headers, null, 'A1' );
+    foreach ( range( 1, count( $display_headers ) ) as $col ) {
+        $sheet->getColumnDimensionByColumn( $col )->setAutoSize( true );
+    }
 
     $row = 2;
     foreach ( $events as $ev ) {
@@ -4843,6 +4863,7 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
         $metrics['refunded_amount']       = '$' . number_format( $metrics['refunded_amount'], 2 );
         $metrics['revenue']               = '$' . number_format( $metrics['revenue'], 2 );
         $metrics['revenue_minus_refunds'] = '$' . number_format( $metrics['revenue_minus_refunds'], 2 );
+        $metrics['sold_out']              = $metrics['sold_out'] ? 'Yes' : 'No';
 
         $ordered_metrics = [];
         foreach ( array_keys( $metric_headers ) as $mk ) {
