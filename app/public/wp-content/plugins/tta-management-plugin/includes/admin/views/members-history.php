@@ -20,7 +20,8 @@ $members_table = $wpdb->prefix . 'tta_members';
 $per_page = 10;
 $page      = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
 $offset    = ( $page - 1 ) * $per_page;
-$orderby   = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : 'joined';
+$orderby_param = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : '';
+$orderby       = $orderby_param ? $orderby_param : 'joined';
 
 // Build the WHERE clause for searching:
 $where_sql   = '';
@@ -94,15 +95,17 @@ $total_pages   = ceil( $total_members / $per_page );
           value="<?php echo esc_attr( $_GET['s'] ?? '' ); ?>"
           placeholder="Search by first name, last name, or email…"
         >
-        <select name="orderby" id="tta-member-orderby" onchange="this.form.submit()">
-          <option value="joined" <?php selected( $orderby, 'joined' ); ?>><?php esc_html_e( 'Newest Joined', 'tta' ); ?></option>
-          <option value="length" <?php selected( $orderby, 'length' ); ?>><?php esc_html_e( 'Membership Length', 'tta' ); ?></option>
-          <option value="attended" <?php selected( $orderby, 'attended' ); ?>><?php esc_html_e( 'Events Attended', 'tta' ); ?></option>
-          <option value="spent" <?php selected( $orderby, 'spent' ); ?>><?php esc_html_e( 'Total Spent', 'tta' ); ?></option>
-          <option value="first" <?php selected( $orderby, 'first' ); ?>><?php esc_html_e( 'First Name', 'tta' ); ?></option>
-          <option value="last" <?php selected( $orderby, 'last' ); ?>><?php esc_html_e( 'Last Name', 'tta' ); ?></option>
-        </select>
         <button class="button" type="submit"><?php esc_html_e( 'Search Members', 'tta' ); ?></button>
+        <select name="orderby" id="tta-member-orderby" onchange="this.form.submit()">
+          <option value="" disabled <?php selected( $orderby_param, '' ); ?>><?php esc_html_e( 'Sort By…', 'tta' ); ?></option>
+          <option value="joined" <?php selected( $orderby_param, 'joined' ); ?>><?php esc_html_e( 'Newest Joined', 'tta' ); ?></option>
+          <option value="length" <?php selected( $orderby_param, 'length' ); ?>><?php esc_html_e( 'Membership Length', 'tta' ); ?></option>
+          <option value="attended" <?php selected( $orderby_param, 'attended' ); ?>><?php esc_html_e( 'Events Attended', 'tta' ); ?></option>
+          <option value="spent" <?php selected( $orderby_param, 'spent' ); ?>><?php esc_html_e( 'Total Spent', 'tta' ); ?></option>
+          <option value="first" <?php selected( $orderby_param, 'first' ); ?>><?php esc_html_e( 'First Name', 'tta' ); ?></option>
+          <option value="last" <?php selected( $orderby_param, 'last' ); ?>><?php esc_html_e( 'Last Name', 'tta' ); ?></option>
+        </select>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-members&tab=history' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
       </p>
     </form>
 
@@ -178,14 +181,18 @@ $total_pages   = ceil( $total_members / $per_page );
         <div class="tablenav">
             <div class="tablenav-pages">
                 <?php
-                    echo paginate_links( [
+                    $pagination_args = [
                         'base'      => add_query_arg( 'paged', '%#%' ),
                         'format'    => '',
                         'prev_text' => '&laquo;',
                         'next_text' => '&raquo;',
                         'total'     => $total_pages,
                         'current'   => $page,
-                    ] );
+                        'end_size'  => 1,
+                        'mid_size'  => $page === 1 ? 19 : 2,
+                    ];
+
+                    echo paginate_links( $pagination_args );
                 ?>
             </div>
         </div>

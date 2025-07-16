@@ -58,7 +58,8 @@ if ( $search ) {
 $per_page = 20;
 $paged    = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
 $offset   = ( $paged - 1 ) * $per_page;
-$orderby  = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : 'date_desc';
+$orderby_param = isset( $_GET['orderby'] ) ? sanitize_text_field( $_GET['orderby'] ) : '';
+$orderby       = $orderby_param ? $orderby_param : 'date_desc';
 
 // Total count
 $total = $wpdb->get_var( "SELECT COUNT(*) FROM {$table} {$where}" );
@@ -92,12 +93,14 @@ $events = $wpdb->get_results(
     <p class="search-box">
         <label for="event-search-input" class="screen-reader-text">Search Events:</label>
         <input type="search" id="event-search-input" name="s" value="<?php echo esc_attr( $search ); ?>">
-        <select name="orderby" onchange="this.form.submit()">
-            <option value="date_desc" <?php selected( $orderby, 'date_desc' ); ?>><?php esc_html_e( 'Newest First', 'tta' ); ?></option>
-            <option value="date_asc" <?php selected( $orderby, 'date_asc' ); ?>><?php esc_html_e( 'Oldest First', 'tta' ); ?></option>
-            <option value="name" <?php selected( $orderby, 'name' ); ?>><?php esc_html_e( 'Event Name', 'tta' ); ?></option>
-        </select>
         <button class="button" type="submit">Search Events</button>
+        <select name="orderby" onchange="this.form.submit()">
+            <option value="" disabled <?php selected( $orderby_param, '' ); ?>><?php esc_html_e( 'Sort By…', 'tta' ); ?></option>
+            <option value="date_desc" <?php selected( $orderby_param, 'date_desc' ); ?>><?php esc_html_e( 'Newest First', 'tta' ); ?></option>
+            <option value="date_asc" <?php selected( $orderby_param, 'date_asc' ); ?>><?php esc_html_e( 'Oldest First', 'tta' ); ?></option>
+            <option value="name" <?php selected( $orderby_param, 'name' ); ?>><?php esc_html_e( 'Event Name', 'tta' ); ?></option>
+        </select>
+        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-events&tab=archive' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
     </p>
 </form>
 
@@ -190,6 +193,8 @@ echo paginate_links( [
     'total'     => ceil( $total / $per_page ),
     'prev_text' => '&laquo;',
     'next_text' => '&raquo;',
+    'end_size'  => 1,
+    'mid_size'  => $paged === 1 ? 19 : 2,
 ] );
 echo '</div></div>';
 ?>
