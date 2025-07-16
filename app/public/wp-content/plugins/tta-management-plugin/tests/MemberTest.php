@@ -106,7 +106,21 @@ class MemberTest extends TestCase {
         if (!function_exists('current_time')) { function current_time($t){ return 'now'; } }
         if (!function_exists('update_user_meta')) { function update_user_meta($u,$k,$v){ $GLOBALS['user_meta'][$u][$k]=$v; } }
         if (!function_exists('get_userdata')) { function get_userdata($uid){ foreach($GLOBALS['wp_users'] as $u){ if($u['ID']==$uid) return (object)$u; } return false; } }
-        if (!function_exists('wp_update_user')) { function wp_update_user($d){ foreach($GLOBALS['wp_users'] as $email=>&$u){ if($u['ID']==$d['ID']){ if(isset($d['user_email'])){ unset($GLOBALS['wp_users'][$email]); $u['user_email']=$d['user_email']; $GLOBALS['wp_users'][$u['user_email']]=$u; } } } } }
+        if (!function_exists('wp_update_user')) { function wp_update_user($d){
+            foreach ($GLOBALS['wp_users'] as $email => $u) {
+                if ($u['ID'] == $d['ID']) {
+                    $new_email = $d['user_email'] ?? $email;
+                    if ($new_email !== $email) {
+                        unset($GLOBALS['wp_users'][$email]);
+                        $u['user_email'] = $new_email;
+                    } else {
+                        $u = array_merge($u, $d);
+                    }
+                    $GLOBALS['wp_users'][$new_email] = $u;
+                    break;
+                }
+            }
+        } }
         if (!function_exists('media_handle_upload')) { function media_handle_upload($f,$p){ return 1; } }
 
         require_once __DIR__ . '/../includes/ajax/handlers/class-ajax-members.php';
