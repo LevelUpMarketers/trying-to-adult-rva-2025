@@ -3,6 +3,13 @@
 ?><?php
 global $wpdb;
 $table = $wpdb->prefix . 'tta_events_archive';
+// Handle export
+if ( isset( $_POST['tta_export_events'] ) && check_admin_referer( 'tta_export_events_nonce' ) ) {
+    $start = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : '';
+    $end   = isset( $_POST['end_date'] ) ? sanitize_text_field( $_POST['end_date'] ) : '';
+    tta_export_event_metrics_report( $start, $end );
+}
+
 
 // Handle deletion
 if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['event_id'] ) ) {
@@ -102,6 +109,19 @@ $events = $wpdb->get_results(
         </select>
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-events&tab=archive' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
     </p>
+</form>
+
+<form method="post" style="margin-bottom:1em;">
+    <?php wp_nonce_field( 'tta_export_events_nonce' ); ?>
+    <input type="hidden" name="page" value="tta-events">
+    <input type="hidden" name="tab" value="archive">
+    <label><?php esc_html_e( 'Start Date', 'tta' ); ?>
+        <input type="date" name="start_date">
+    </label>
+    <label><?php esc_html_e( 'End Date', 'tta' ); ?>
+        <input type="date" name="end_date">
+    </label>
+    <button class="button" type="submit" name="tta_export_events" value="1"><?php esc_html_e( 'Export Metrics', 'tta' ); ?></button>
 </form>
 
 <table class="widefat striped">

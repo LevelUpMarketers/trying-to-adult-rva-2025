@@ -4576,3 +4576,171 @@ function tta_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
 }
 add_filter( 'login_redirect', 'tta_login_redirect', 10, 3 );
 
+/**
+ * Get aggregated metrics for an event.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return array{
+ *     expected_attendees:int,
+ *     checked_in:int,
+ *     no_show:int,
+ *     refund_requests:int,
+ *     refunded_amount:float,
+ *     revenue:float,
+ *     waitlist_count:int
+ * }
+ */
+function tta_get_event_metrics( $event_ute_id ) {
+    global $wpdb;
+
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return [
+            'expected_attendees' => 0,
+            'checked_in'        => 0,
+            'no_show'           => 0,
+            'refund_requests'   => 0,
+            'refunded_amount'   => 0,
+            'revenue'           => 0,
+            'waitlist_count'    => 0,
+        ];
+    }
+
+    $attendees = tta_get_event_attendees_with_status( $event_ute_id );
+    $metrics = [
+        'expected_attendees' => count( $attendees ),
+        'checked_in'        => 0,
+        'no_show'           => 0,
+        'refund_requests'   => 0,
+        'refunded_amount'   => 0,
+        'revenue'           => 0,
+        'waitlist_count'    => 0,
+    ];
+    foreach ( $attendees as $a ) {
+        if ( 'checked_in' === $a['status'] ) {
+            $metrics['checked_in']++;
+        } elseif ( 'no_show' === $a['status'] ) {
+            $metrics['no_show']++;
+        }
+    }
+
+    $event_id = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}tta_events WHERE ute_id = %s UNION SELECT id FROM {$wpdb->prefix}tta_events_archive WHERE ute_id = %s LIMIT 1",
+            $event_ute_id,
+            $event_ute_id
+        )
+    );
+
+    if ( $event_id ) {
+        $ticket_rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}tta_tickets WHERE event_ute_id = %s UNION ALL SELECT id FROM {$wpdb->prefix}tta_tickets_archive WHERE event_ute_id = %s",
+                $event_ute_id,
+                $event_ute_id
+            ),
+            ARRAY_A
+        );
+        foreach ( $ticket_rows as $tr ) {
+            $tid = intval( $tr['id'] );
+            $metrics['refund_requests'] += count( tta_get_ticket_pending_refund_attendees( $tid, $event_id ) );
+            foreach ( tta_get_ticket_refunded_attendees( $tid, $event_id ) as $ref ) {
+                $metrics['refunded_amount'] += floatval( $ref['amount_paid'] );
+            }
+        }
+    }
+
+    // Revenue from transactions
+    $like = '%' . $wpdb->esc_like( $event_ute_id ) . '%';
+    $tx_rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT details FROM {$wpdb->prefix}tta_transactions WHERE details LIKE %s",
+            $like
+        ),
+        ARRAY_A
+    );
+    foreach ( $tx_rows as $tx ) {
+        $items = json_decode( $tx['details'], true );
+        if ( ! is_array( $items ) ) {
+            continue;
+        }
+        foreach ( $items as $it ) {
+            if ( ( $it['event_ute_id'] ?? '' ) === $event_ute_id ) {
+                $qty   = intval( $it['quantity'] ?? 1 );
+                $price = floatval( $it['final_price'] ?? ( $it['price'] ?? 0 ) );
+                $metrics['revenue'] += $price * $qty;
+            }
+        }
+    }
+
+    $metrics['waitlist_count'] = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_waitlist WHERE event_ute_id = %s",
+            $event_ute_id
+        )
+    );
+
+    return $metrics;
+}
+
+/**
+ * Export event metrics to an Excel spreadsheet.
+ *
+ * @param string $start_date Optional start date Y-m-d.
+ * @param string $end_date   Optional end date Y-m-d.
+ */
+function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
+    global $wpdb;
+
+    if ( ! class_exists( '\\PhpOffice\\PhpSpreadsheet\\Spreadsheet' ) ) {
+        if ( function_exists( 'is_admin' ) && is_admin() ) {
+            add_action( 'admin_notices', function () {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'PhpSpreadsheet library missing. Run composer install inside the tta-management-plugin directory.', 'tta' ) . '</p></div>';
+            } );
+        }
+        return;
+    }
+
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+    $where  = '1=1';
+    $params = [];
+    if ( $start_date ) {
+        $where  .= ' AND date >= %s';
+        $params[] = $start_date;
+    }
+    if ( $end_date ) {
+        $where  .= ' AND date <= %s';
+        $params[] = $end_date;
+    }
+
+    $sql = "SELECT * FROM {$events_table} WHERE {$where} UNION ALL SELECT * FROM {$archive_table} WHERE {$where} ORDER BY date DESC";
+    $events = $wpdb->get_results( $wpdb->prepare( $sql, array_merge( $params, $params ) ), ARRAY_A );
+    if ( empty( $events ) ) {
+        wp_die( esc_html__( 'No events found for that range.', 'tta' ) );
+    }
+
+    $headers = array_keys( $events[0] );
+    $metric_headers = [ 'expected_attendees', 'checked_in', 'no_show', 'refund_requests', 'refunded_amount', 'revenue', 'waitlist_count' ];
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->fromArray( array_merge( $headers, $metric_headers ), null, 'A1' );
+
+    $row = 2;
+    foreach ( $events as $ev ) {
+        $metrics = tta_get_event_metrics( $ev['ute_id'] );
+        $sheet->fromArray( array_merge( array_values( $ev ), array_values( $metrics ) ), null, 'A' . $row );
+        $row++;
+    }
+
+    $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx( $spreadsheet );
+    $tmp_file = wp_tempnam();
+    $writer->save( $tmp_file );
+
+    header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
+    header( 'Content-Disposition: attachment; filename="event-report.xlsx"' );
+    readfile( $tmp_file );
+    unlink( $tmp_file );
+    exit;
+}
