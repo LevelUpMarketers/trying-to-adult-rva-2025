@@ -6,6 +6,7 @@ This feature relies on the PhpSpreadsheet library installed via Composer inside 
 
 The spreadsheet excludes internal IDs like `id`, `page_id`, `ticket_id` and other implementation columns. Boolean values become **Yes** or **No** and discount codes are shown in plain English. The **Time** column appears directly before **Date** and event type values are capitalized. The featured image column links directly to the full image. Additional metrics appear at the end of each row:
 
+
 - `expected_attendees` – number of purchased tickets (after refunds)
 - `checked_in` – count of attendees marked as checked in
 - `no_show` – count of attendees marked as no show

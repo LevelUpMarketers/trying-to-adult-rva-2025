@@ -3,6 +3,13 @@
 ?><?php
 global $wpdb;
 $table = $wpdb->prefix . 'tta_events';
+// Handle export
+if ( isset( $_POST['tta_export_events'] ) && check_admin_referer( 'tta_export_events_nonce' ) ) {
+    $start = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : '';
+    $end   = isset( $_POST['end_date'] ) ? sanitize_text_field( $_POST['end_date'] ) : '';
+    tta_export_event_metrics_report( $start, $end );
+}
+
 
 
 // Handle deletion

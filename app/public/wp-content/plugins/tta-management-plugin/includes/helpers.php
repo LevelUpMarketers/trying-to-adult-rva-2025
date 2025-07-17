@@ -4714,7 +4714,6 @@ function tta_get_event_metrics( $event_ute_id ) {
         )
     );
     $metrics['sold_out'] = ( $open_tickets === 0 );
-
     return $metrics;
 }
 
@@ -4831,7 +4830,6 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     $row = 2;
     foreach ( $events as $ev ) {
         $metrics = tta_get_event_metrics( $ev['ute_id'] );
-
         foreach ( $remove_cols as $c ) {
             unset( $ev[ $c ] );
         }
