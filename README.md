@@ -21,6 +21,13 @@ define('TTA_TWILIO_FROM', '+15555555555');
 If any of these constants are missing the plugin will warn administrators and SMS
 messages will not be sent.
 
+## Development Quick Start
+
+1. Install PHP and Composer.
+2. Run `composer install` from the project root.
+3. Run `composer install` inside `app/public/wp-content/plugins/tta-management-plugin`.
+4. Execute `vendor/bin/phpunit` to ensure all tests pass.
+
 ## Documentation
 
 - [Cart and Checkout Flow](docs/CartFlow.md)
