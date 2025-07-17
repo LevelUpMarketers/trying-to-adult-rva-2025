@@ -23,7 +23,7 @@ messages will not be sent.
 
 ## Development Quick Start
 
-1. Install PHP and Composer.
+1. Install PHP and Composer. Make sure the `mysqli`, `curl`, and `gd` extensions are enabled. Without `mysqli` WordPress will fail to load and may show a blank screen.
 2. Run `composer install` from the project root.
 3. Run `composer install` inside `app/public/wp-content/plugins/tta-management-plugin`.
 4. Execute `vendor/bin/phpunit` to ensure all tests pass.
