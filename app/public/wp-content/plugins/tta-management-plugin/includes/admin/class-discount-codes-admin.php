@@ -18,7 +18,8 @@ class TTA_Discount_Codes_Admin {
             'manage_options',
             'tta-discount-codes',
             [ $this, 'render_page' ],
-            'dashicons-ticket',
+            // Use the tickets dashicon so the menu matches other TTA pages.
+            'dashicons-tickets-alt',
             14
         );
     }
