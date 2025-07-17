@@ -10,6 +10,17 @@ define('TTA_AUTHNET_SANDBOX', true);
 ```
 If these constants are not defined, checkout will fail and an admin notice will be displayed. When deploying to production, move the credentials out of the plugin directory.
 
+SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can
+create a `twilio-config.php` file or set environment variables:
+
+```
+define('TTA_TWILIO_SID', 'your_account_sid');
+define('TTA_TWILIO_TOKEN', 'your_auth_token');
+define('TTA_TWILIO_FROM', '+15555555555');
+```
+If any of these constants are missing the plugin will warn administrators and SMS
+messages will not be sent.
+
 ## Documentation
 
 - [Cart and Checkout Flow](docs/CartFlow.md)

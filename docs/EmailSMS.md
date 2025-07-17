@@ -145,3 +145,11 @@ returns both values combined in a single string.
 ## Email Delivery
 
 All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member receives one email and each attendee gets a personalized copy where tokens like `{attendee_first_name}` reflect their own information. Duplicate addresses are skipped so each email address only receives one message.
+
+## SMS Delivery
+
+SMS notifications are sent through Twilio. The `TTA_SMS_Handler` class mirrors
+the email handler and reads the SMS text from the same template set. When the
+Twilio credentials are configured, members and attendees receive text messages
+for purchases, refunds and waitlist openings. If credentials are missing no SMS
+is dispatched and a notice appears in the WordPress admin.

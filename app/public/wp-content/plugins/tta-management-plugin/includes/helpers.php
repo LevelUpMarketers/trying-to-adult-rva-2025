@@ -4388,9 +4388,7 @@ function tta_send_waitlist_notification( $entry, $event ) {
     if ( $to ) {
         wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
     }
-    // TODO: send SMS/text when service is integrated.
-    // Cron jobs might not work on production environment, so we might have to
-    // schedule these emails via a service like SendGrid if their API allows it.
+    TTA_SMS_Handler::get_instance()->send_waitlist_text( $entry, $event );
 }
 add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
 
