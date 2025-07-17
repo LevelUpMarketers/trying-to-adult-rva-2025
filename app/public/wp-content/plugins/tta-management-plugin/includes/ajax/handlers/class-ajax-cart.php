@@ -220,11 +220,20 @@ class TTA_Ajax_Cart {
         $valid   = false;
         $message = '';
         if ( $code_to_add ) {
-            foreach ( $cart->get_items() as $it ) {
-                $info = tta_parse_discount_data( $it['discountcode'] );
-                if ( $info['code'] && strcasecmp( $info['code'], $code_to_add ) === 0 ) {
+            $globals = tta_get_global_discount_codes();
+            foreach ( $globals as $g ) {
+                if ( $g['code'] && strcasecmp( $g['code'], $code_to_add ) === 0 ) {
                     $valid = true;
                     break;
+                }
+            }
+            if ( ! $valid ) {
+                foreach ( $cart->get_items() as $it ) {
+                    $info = tta_parse_discount_data( $it['discountcode'] );
+                    if ( $info['code'] && strcasecmp( $info['code'], $code_to_add ) === 0 ) {
+                        $valid = true;
+                        break;
+                    }
                 }
             }
             if ( $valid ) {

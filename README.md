@@ -50,6 +50,7 @@ messages will not be sent.
 - [Member Metrics Export](docs/MemberMetricsExport.md)
 - [TTA Refund Requests Admin](docs/RefundRequestsAdmin.md)
 - [TTA Ads Admin](docs/AdsAdmin.md)
+- [TTA Discount Codes Admin](docs/DiscountCodesAdmin.md)
 - [Event Check-In Page](docs/EventCheckInAdmin.md)
 - [Venue Administration](docs/VenuesAdmin.md)
 - [Event Creation Requirements](docs/EventCreationAdmin.md)
