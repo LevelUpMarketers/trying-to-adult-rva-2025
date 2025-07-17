@@ -4532,6 +4532,38 @@ function tta_get_random_ad() {
 }
 
 /**
+ * Retrieve all non-event discount codes.
+ *
+ * @return array[]
+ */
+function tta_get_global_discount_codes() {
+    $cache_key = 'tta_global_discounts';
+    $codes = TTA_Cache::get( $cache_key );
+    if ( false !== $codes ) {
+        return $codes;
+    }
+    $codes = get_option( 'tta_global_discount_codes', [] );
+    if ( ! is_array( $codes ) ) {
+        $codes = [];
+    }
+    TTA_Cache::set( $cache_key, $codes, 300 );
+    return $codes;
+}
+
+/**
+ * Save global discount codes and clear the cache.
+ *
+ * @param array[] $codes
+ */
+function tta_save_global_discount_codes( $codes ) {
+    if ( ! is_array( $codes ) ) {
+        $codes = [];
+    }
+    update_option( 'tta_global_discount_codes', array_values( $codes ), false );
+    TTA_Cache::delete( 'tta_global_discounts' );
+}
+
+/**
  * Get the page ID of the first event scheduled for a given date.
  *
  * @param int $year  Year in YYYY format.

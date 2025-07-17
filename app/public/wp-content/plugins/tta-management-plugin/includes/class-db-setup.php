@@ -200,6 +200,21 @@ class TTA_DB_Setup {
         ) $charset_collate";
 
         // ─────────────────────────────────────────────────────────────────
+        // Global discount codes table
+        // ─────────────────────────────────────────────────────────────────
+        $sql_statements[] = "
+        CREATE TABLE {$prefix}discount_codes (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            code VARCHAR(50) NOT NULL,
+            type ENUM('flat','percent') DEFAULT 'percent',
+            amount DECIMAL(10,2) DEFAULT 0.00,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY code (code)
+        ) $charset_collate";
+
+        // ─────────────────────────────────────────────────────────────────
         // Member history table
         // ─────────────────────────────────────────────────────────────────
         $sql_statements[] = "

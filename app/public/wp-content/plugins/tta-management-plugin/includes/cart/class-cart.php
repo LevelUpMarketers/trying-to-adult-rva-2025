@@ -444,7 +444,20 @@ class TTA_Cart {
     if ( $include_membership && ! empty( $_SESSION['tta_membership_purchase'] ) ) {
       $total += tta_get_membership_price( $_SESSION['tta_membership_purchase'] );
     }
-    return $total;
+
+    $codes  = array_map( 'strtolower', (array) $discount_codes );
+    $globals = array_filter( tta_get_global_discount_codes(), function ( $row ) use ( $codes ) {
+      return $row['code'] && in_array( strtolower( $row['code'] ), $codes, true );
+    } );
+    foreach ( $globals as $g ) {
+      if ( 'percent' === $g['type'] ) {
+        $total *= max( 0, 1 - ( floatval( $g['amount'] ) / 100 ) );
+      } else {
+        $total = max( 0, $total - floatval( $g['amount'] ) );
+      }
+    }
+
+    return round( $total, 2 );
   }
 
 

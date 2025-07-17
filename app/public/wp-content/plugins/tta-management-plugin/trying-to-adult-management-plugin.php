@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'TTA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TTA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TTA_PLUGIN_VERSION', '0.4.2' );
-define( 'TTA_DB_VERSION', '1.10.0' );
+define( 'TTA_DB_VERSION', '1.11.0' );
 define( 'TTA_BASIC_MEMBERSHIP_PRICE', 5.00 );
 define( 'TTA_PREMIUM_MEMBERSHIP_PRICE', 10.00 );
 define( 'TTA_BASIC_SUBSCRIPTION_NAME', 'Trying to Adult Basic Membership' );
@@ -129,6 +129,7 @@ require_once TTA_PLUGIN_DIR . 'includes/admin/class-tickets-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-settings-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-comms-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-ads-admin.php';
+require_once TTA_PLUGIN_DIR . 'includes/admin/class-discount-codes-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-bi-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-refund-requests-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-events-shortcode.php';

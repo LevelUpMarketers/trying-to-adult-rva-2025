@@ -517,6 +517,20 @@ class HelpersTest extends TestCase {
         $this->assertArrayHasKey('image_id', $ad);
     }
 
+    public function test_global_discount_code_helpers() {
+        update_option('tta_global_discount_codes', [
+            ['code' => 'SAVE', 'type' => 'percent', 'amount' => 5],
+        ], false);
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        $codes = tta_get_global_discount_codes();
+        $this->assertCount(1, $codes);
+        $this->assertSame('SAVE', $codes[0]['code']);
+        tta_save_global_discount_codes([]);
+        $codes2 = tta_get_global_discount_codes();
+        $this->assertSame([], $codes2);
+    }
+
     public function test_get_first_event_page_id_for_date() {
         global $wpdb;
         $wpdb = new class {
