@@ -105,17 +105,7 @@ $events = $wpdb->get_results(
     </p>
 </form>
 
-<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:1em;">
-    <?php wp_nonce_field( 'tta_export_events_nonce' ); ?>
-    <input type="hidden" name="action" value="tta_export_event_metrics">
-    <label><?php esc_html_e( 'Start Date', 'tta' ); ?>
-        <input type="date" name="start_date">
-    </label>
-    <label><?php esc_html_e( 'End Date', 'tta' ); ?>
-        <input type="date" name="end_date">
-    </label>
-    <button class="button" type="submit"><?php esc_html_e( 'Export Metrics', 'tta' ); ?></button>
-</form>
+
 
 <table class="widefat striped">
     <thead>

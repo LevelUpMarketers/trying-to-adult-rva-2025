@@ -4909,3 +4909,163 @@ function tta_handle_event_metrics_export() {
     tta_export_event_metrics_report( $start, $end );
 }
 add_action( 'admin_post_tta_export_event_metrics', 'tta_handle_event_metrics_export' );
+
+/**
+ * Export member metrics to an Excel spreadsheet.
+ *
+ * @param string $start_date Optional join start date Y-m-d.
+ * @param string $end_date   Optional join end date Y-m-d.
+ */
+function tta_export_member_metrics_report( $start_date = '', $end_date = '' ) {
+    global $wpdb;
+
+    if ( ! class_exists( '\\PhpOffice\\PhpSpreadsheet\\Spreadsheet' ) ) {
+        if ( function_exists( 'is_admin' ) && is_admin() ) {
+            add_action( 'admin_notices', function () {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'PhpSpreadsheet library missing. Run composer install inside the tta-management-plugin directory.', 'tta' ) . '</p></div>';
+            } );
+        }
+        return;
+    }
+
+    $table  = $wpdb->prefix . 'tta_members';
+    $where  = '1=1';
+    $params = [];
+    if ( $start_date ) {
+        $where  .= ' AND joined_at >= %s';
+        $params[] = $start_date;
+    }
+    if ( $end_date ) {
+        $where  .= ' AND joined_at <= %s';
+        $params[] = $end_date;
+    }
+
+    $sql     = $wpdb->prepare( "SELECT * FROM {$table} WHERE {$where} ORDER BY joined_at DESC", $params );
+    $members = $wpdb->get_results( $sql, ARRAY_A );
+    if ( empty( $members ) ) {
+        wp_die( esc_html__( 'No members found for that range.', 'tta' ) );
+    }
+
+    $remove_cols = [ 'id', 'password', 'profileimgid', 'notes', 'biography', 'subscription_id', 'facebook', 'linkedin', 'instagram', 'twitter', 'interests' ];
+    $bool_cols   = [ 'opt_in_marketing_email', 'opt_in_marketing_sms', 'opt_in_event_email', 'opt_in_event_sms', 'hide_event_attendance' ];
+
+    $header_labels = [
+        'first_name'            => 'First Name',
+        'last_name'             => 'Last Name',
+        'email'                 => 'Email',
+        'member_type'           => 'Member Type',
+        'membership_level'      => 'Membership Level',
+        'joined_at'             => 'Joined',
+        'membership_length'     => 'Membership Length (days)',
+        'address'               => 'Address',
+        'phone'                 => 'Phone',
+        'dob'                   => 'Date of Birth',
+        'subscription_status'   => 'Subscription Status',
+        'opt_in_marketing_email'=> 'Marketing Emails',
+        'opt_in_marketing_sms'  => 'Marketing SMS',
+        'opt_in_event_email'    => 'Event Emails',
+        'opt_in_event_sms'      => 'Event SMS',
+        'hide_event_attendance' => 'Hide Attendance',
+    ];
+
+    $metric_headers = [
+        'events'       => 'Events Purchased',
+        'attended'     => 'Events Attended',
+        'no_show'      => 'No Shows',
+        'refunds'      => 'Refund Requests',
+        'cancellations'=> 'Cancellation Requests',
+        'total_spent'  => 'Total Spent',
+    ];
+
+    $first = $members[0];
+    foreach ( $remove_cols as $rc ) {
+        unset( $first[ $rc ] );
+    }
+    $headers = array_keys( $first );
+    $joined_index = array_search( 'joined_at', $headers, true );
+    if ( false !== $joined_index ) {
+        array_splice( $headers, $joined_index + 1, 0, 'membership_length' );
+    } else {
+        $headers[] = 'membership_length';
+    }
+
+    $display_headers = [];
+    foreach ( $headers as $h ) {
+        $display_headers[] = $header_labels[ $h ] ?? $h;
+    }
+    foreach ( $metric_headers as $h => $label ) {
+        $display_headers[] = $label;
+    }
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->fromArray( $display_headers, null, 'A1' );
+    foreach ( range( 1, count( $display_headers ) ) as $col ) {
+        $sheet->getColumnDimensionByColumn( $col )->setAutoSize( true );
+    }
+
+    $row = 2;
+    foreach ( $members as $m ) {
+        $summary = tta_get_member_history_summary( $m['id'] );
+
+        foreach ( $remove_cols as $c ) {
+            unset( $m[ $c ] );
+        }
+
+        foreach ( $bool_cols as $c ) {
+            if ( isset( $m[ $c ] ) ) {
+                $m[ $c ] = $m[ $c ] ? 'Yes' : 'No';
+            }
+        }
+
+        $m['address']   = tta_format_address( $m['address'] );
+        $join_ts = strtotime( $m['joined_at'] );
+        $m['membership_length'] = floor( ( time() - $join_ts ) / DAY_IN_SECONDS );
+        $m['joined_at'] = date_i18n( 'n-j-Y', $join_ts );
+        $m['dob']       = $m['dob'] ? date_i18n( 'n-j-Y', strtotime( $m['dob'] ) ) : '';
+        $summary['total_spent'] = '$' . number_format( $summary['total_spent'], 2 );
+
+        $ordered_metrics = [];
+        foreach ( array_keys( $metric_headers ) as $mk ) {
+            $ordered_metrics[] = $summary[ $mk ] ?? '';
+        }
+
+        $row_values = [];
+        foreach ( $headers as $col ) {
+            $row_values[] = $m[ $col ] ?? '';
+        }
+
+        $sheet->fromArray( array_merge( $row_values, $ordered_metrics ), null, 'A' . $row );
+        $row++;
+    }
+
+    $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx( $spreadsheet );
+    $tmp_file = wp_tempnam();
+    $writer->save( $tmp_file );
+
+    nocache_headers();
+    header( 'X-Content-Type-Options: nosniff' );
+    header( 'Content-Transfer-Encoding: binary' );
+    header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
+    header( 'Content-Disposition: attachment; filename="member-report.xlsx"' );
+    readfile( $tmp_file );
+    unlink( $tmp_file );
+    exit;
+}
+
+/**
+ * Handle admin-post request for exporting member metrics.
+ */
+function tta_handle_member_metrics_export() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'Permission denied.', 'tta' ) );
+    }
+
+    check_admin_referer( 'tta_export_members_nonce' );
+
+    $start = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : '';
+    $end   = isset( $_POST['end_date'] ) ? sanitize_text_field( $_POST['end_date'] ) : '';
+
+    tta_export_member_metrics_report( $start, $end );
+}
+add_action( 'admin_post_tta_export_member_metrics', 'tta_handle_member_metrics_export' );

@@ -4,6 +4,8 @@ The **Member History** tab is available under **Members** in the WordPress admin
 
 Members can now be sorted by membership length, events attended, total amount spent or alphabetically by first or last name. The dropdown begins with a disabled **Sort By…** option so the default order is obvious. A **Clear Sorting** button resets the view back to this default.
 
+An **Export Members** form lets administrators download a spreadsheet with the same metrics shown in the table. Optionally specify a start and end join date to limit the export.
+
 - Total amount spent across all transactions, including membership purchases and recurring charges
 - Count of events they have purchased
 - Count of events checked in
