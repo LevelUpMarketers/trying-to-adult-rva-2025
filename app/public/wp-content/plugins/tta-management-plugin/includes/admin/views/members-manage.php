@@ -105,8 +105,20 @@ $total_pages   = ceil( $total_members / $per_page );
           <option value="first" <?php selected( $orderby_param, 'first' ); ?>><?php esc_html_e( 'First Name', 'tta' ); ?></option>
           <option value="last" <?php selected( $orderby_param, 'last' ); ?>><?php esc_html_e( 'Last Name', 'tta' ); ?></option>
         </select>
-        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-members&tab=manage' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
+      <a href="<?php echo esc_url( admin_url( 'admin.php?page=tta-members&tab=manage' ) ); ?>" class="button"><?php esc_html_e( 'Clear Sorting', 'tta' ); ?></a>
       </p>
+    </form>
+
+    <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:20px;">
+        <?php wp_nonce_field( 'tta_export_members_nonce' ); ?>
+        <input type="hidden" name="action" value="tta_export_member_metrics">
+        <label><?php esc_html_e( 'Joined Start', 'tta' ); ?>
+            <input type="date" name="start_date">
+        </label>
+        <label><?php esc_html_e( 'Joined End', 'tta' ); ?>
+            <input type="date" name="end_date">
+        </label>
+        <button class="button" type="submit"><?php esc_html_e( 'Export Members', 'tta' ); ?></button>
     </form>
 
     <table class="widefat fixed striped">

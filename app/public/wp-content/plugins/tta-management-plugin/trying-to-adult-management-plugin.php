@@ -61,6 +61,34 @@ if ( is_admin() ) {
     } );
 }
 
+// -----------------------------------------------------------------------------
+// Twilio Credentials
+// -----------------------------------------------------------------------------
+$twilio_config = TTA_PLUGIN_DIR . 'twilio-config.php';
+if ( file_exists( $twilio_config ) ) {
+    include_once $twilio_config;
+}
+
+if ( getenv( 'TTA_TWILIO_SID' ) && ! defined( 'TTA_TWILIO_SID' ) ) {
+    define( 'TTA_TWILIO_SID', getenv( 'TTA_TWILIO_SID' ) );
+}
+if ( getenv( 'TTA_TWILIO_TOKEN' ) && ! defined( 'TTA_TWILIO_TOKEN' ) ) {
+    define( 'TTA_TWILIO_TOKEN', getenv( 'TTA_TWILIO_TOKEN' ) );
+}
+if ( getenv( 'TTA_TWILIO_FROM' ) && ! defined( 'TTA_TWILIO_FROM' ) ) {
+    define( 'TTA_TWILIO_FROM', getenv( 'TTA_TWILIO_FROM' ) );
+}
+
+if ( is_admin() ) {
+    add_action( 'admin_notices', function () {
+        if ( current_user_can( 'manage_options' ) && ( ! defined( 'TTA_TWILIO_SID' ) || ! defined( 'TTA_TWILIO_TOKEN' ) || ! defined( 'TTA_TWILIO_FROM' ) ) ) {
+            echo '<div class="notice notice-error"><p>' .
+                esc_html__( 'Twilio credentials are not configured. Define TTA_TWILIO_SID, TTA_TWILIO_TOKEN and TTA_TWILIO_FROM in twilio-config.php or your server environment.', 'tta' ) .
+                '</p></div>';
+        }
+    } );
+}
+
 // Load Composer autoloader if present within the plugin directory.
 if ( file_exists( TTA_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once TTA_PLUGIN_DIR . 'vendor/autoload.php';

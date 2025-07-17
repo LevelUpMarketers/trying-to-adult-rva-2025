@@ -11,6 +11,7 @@ if ( isset( $_POST['tta_export_events'] ) && check_admin_referer( 'tta_export_ev
 }
 
 
+
 // Handle deletion
 if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['event_id'] ) ) {
     if ( check_admin_referer( 'tta_event_delete_nonce' ) ) {
@@ -144,17 +145,16 @@ $events = $wpdb->get_results(
     </p>
 </form>
 
-<form method="post" style="margin-bottom:1em;">
+<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:1em;">
     <?php wp_nonce_field( 'tta_export_events_nonce' ); ?>
-    <input type="hidden" name="page" value="tta-events">
-    <input type="hidden" name="tab" value="manage">
+    <input type="hidden" name="action" value="tta_export_event_metrics">
     <label><?php esc_html_e( 'Start Date', 'tta' ); ?>
         <input type="date" name="start_date">
     </label>
     <label><?php esc_html_e( 'End Date', 'tta' ); ?>
         <input type="date" name="end_date">
     </label>
-    <button class="button" type="submit" name="tta_export_events" value="1"><?php esc_html_e( 'Export Metrics', 'tta' ); ?></button>
+    <button class="button" type="submit"><?php esc_html_e( 'Export Metrics', 'tta' ); ?></button>
 </form>
 
 <table class="widefat striped">

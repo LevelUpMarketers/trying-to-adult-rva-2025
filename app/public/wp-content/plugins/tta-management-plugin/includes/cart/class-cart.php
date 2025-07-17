@@ -540,6 +540,7 @@ class TTA_Cart {
       $user_id = get_current_user_id();
       TTA_Transaction_Logger::log( $transaction_id, $amount, $items, implode( ',', $discount_codes ), $discount_total, $user_id, $card_last4 );
       TTA_Email_Handler::get_instance()->send_purchase_emails( $items, $user_id );
+      TTA_SMS_Handler::get_instance()->send_purchase_texts( $items, $user_id );
       tta_remove_purchased_from_waitlists( $items, $user_id );
     }
 

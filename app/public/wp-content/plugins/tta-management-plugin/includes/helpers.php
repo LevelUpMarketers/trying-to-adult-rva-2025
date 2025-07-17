@@ -283,6 +283,26 @@ function tta_build_discount_data( $code, $type = 'percent', $amount = 0 ) {
 }
 
 /**
+ * Convert stored discount data into a human-readable string.
+ *
+ * @param string $raw Discount data from the database.
+ * @return string Formatted description or empty string.
+ */
+function tta_format_discount_display( $raw ) {
+    $info = tta_parse_discount_data( $raw );
+    if ( '' === $info['code'] ) {
+        return '';
+    }
+
+    $amount = number_format( floatval( $info['amount'] ), 2 );
+    if ( 'flat' === $info['type'] ) {
+        return sprintf( '%s - %s %s%s', $info['code'], __( 'Flat Discount of', 'tta' ), '$', $amount );
+    }
+
+    return sprintf( '%s - %s%% %s', $info['code'], $amount, __( 'Discount', 'tta' ) );
+}
+
+/**
  * Store a notice to display on the cart page.
  *
  * @param string $message
@@ -4368,9 +4388,7 @@ function tta_send_waitlist_notification( $entry, $event ) {
     if ( $to ) {
         wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
     }
-    // TODO: send SMS/text when service is integrated.
-    // Cron jobs might not work on production environment, so we might have to
-    // schedule these emails via a service like SendGrid if their API allows it.
+    TTA_SMS_Handler::get_instance()->send_waitlist_text( $entry, $event );
 }
 add_action( 'tta_send_waitlist_notification', 'tta_send_waitlist_notification', 10, 2 );
 
@@ -4587,7 +4605,8 @@ add_filter( 'login_redirect', 'tta_login_redirect', 10, 3 );
  *     refund_requests:int,
  *     refunded_amount:float,
  *     revenue:float,
- *     waitlist_count:int
+ *     waitlist_count:int,
+ *     sold_out:bool
  * }
  */
 function tta_get_event_metrics( $event_ute_id ) {
@@ -4603,6 +4622,7 @@ function tta_get_event_metrics( $event_ute_id ) {
             'refunded_amount'   => 0,
             'revenue'           => 0,
             'waitlist_count'    => 0,
+            'sold_out'          => false,
         ];
     }
 
@@ -4615,6 +4635,7 @@ function tta_get_event_metrics( $event_ute_id ) {
         'refunded_amount'   => 0,
         'revenue'           => 0,
         'waitlist_count'    => 0,
+        'sold_out'          => false,
     ];
     foreach ( $attendees as $a ) {
         if ( 'checked_in' === $a['status'] ) {
@@ -4680,6 +4701,19 @@ function tta_get_event_metrics( $event_ute_id ) {
         )
     );
 
+    $open_tickets = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_tickets WHERE event_ute_id = %s AND ticketlimit > 0",
+            $event_ute_id
+        )
+    );
+    $open_tickets += (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tta_tickets_archive WHERE event_ute_id = %s AND ticketlimit > 0",
+            $event_ute_id
+        )
+    );
+    $metrics['sold_out'] = ( $open_tickets === 0 );
     return $metrics;
 }
 
@@ -4720,17 +4754,124 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
         wp_die( esc_html__( 'No events found for that range.', 'tta' ) );
     }
 
-    $headers = array_keys( $events[0] );
-    $metric_headers = [ 'expected_attendees', 'checked_in', 'no_show', 'refund_requests', 'refunded_amount', 'revenue', 'waitlist_count' ];
+    $remove_cols = [ 'id', 'page_id', 'ticket_id', 'refundsavailable', 'created_at', 'updated_at', 'ute_id', 'otherimageids', 'waitlist_id' ];
+    $bool_cols   = [ 'waitlistavailable', 'all_day_event', 'virtual_event' ];
+
+    $header_labels = [
+        'id'                    => 'ID',
+        'name'                  => 'Event Name',
+        'time'                  => 'Time',
+        'date'                  => 'Date',
+        'baseeventcost'         => 'Base Event Cost',
+        'discountedmembercost'  => 'Discounted Member Cost',
+        'premiummembercost'     => 'Premium Member Cost',
+        'address'               => 'Address',
+        'type'                  => 'Event Type',
+        'venuename'             => 'Venue Name',
+        'venueurl'              => 'Venue URL',
+        'url2'                  => 'URL 2',
+        'url3'                  => 'URL 3',
+        'url4'                  => 'URL 4',
+        'mainimageid'           => 'Featured Image',
+        'waitlistavailable'     => 'Waitlist Available',
+        'discountcode'          => 'Discount',
+        'all_day_event'         => 'All Day Event',
+        'virtual_event'         => 'Virtual Event',
+        'hosts'                 => 'Hosts',
+        'volunteers'            => 'Volunteers',
+        'host_notes'            => 'Host Notes',
+    ];
+
+    $metric_headers = [
+        'expected_attendees'   => 'Tickets Sold',
+        'sold_out'             => 'Sold Out',
+        'checked_in'           => 'Checked In',
+        'no_show'              => 'No Shows',
+        'refund_requests'      => 'Refund Requests',
+        'refunded_amount'      => 'Refunded Amount',
+        'revenue'              => 'Total Revenue',
+        'revenue_minus_refunds'=> 'Revenue Minus Refunds',
+    ];
+
+    // Prepare header list after removing unwanted columns.
+    $first_event = $events[0];
+    foreach ( $remove_cols as $rc ) {
+        unset( $first_event[ $rc ] );
+    }
+    $headers = array_keys( $first_event );
+    // Move "time" directly before "date" if both exist.
+    $time_index = array_search( 'time', $headers, true );
+    if ( false !== $time_index ) {
+        unset( $headers[ $time_index ] );
+    }
+    $date_index = array_search( 'date', $headers, true );
+    if ( false !== $date_index ) {
+        array_splice( $headers, $date_index, 0, 'time' );
+    } elseif ( false !== $time_index ) {
+        // If date is missing but time exists, append time.
+        $headers[] = 'time';
+    }
+    $headers = array_values( $headers );
+    $display_headers = [];
+    foreach ( $headers as $h ) {
+        $display_headers[] = $header_labels[ $h ] ?? $h;
+    }
+    foreach ( $metric_headers as $h => $label ) {
+        $display_headers[] = $label;
+    }
 
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->fromArray( array_merge( $headers, $metric_headers ), null, 'A1' );
+    $sheet->fromArray( $display_headers, null, 'A1' );
+    foreach ( range( 1, count( $display_headers ) ) as $col ) {
+        $sheet->getColumnDimensionByColumn( $col )->setAutoSize( true );
+    }
 
     $row = 2;
     foreach ( $events as $ev ) {
         $metrics = tta_get_event_metrics( $ev['ute_id'] );
-        $sheet->fromArray( array_merge( array_values( $ev ), array_values( $metrics ) ), null, 'A' . $row );
+        foreach ( $remove_cols as $c ) {
+            unset( $ev[ $c ] );
+        }
+
+        foreach ( $bool_cols as $c ) {
+            if ( isset( $ev[ $c ] ) ) {
+                $ev[ $c ] = $ev[ $c ] ? 'Yes' : 'No';
+            }
+        }
+
+        $ev['address']              = tta_format_address( $ev['address'] );
+        $ev['date']                 = tta_format_event_date( $ev['date'] );
+        $ev['time']                 = tta_format_event_time( $ev['time'] );
+        $ev['type']                 = ucfirst( strtolower( $ev['type'] ) );
+        if ( ! empty( $ev['mainimageid'] ) ) {
+            $url = wp_get_attachment_url( intval( $ev['mainimageid'] ) );
+            $ev['mainimageid'] = $url ? $url : '';
+        } else {
+            $ev['mainimageid'] = '';
+        }
+        $ev['baseeventcost']        = '$' . number_format( floatval( $ev['baseeventcost'] ), 2 );
+        $ev['discountedmembercost'] = '$' . number_format( floatval( $ev['discountedmembercost'] ), 2 );
+        $ev['premiummembercost']    = '$' . number_format( floatval( $ev['premiummembercost'] ), 2 );
+        $ev['discountcode']         = tta_format_discount_display( $ev['discountcode'] );
+
+        $metrics['revenue_minus_refunds'] = max( 0, $metrics['revenue'] - $metrics['refunded_amount'] );
+        $metrics['refunded_amount']       = '$' . number_format( $metrics['refunded_amount'], 2 );
+        $metrics['revenue']               = '$' . number_format( $metrics['revenue'], 2 );
+        $metrics['revenue_minus_refunds'] = '$' . number_format( $metrics['revenue_minus_refunds'], 2 );
+        $metrics['sold_out']              = $metrics['sold_out'] ? 'Yes' : 'No';
+
+        $ordered_metrics = [];
+        foreach ( array_keys( $metric_headers ) as $mk ) {
+            $ordered_metrics[] = $metrics[ $mk ] ?? '';
+        }
+
+        $row_values = [];
+        foreach ( $headers as $col ) {
+            $row_values[] = $ev[ $col ] ?? '';
+        }
+
+        $sheet->fromArray( array_merge( $row_values, $ordered_metrics ), null, 'A' . $row );
         $row++;
     }
 
@@ -4738,9 +4879,189 @@ function tta_export_event_metrics_report( $start_date = '', $end_date = '' ) {
     $tmp_file = wp_tempnam();
     $writer->save( $tmp_file );
 
+    nocache_headers();
+    header( 'X-Content-Type-Options: nosniff' );
+    header( 'Content-Transfer-Encoding: binary' );
     header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
     header( 'Content-Disposition: attachment; filename="event-report.xlsx"' );
     readfile( $tmp_file );
     unlink( $tmp_file );
     exit;
 }
+
+/**
+ * Handle admin-post request for exporting event metrics.
+ */
+function tta_handle_event_metrics_export() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'Permission denied.', 'tta' ) );
+    }
+
+    check_admin_referer( 'tta_export_events_nonce' );
+
+    $start = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : '';
+    $end   = isset( $_POST['end_date'] ) ? sanitize_text_field( $_POST['end_date'] ) : '';
+
+    tta_export_event_metrics_report( $start, $end );
+}
+add_action( 'admin_post_tta_export_event_metrics', 'tta_handle_event_metrics_export' );
+
+/**
+ * Export member metrics to an Excel spreadsheet.
+ *
+ * @param string $start_date Optional join start date Y-m-d.
+ * @param string $end_date   Optional join end date Y-m-d.
+ */
+function tta_export_member_metrics_report( $start_date = '', $end_date = '' ) {
+    global $wpdb;
+
+    if ( ! class_exists( '\\PhpOffice\\PhpSpreadsheet\\Spreadsheet' ) ) {
+        if ( function_exists( 'is_admin' ) && is_admin() ) {
+            add_action( 'admin_notices', function () {
+                echo '<div class="notice notice-error"><p>' . esc_html__( 'PhpSpreadsheet library missing. Run composer install inside the tta-management-plugin directory.', 'tta' ) . '</p></div>';
+            } );
+        }
+        return;
+    }
+
+    $table  = $wpdb->prefix . 'tta_members';
+    $where  = '1=1';
+    $params = [];
+    if ( $start_date ) {
+        $where  .= ' AND joined_at >= %s';
+        $params[] = $start_date;
+    }
+    if ( $end_date ) {
+        $where  .= ' AND joined_at <= %s';
+        $params[] = $end_date;
+    }
+
+    $sql     = $wpdb->prepare( "SELECT * FROM {$table} WHERE {$where} ORDER BY joined_at DESC", $params );
+    $members = $wpdb->get_results( $sql, ARRAY_A );
+    if ( empty( $members ) ) {
+        wp_die( esc_html__( 'No members found for that range.', 'tta' ) );
+    }
+
+    $remove_cols = [ 'id', 'password', 'profileimgid', 'notes', 'biography', 'subscription_id', 'facebook', 'linkedin', 'instagram', 'twitter', 'interests' ];
+    $bool_cols   = [ 'opt_in_marketing_email', 'opt_in_marketing_sms', 'opt_in_event_email', 'opt_in_event_sms', 'hide_event_attendance' ];
+
+    $header_labels = [
+        'first_name'            => 'First Name',
+        'last_name'             => 'Last Name',
+        'email'                 => 'Email',
+        'member_type'           => 'Member Type',
+        'membership_level'      => 'Membership Level',
+        'joined_at'             => 'Joined',
+        'membership_length'     => 'Membership Length (days)',
+        'address'               => 'Address',
+        'phone'                 => 'Phone',
+        'dob'                   => 'Date of Birth',
+        'subscription_status'   => 'Subscription Status',
+        'opt_in_marketing_email'=> 'Marketing Emails',
+        'opt_in_marketing_sms'  => 'Marketing SMS',
+        'opt_in_event_email'    => 'Event Emails',
+        'opt_in_event_sms'      => 'Event SMS',
+        'hide_event_attendance' => 'Hide Attendance',
+    ];
+
+    $metric_headers = [
+        'events'       => 'Events Purchased',
+        'attended'     => 'Events Attended',
+        'no_show'      => 'No Shows',
+        'refunds'      => 'Refund Requests',
+        'cancellations'=> 'Cancellation Requests',
+        'total_spent'  => 'Total Spent',
+    ];
+
+    $first = $members[0];
+    foreach ( $remove_cols as $rc ) {
+        unset( $first[ $rc ] );
+    }
+    $headers = array_keys( $first );
+    $joined_index = array_search( 'joined_at', $headers, true );
+    if ( false !== $joined_index ) {
+        array_splice( $headers, $joined_index + 1, 0, 'membership_length' );
+    } else {
+        $headers[] = 'membership_length';
+    }
+
+    $display_headers = [];
+    foreach ( $headers as $h ) {
+        $display_headers[] = $header_labels[ $h ] ?? $h;
+    }
+    foreach ( $metric_headers as $h => $label ) {
+        $display_headers[] = $label;
+    }
+
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->fromArray( $display_headers, null, 'A1' );
+    foreach ( range( 1, count( $display_headers ) ) as $col ) {
+        $sheet->getColumnDimensionByColumn( $col )->setAutoSize( true );
+    }
+
+    $row = 2;
+    foreach ( $members as $m ) {
+        $summary = tta_get_member_history_summary( $m['id'] );
+
+        foreach ( $remove_cols as $c ) {
+            unset( $m[ $c ] );
+        }
+
+        foreach ( $bool_cols as $c ) {
+            if ( isset( $m[ $c ] ) ) {
+                $m[ $c ] = $m[ $c ] ? 'Yes' : 'No';
+            }
+        }
+
+        $m['address']   = tta_format_address( $m['address'] );
+        $join_ts = strtotime( $m['joined_at'] );
+        $m['membership_length'] = floor( ( time() - $join_ts ) / DAY_IN_SECONDS );
+        $m['joined_at'] = date_i18n( 'n-j-Y', $join_ts );
+        $m['dob']       = $m['dob'] ? date_i18n( 'n-j-Y', strtotime( $m['dob'] ) ) : '';
+        $summary['total_spent'] = '$' . number_format( $summary['total_spent'], 2 );
+
+        $ordered_metrics = [];
+        foreach ( array_keys( $metric_headers ) as $mk ) {
+            $ordered_metrics[] = $summary[ $mk ] ?? '';
+        }
+
+        $row_values = [];
+        foreach ( $headers as $col ) {
+            $row_values[] = $m[ $col ] ?? '';
+        }
+
+        $sheet->fromArray( array_merge( $row_values, $ordered_metrics ), null, 'A' . $row );
+        $row++;
+    }
+
+    $writer   = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx( $spreadsheet );
+    $tmp_file = wp_tempnam();
+    $writer->save( $tmp_file );
+
+    nocache_headers();
+    header( 'X-Content-Type-Options: nosniff' );
+    header( 'Content-Transfer-Encoding: binary' );
+    header( 'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' );
+    header( 'Content-Disposition: attachment; filename="member-report.xlsx"' );
+    readfile( $tmp_file );
+    unlink( $tmp_file );
+    exit;
+}
+
+/**
+ * Handle admin-post request for exporting member metrics.
+ */
+function tta_handle_member_metrics_export() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'Permission denied.', 'tta' ) );
+    }
+
+    check_admin_referer( 'tta_export_members_nonce' );
+
+    $start = isset( $_POST['start_date'] ) ? sanitize_text_field( $_POST['start_date'] ) : '';
+    $end   = isset( $_POST['end_date'] ) ? sanitize_text_field( $_POST['end_date'] ) : '';
+
+    tta_export_member_metrics_report( $start, $end );
+}
+add_action( 'admin_post_tta_export_member_metrics', 'tta_handle_member_metrics_export' );

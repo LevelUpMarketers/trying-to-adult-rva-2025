@@ -181,6 +181,7 @@ class TTA_Refund_Processor {
             'email'       => $attendee['email'] ?? '',
         ];
         TTA_Email_Handler::get_instance()->send_refund_emails( $tx, $refund_data );
+        TTA_SMS_Handler::get_instance()->send_refund_texts( $tx, $refund_data );
 
         tta_delete_refund_request( $req['transaction_id'], $req['ticket_id'], $req['attendee']['id'] ?? 0 );
         tta_decrement_released_refund_count( $req['ticket_id'] );
