@@ -33,6 +33,7 @@ messages will not be sent.
 - [Cart and Checkout Flow](docs/CartFlow.md)
 - [Object Caching](docs/ObjectCaching.md)
   - Plugin caches can now be cleared reliably even on hosts with persistent object caching.
+- [Notice Bar](docs/NoticeBar.md)
 - [Input Sanitization Helpers](docs/InputSanitization.md)
 - [Authorize.Net Error Codes](docs/AuthorizeNetErrors.md)
 - [Address Helper Functions](docs/AddressHelpers.md)
