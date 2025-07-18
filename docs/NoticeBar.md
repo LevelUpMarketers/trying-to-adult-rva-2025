@@ -1,12 +1,13 @@
 # Notice Bar
 
 The Notice Bar is displayed at the very top of every page on the site. It is
-initialized from the main plugin loader and shows
-important alerts and includes quick links to social accounts and the cart.
+initialized from the main plugin loader and injected via JavaScript after the
+page loads. It shows important alerts and includes quick links to social
+accounts and the cart.
 
 ## Features
 
-- Always visible on desktop and mobile via the `wp_body_open` hook.
+ - Always visible on desktop and mobile using a small JavaScript snippet.
 - Social icons and links mirror the original top bar markup.
 - A persistent **Cart** link appears on the far right.
 - The message area in the center is populated via the `tta_notice_bar_messages`

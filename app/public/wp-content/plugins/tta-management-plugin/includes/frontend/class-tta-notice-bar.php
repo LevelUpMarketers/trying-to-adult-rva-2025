@@ -3,7 +3,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class TTA_Notice_Bar {
     public static function init() {
-        add_action( 'wp_body_open', [ __CLASS__, 'render' ] );
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_assets' ] );
     }
 
@@ -21,11 +20,16 @@ class TTA_Notice_Bar {
             TTA_PLUGIN_VERSION,
             true
         );
+
+        $msg     = self::determine_message( apply_filters( 'tta_notice_bar_messages', [] ) );
+
         wp_localize_script(
             'tta-notice-bar-js',
             'ttaNoticeBar',
             [
                 'cart_url' => home_url( '/cart' ),
+                'message'  => $msg['html'],
+                'expires'  => $msg['expires'],
             ]
         );
     }
@@ -48,11 +52,5 @@ class TTA_Notice_Bar {
         return [ 'html' => '', 'expires' => 0 ];
     }
 
-    public static function render() {
-        $result  = self::determine_message( apply_filters( 'tta_notice_bar_messages', [] ) );
-        $message = $result['html'];
-        $expires = $result['expires'];
-        $data    = $expires ? ' data-expires="' . esc_attr( $expires ) . '"' : '';
-        include TTA_PLUGIN_DIR . 'includes/frontend/templates/notice-bar.php';
-    }
+    // Rendering now handled entirely via JavaScript.
 }
