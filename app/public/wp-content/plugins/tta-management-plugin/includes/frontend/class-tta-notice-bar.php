@@ -56,5 +56,3 @@ class TTA_Notice_Bar {
         include TTA_PLUGIN_DIR . 'includes/frontend/templates/notice-bar.php';
     }
 }
-
-TTA_Notice_Bar::init();

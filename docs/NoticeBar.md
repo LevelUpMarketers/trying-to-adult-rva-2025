@@ -1,6 +1,7 @@
 # Notice Bar
 
-The Notice Bar is displayed at the very top of every page on the site. It shows
+The Notice Bar is displayed at the very top of every page on the site. It is
+initialized from the main plugin loader and shows
 important alerts and includes quick links to social accounts and the cart.
 
 ## Features

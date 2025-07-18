@@ -193,6 +193,9 @@ class TTA_Plugin {
         TTA_Event_Archiver::init();
         TTA_Refund_Processor::init();
 
+        // Frontend notice bar
+        TTA_Notice_Bar::init();
+
         // Clear plugin caches after a successful checkout
         add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );
     }
