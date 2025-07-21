@@ -16,7 +16,12 @@ class TTA_SMS_Handler {
     }
 
     private function __construct() {
-        if ( defined( 'TTA_TWILIO_SID' ) && defined( 'TTA_TWILIO_TOKEN' ) && defined( 'TTA_TWILIO_FROM' ) ) {
+        if (
+            defined( 'TTA_TWILIO_SID' ) &&
+            defined( 'TTA_TWILIO_TOKEN' ) &&
+            defined( 'TTA_TWILIO_FROM' ) &&
+            class_exists( Client::class )
+        ) {
             $this->client = new Client( TTA_TWILIO_SID, TTA_TWILIO_TOKEN );
             $this->from   = TTA_TWILIO_FROM;
         }

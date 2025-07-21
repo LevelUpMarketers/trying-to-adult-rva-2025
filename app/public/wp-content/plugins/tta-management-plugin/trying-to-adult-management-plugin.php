@@ -3,7 +3,7 @@
  * Plugin Name: Trying To Adult Management Plugin
  * Plugin URI: https://example.com
  * Description: Custom plugin for Members, Events, Tickets management with waitlist, notifications, and Authorize.Net integration.
- * Version: 0.4.2
+ * Version: 0.4.5
  * Author: Your Name
  * Author URI: https://example.com
  * Text Domain: trying-to-adult-management
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants
 define( 'TTA_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TTA_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'TTA_PLUGIN_VERSION', '0.4.2' );
+define( 'TTA_PLUGIN_VERSION', '0.4.5' );
 define( 'TTA_DB_VERSION', '1.11.0' );
 define( 'TTA_BASIC_MEMBERSHIP_PRICE', 5.00 );
 define( 'TTA_PREMIUM_MEMBERSHIP_PRICE', 10.00 );
@@ -137,6 +137,7 @@ require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-members-shortcode.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-member-dashboard.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-checkin-page-manager.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-become-member-page.php';
+require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-notice-bar.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart-cleanup.php';
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-event-archiver.php';
@@ -191,6 +192,9 @@ class TTA_Plugin {
         TTA_Cart_Cleanup::init();
         TTA_Event_Archiver::init();
         TTA_Refund_Processor::init();
+
+        // Frontend notice bar
+        TTA_Notice_Bar::init();
 
         // Clear plugin caches after a successful checkout
         add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );
