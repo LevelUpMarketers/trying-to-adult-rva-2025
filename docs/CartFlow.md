@@ -17,6 +17,7 @@ This document summarizes the current logic around the cart and checkout process 
 
 2. **Viewing the Cart**
    - The **Cart Page** template renders the current cart contents using `tta_render_cart_contents()`.
+   - A WPBakery hero banner appears above the cart using `do_shortcode()`.
    - If a visitor selected a membership on the Become a Member page, that membership appears as its own line item in the cart.
    - Premium members cannot add another membership at all. Attempts to add Basic or Premium memberships are rejected.
    - When the cart only contains a membership, the table hides the **Ticket Reserved for…** column and the first column heading becomes **Event or Item**. Membership pricing shows "Per Month" in the price and subtotal columns, and the total row also displays "Per Month". Column spans adjust so the table remains aligned without the countdown column.
@@ -38,6 +39,7 @@ This document summarizes the current logic around the cart and checkout process 
 
 3. **Checkout**
    - The **Checkout Page** template performs checkout via an AJAX request (`tta_do_checkout`). The page fades while a spinner shows and always waits at least five seconds before displaying the result under the **Place Order** button.
+   - A matching WPBakery hero banner is displayed at the top of the page.
   - Inventory is reserved when items are added to the cart. Checkout no longer revalidates stock so users can complete a purchase with their held tickets as long as the reservation has not expired.
    - Checkout displays a read-only summary table that mirrors the cart layout with tooltips, countdown timers, and a list of active discount codes below the total.
   - Attendee fields collect a first name, last name, email, and phone for each ticket. A "text me" and "email me" checkbox is included and checked by default. The first ticket for every event autofills with the logged‑in member's details. Those first name, last name, and email fields are displayed but locked from editing. Phone numbers are automatically formatted as the user types.
