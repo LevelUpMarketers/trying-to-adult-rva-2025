@@ -117,7 +117,7 @@ $hide_attendance = intval( $member['hide_event_attendance'] );
         <!-- Date of Birth -->
         <tr class="profile-row">
           <th>
-            <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Used to verify age-restricted events.', 'tta' ); ?>">
+            <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Used to celebrate member birthdays, verify age-restricted events, etc.', 'tta' ); ?>">
               <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/question.svg' ); ?>" alt="Help">
             </span>
             <label for="dob"><?php esc_html_e( 'Date of Birth', 'tta' ); ?></label>

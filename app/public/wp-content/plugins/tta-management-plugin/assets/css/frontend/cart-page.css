@@ -141,8 +141,9 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
-.wrap.tta-cart-page{
+.wrap.tta-cart-page, .wrap.tta-checkout-page{
   margin:20px;
+  margin-top:100px;
 }
 #tta-checkout-response{
       display: block;

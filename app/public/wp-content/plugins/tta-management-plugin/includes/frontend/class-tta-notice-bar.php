@@ -83,7 +83,7 @@ class TTA_Notice_Bar {
                         </li>
                     </ul>
                 </div>
-                <a href="<?php echo esc_url( home_url( '/cart' ) ); ?>" class="tta-cart-link">Cart</a>
+                <a href="<?php echo esc_url( home_url( '/cart' ) ); ?>" class="tta-cart-link"><img src="/wp-content/uploads/2025/07/cart-1.png" alt=""></a>
             </div>
             <div id="tta-notice-message" class="tta-notice-message" data-expires="<?php echo intval( $msg['expires'] ); ?>">
                 <?php echo wp_kses_post( $msg['html'] ); ?>

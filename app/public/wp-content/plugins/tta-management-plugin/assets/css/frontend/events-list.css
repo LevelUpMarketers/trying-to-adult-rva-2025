@@ -6,6 +6,12 @@
   padding: 20px;
 }
 
+.tta-events-ad{
+  position: fixed;
+  padding-top: 50px;
+  padding-bottom: 100px;
+}
+
 .tta-events-columns {
   display: flex;
   gap: 20px;

@@ -2,6 +2,10 @@
 #profile-image-input { display: none; }
 .tta-dashboard-section  { display: none; }
 
+.login-username label, .login-password label{
+      display: block;
+}
+
 /* Show Profile tab on load */
 #tab-profile { display: block; }
 
@@ -95,6 +99,11 @@
   position:absolute; top:20px; left:8px;
 }
 .tta-tooltip-icon img { width:15px; }
+.is-editing .tta-tooltip-icon img { position:relative;top:8px; }
+
+.is-editing .tta-wider-and-bigger-rows .tta-tooltip-icon img { position:relative;top:0px; }
+
+
 .tta-tooltip-icon::after {
   content: attr(data-tooltip);
   position: absolute; bottom:100%; left:50%;
