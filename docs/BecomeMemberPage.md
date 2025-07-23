@@ -14,6 +14,9 @@ The **Become a Member** template introduces a front‑end landing page for membe
 - When only a membership is present in the cart, the subtotal and total rows show the price "Per Month" and table columns remain aligned.
 - When tickets are also in the cart, the total row shows the immediate charge followed by the monthly membership amount (e.g. `$15.00 today, $5 Per Month`).
 
+### Header
+The template outputs a WPBakery hero row above the content using `do_shortcode()`. The banner displays **Become a Member** over a full-width background image.
+
 ## Processing
 Membership purchases are handled separately from one‑off ticket sales. The JavaScript on the page calls the `tta_add_membership` AJAX action which stores the chosen level in the visitor's session. Checkout will display this membership in the cart summary and use `TTA_AuthorizeNet_API::create_subscription()` to create a recurring subscription with Authorize.Net.
 The subscription ID returned by the API is stored on the member record for future cancellation and reporting.

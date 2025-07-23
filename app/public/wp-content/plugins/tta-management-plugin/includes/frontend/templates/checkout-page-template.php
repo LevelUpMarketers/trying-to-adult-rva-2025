@@ -169,6 +169,9 @@ $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
 $has_membership   = in_array( $membership_level, [ 'basic', 'premium' ], true );
 get_header();
 
+$header_shortcode = '[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">CHECKOUT</p>[/vc_column_text][/vc_column][/vc_row]';
+echo do_shortcode( $header_shortcode );
+
  $items         = $cart->get_items();
  $checkout_done = isset( $_GET['checkout'] ) && 'done' === $_GET['checkout'];
 $sub_details   = $_SESSION['tta_checkout_sub'] ?? null;
