@@ -8,7 +8,7 @@
   padding: 40px 0;
 }
 .tta-events-ad{
-  position: fixed;
+
   padding-top: 50px;
   padding-bottom: 100px;
 }
@@ -26,8 +26,8 @@
   flex: 1 1 400px;
   padding-right: 20px;
 }
-.tta-event-hero-text a:hover{
-  background-color:initial;
+.tta-event-hero-text .tta-button:hover{
+  background-color:#2f516a;
   text-decoration:none;
 }
 
@@ -253,7 +253,7 @@
   flex-direction: column;
 }
 .tta-related-event-info {
-  margin-top: auto;
+
 }
 
 /* Message Center */
@@ -575,6 +575,10 @@ input[disabled]::before {
   height: 60px;
   pointer-events: none;
   transition: opacity 0.4s ease;   /* fade animation */
+}
+
+.tta-accordion button{
+  margin-top:10px;
 }
 
 .tta-event-sidebar .tta-accordion-content::after {
