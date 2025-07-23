@@ -257,7 +257,7 @@
   flex-direction: column;
 }
 .tta-related-event-info {
-  margin-top: auto;
+
 }
 
 /* Message Center */
@@ -579,6 +579,10 @@ input[disabled]::before {
   height: 60px;
   pointer-events: none;
   transition: opacity 0.4s ease;   /* fade animation */
+}
+
+.tta-accordion button{
+  margin-top:10px;
 }
 
 .tta-event-sidebar .tta-accordion-content::after {
