@@ -15,7 +15,8 @@
 .tta-become-member-wrap {
   max-width: 800px;
   margin: 0 auto;
-  padding-bottom: 200px;
+  padding-bottom:200px;
+  padding-top:100px;
 }
 .tta-membership-table {
   width: 100%;
@@ -45,4 +46,32 @@
 }
 .tta-membership-buttons .button:hover {
   background: #005177;
+}
+
+
+
+
+
+.tta-checkin-wrap{
+    margin-top: 100px;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-bottom: 200px;
+}
+
+.tta-checkin-wrap table td{
+    vertical-align: middle;
+}
+
+.tta-checkin-wrap .tta-attendance-details{
+  margin-left:5px;
+  margin-bottom:10px;
+}
+
+.tta-checkin-wrap .tta-attendance-details p{
+  margin-bottom:0;
+}
+
+.tta-checkin-wrap .tta-attendance-details h4{
+  margin-bottom:0px;
 }

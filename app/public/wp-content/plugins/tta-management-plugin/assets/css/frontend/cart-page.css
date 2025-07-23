@@ -175,9 +175,11 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 20px;
+  max-width:700px;
 }
 .tta-checkout-right p{
   display: inline-block;
+  margin-right:20px;
 }
 .tta-ticket-opt-text{
   display: inline-block;
@@ -194,6 +196,7 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 20px;
+  max-width:600px;
 }
 .tta-attendee-row strong{
   display:block;
@@ -210,7 +213,8 @@
 .tta-billing-details-div-container .tta-place-order-button-p{
   display: block;
 }
-.tta-attendee-row label { max-width:200px; display: inline-block; margin-bottom: 4px; }
+.tta-attendee-row label { max-width:200px; display: inline-block; margin-bottom: 4px; margin-right: 20px;
+    margin-top: 10px;}
 .tta-ticket-optin { display:block; margin-top:4px; }
 .tta-required { color:red; margin-left:2px; }
 .tta-attendee-note { margin-bottom:10px; font-style:italic; }

@@ -8,10 +8,14 @@
   padding: 40px 0;
 }
 .tta-events-ad{
-
   padding-top: 50px;
   padding-bottom: 100px;
 }
+
+.tta-events-ad img{
+  border-radius:4px;
+}
+
 .tta-event-hero-inner {
   display: flex;
   flex-wrap: wrap;
