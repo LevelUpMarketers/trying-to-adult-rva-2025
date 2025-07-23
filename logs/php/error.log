@@ -1,0 +1,2 @@
+[23-Jul-2025 15:22:35 UTC] PHP Warning:  The magic method Vc_Manager::__wakeup() must have public visibility in C:\Users\Jake\Local Sites\trying-to-adult-rva-2025\app\public\wp-content\plugins\js_composer\include\classes\core\class-vc-manager.php on line 203
+[23-Jul-2025 15:22:36 UTC] PHP Warning:  The magic method TotalTheme\ResizeImage::__wakeup() must have public visibility in C:\Users\Jake\Local Sites\trying-to-adult-rva-2025\app\public\wp-content\themes\Total\framework\classes\class-resize-image.php on line 34
