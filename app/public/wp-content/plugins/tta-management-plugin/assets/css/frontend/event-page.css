@@ -27,7 +27,7 @@
   padding-right: 20px;
 }
 .tta-event-hero-text a:hover{
-  background-color:#2f516a;
+  background-color:initial;
   text-decoration:none;
 }
 

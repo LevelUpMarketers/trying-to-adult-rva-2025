@@ -4,12 +4,17 @@
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
+  padding-bottom:200px;
 }
 
 .tta-events-ad{
   position: fixed;
   padding-top: 50px;
   padding-bottom: 100px;
+}
+
+.tta-events-ad a img{
+  border-radius:4px;
 }
 
 .tta-events-columns {
@@ -253,6 +258,7 @@ li.tta-event-list-item > div > a > span:hover{
   height: auto;
   display: block;
   margin-bottom: 8px;
+  border-radius: 4px;
 }
 .login-wrap form {
   margin-top: 10px;

@@ -204,7 +204,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
             if ( ! $context['is_logged_in'] || 'free' === $context['membership_level'] ) :
                 ?>
                 <a href="<?php echo esc_url( $become_url ); ?>">
-                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="Become a Member">
+                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/NotLoggedInMembershipAdvert.png' ); ?>" alt="Become a Member">
                 </a>
                 <p><?php esc_html_e( 'Become a member today to unlock discounts and exclusive events!', 'tta' ); ?></p>
             <?php elseif ( 'basic' === $context['membership_level'] ) : ?>

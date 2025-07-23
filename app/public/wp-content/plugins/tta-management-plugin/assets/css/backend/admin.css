@@ -61,9 +61,16 @@
     pointer-events:none;
 }
 
+#tta-members-manage .subtitle{
+    margin-top: 20px;
+    padding-left: 0;
+    font-weight: bold;
+    font-size: 18px;
+}
 
-
-
+#tta-members-manage p.search-box{
+    margin:0;
+}
 
 #tta-members-create .form-table{
     width: initial;
