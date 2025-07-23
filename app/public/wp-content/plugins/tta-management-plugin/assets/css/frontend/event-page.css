@@ -8,10 +8,14 @@
   padding: 40px 0;
 }
 .tta-events-ad{
-  position: fixed;
   padding-top: 50px;
   padding-bottom: 100px;
 }
+
+.tta-events-ad img{
+  border-radius:4px;
+}
+
 .tta-event-hero-inner {
   display: flex;
   flex-wrap: wrap;
@@ -26,8 +30,8 @@
   flex: 1 1 400px;
   padding-right: 20px;
 }
-.tta-event-hero-text a:hover{
-  background-color:initial;
+.tta-event-hero-text .tta-button:hover{
+  background-color:#2f516a;
   text-decoration:none;
 }
 

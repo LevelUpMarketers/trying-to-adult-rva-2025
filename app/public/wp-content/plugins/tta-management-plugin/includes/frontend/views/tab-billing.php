@@ -89,7 +89,6 @@
     </p>
     <?php $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status ); ?>
     <p><?php esc_html_e( 'Status:', 'tta' ); ?> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
-    <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
     <?php if ( $last4 ) : ?>
       <p><?php esc_html_e( 'Current Card:', 'tta' ); ?> <span id="tta-card-last4">**** <?php echo esc_html( $last4 ); ?></span></p>
     <?php endif; ?>
@@ -107,7 +106,7 @@
           <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
         </p>
       </form>
-
+      <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
       <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">
         <?php wp_nonce_field( 'tta_member_front_update', 'nonce' ); ?>
         <input type="hidden" name="action" value="tta_update_payment" />

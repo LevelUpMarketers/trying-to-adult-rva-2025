@@ -91,6 +91,20 @@
     background-color: #fbfbfb;
     border: solid 1px #ddd;
 }
+
+.tta-dashboard-content #tab-billing h3{
+  margin-bottom:0px;
+}
+#tta-cancel-membership-form .tta-submit-wrap button{
+  margin-top:10px;
+}
+
+#tta-update-card-form .tta-submit-wrap button{
+  margin-top:10px;
+}
+.tta-dashboard-content #tab-billing p{
+  margin-bottom:0px;
+}
 .tta-dashboard-content.fading { opacity: 0; }
 
 /* Tooltip */
@@ -215,21 +229,42 @@
 #select-profile-image{
   margin-top:20px;
 }
+.tta-assistance-form label{
+    font-weight: bold;
+    font-size: 16px;
+}
 
+.tta-assistance-form{
+    margin-top:20px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+}
 /* Upcoming events layout */
 .tta-upcoming-event {
   display:flex;
   border-bottom:1px solid #ddd;
   padding:15px 0;
   gap:15px;
+  margin-bottom:10px;
 }
 .tta-upcoming-thumb img {
   width:120px;
   height:auto;
+  border-radius:4px;
 }
+.tta-upcoming-info h4{
+  margin-top:0px;
+  margin-bottom:5px;
+}
+.tta-upcoming-info p{
+  margin-bottom:0px;
+}
+
+
 .tta-ticket-details {
-  margin-left:115px;
+  margin-left:0px;
   margin-bottom:10px;
+  margin: 20px;
 }
 .tta-ticket-details ul {
   margin:4px 0 0 20px;
@@ -299,5 +334,14 @@
 
 #tta-update-card-form > p.tta-submit-wrap{
   display:block;
+}
+
+#tta-update-card-form{
+  max-width:700px;
+}
+
+#tta-update-card-form p{
+  margin-right: 20px;
+  margin-top: 10px;
 }
 

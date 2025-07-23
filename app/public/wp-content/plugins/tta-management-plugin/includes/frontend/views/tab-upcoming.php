@@ -86,9 +86,6 @@
                   </a>
                 <?php endif; ?>
                 <form class="tta-refund-form" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
-                  <label for="refund-<?php echo esc_attr( $ev['transaction_id'] . '-' . $it['ticket_id'] ); ?>">
-                    <?php esc_html_e( 'Refund Request Details', 'tta' ); ?>
-                  </label>
                   <span class="description"><?php esc_html_e( 'Tell us why you\'re requesting a refund', 'tta' ); ?></span>
                   <textarea id="refund-<?php echo esc_attr( $ev['transaction_id'] . '-' . $it['ticket_id'] ); ?>" placeholder="<?php esc_attr_e( 'Tell us why you\'re requesting a refund', 'tta' ); ?>"></textarea>
                   <button type="button" class="tta-refund-submit" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">
@@ -104,7 +101,7 @@
             </div>
           <?php endforeach; ?>
           <div class="tta-assistance-form">
-            <label for="assist-<?php echo esc_attr( $ev['event_id'] ); ?>"><?php esc_html_e( 'Message the event host', 'tta' ); ?></label>
+            <label for="assist-<?php echo esc_attr( $ev['event_id'] ); ?>"><?php esc_html_e( 'Can\'t find the group? Gonna be late? Need something else? Message the event host below.', 'tta' ); ?></label>
             <textarea id="assist-<?php echo esc_attr( $ev['event_id'] ); ?>" rows="3"></textarea>
             <button type="button" class="button tta-assistance-submit" data-ute="<?php echo esc_attr( tta_get_event_ute_id( $ev['event_id'] ) ); ?>">
               <?php esc_html_e( 'Send', 'tta' ); ?>
