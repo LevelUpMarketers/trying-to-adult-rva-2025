@@ -232,12 +232,6 @@ $tickets = $wpdb->get_results(
                       <?php esc_html_e( 'Date & Time Joined', 'tta' ); ?>
                     </th>
                     <th>
-                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason this refund has not yet been issued.', 'tta' ); ?>">
-                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                      </span>
-                      <?php esc_html_e( 'Pending Reason', 'tta' ); ?>
-                    </th>
-                    <th>
                       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
                         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                       </span>
@@ -376,12 +370,6 @@ $tickets = $wpdb->get_results(
                         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                       </span>
                       <?php esc_html_e( 'Refund $', 'tta' ); ?>
-                    </th>
-                    <th>
-                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason this refund has not yet been issued.', 'tta' ); ?>">
-                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                      </span>
-                      <?php esc_html_e( 'Pending Reason', 'tta' ); ?>
                     </th>
                     <th>
                       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
