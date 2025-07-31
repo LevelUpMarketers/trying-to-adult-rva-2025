@@ -3,7 +3,7 @@
   <h3><?php esc_html_e( 'Billing & Membership Info', 'tta' ); ?></h3>
   <?php
   $level  = strtolower( $member['membership_level'] ?? 'free' );
-  $status = strtolower( $member['subscription_status'] ?? 'active' );
+  $status = strtolower( $member['subscription_status'] ?? '' );
   $sub_id = $member['subscription_id'] ?? '';
   $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
   $cancel = ( 'cancelled' === $status ) ? tta_get_last_membership_cancellation( get_current_user_id() ) : null;

@@ -12,7 +12,7 @@ To verify in the sandbox:
 2. In the Merchant Interface, open **Recurring Billing > Search** to view the new subscription by ID.
 3. Transaction history will show the initial payment (if the start date is the same day it may post the next business day) followed by monthly charges.
 
-Use the subscription ID stored in the `tta_members` table to manage the plan or cancel it via the admin tools. The member row is updated when the profile is created so `membership_level` records the purchased plan and `subscription_status` becomes `active`.
+Use the subscription ID stored in the `tta_members` table to manage the plan or cancel it via the admin tools. New member records begin with `subscription_status` set to `NULL` and are updated to `active` only when a Basic or Premium membership is purchased.
 
 After a successful membership checkout the confirmation page now displays the returned
 `subscriptionId` along with the API result code. If the ID is missing, the profile

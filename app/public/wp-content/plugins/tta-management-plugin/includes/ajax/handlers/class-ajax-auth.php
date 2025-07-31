@@ -78,7 +78,7 @@ class TTA_Ajax_Auth {
                 'joined_at'        => current_time( 'mysql' ),
                 'member_type'      => 'member',
                 'membership_level' => 'free',
-                'subscription_status' => '',
+                'subscription_status' => null,
             ],
             [ '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
         );

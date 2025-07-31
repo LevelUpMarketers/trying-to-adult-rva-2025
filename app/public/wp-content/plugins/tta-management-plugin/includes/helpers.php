@@ -1085,9 +1085,6 @@ function tta_update_user_membership_level( $wp_user_id, $level, $subscription_id
     if ( null !== $subscription_id ) {
         $data['subscription_id'] = sanitize_text_field( $subscription_id );
         $format[] = '%s';
-        if ( null === $subscription_status ) {
-            $subscription_status = 'active';
-        }
     }
     if ( null !== $subscription_status ) {
         $data['subscription_status'] = sanitize_text_field( $subscription_status );

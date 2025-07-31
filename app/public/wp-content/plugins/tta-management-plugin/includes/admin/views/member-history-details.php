@@ -98,7 +98,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
   <div class="tta-subscription-info">
     <?php
     $level    = strtolower( $member['membership_level'] ?? 'free' );
-    $status   = strtolower( $member['subscription_status'] ?? 'active' );
+    $status   = strtolower( $member['subscription_status'] ?? '' );
     $sub_id   = $member['subscription_id'] ?? '';
     $sub_info   = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
     $last4      = $sub_info['last4'] ?? '';
