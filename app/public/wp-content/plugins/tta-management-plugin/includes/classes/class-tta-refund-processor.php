@@ -180,6 +180,27 @@ class TTA_Refund_Processor {
         if ( ! $res['success'] ) {
             $msg = strtolower( $res['error'] );
             if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) || false !== strpos( strtolower( $status_res['status'] ?? '' ), 'pending' ) ) {
+                global $wpdb;
+                $hist_table = $wpdb->prefix . 'tta_memberhistory';
+                if ( ! empty( $req['history_id'] ) ) {
+                    $data = [
+                        'transaction_id' => $req['transaction_id'],
+                        'ticket_id'      => intval( $req['ticket_id'] ),
+                        'reason'         => $req['reason'] ?? '',
+                        'mode'           => $req['mode'] ?? 'cancel',
+                        'pending_reason' => 'settlement',
+                        'attendee'       => $req['attendee'],
+                    ];
+                    $wpdb->update(
+                        $hist_table,
+                        [ 'action_data' => wp_json_encode( $data ) ],
+                        [ 'id' => intval( $req['history_id'] ) ],
+                        [ '%s' ],
+                        [ '%d' ]
+                    );
+                    TTA_Cache::delete( 'tta_refund_requests' );
+                }
+                self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
                 return;
             }
         }

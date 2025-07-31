@@ -929,11 +929,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     }, function(res){
       if(res.success){
         if(res.data && res.data.pending){
-          if(mode === 'cancel'){
-            $btn.prop('disabled', true)
-                .addClass('tta-disabled tta-tooltip-trigger')
-                .attr('data-tooltip', 'Refund scheduled after settlement');
-          }
+          $btn.prop('disabled', true)
+              .addClass('tta-disabled tta-tooltip-trigger')
+              .attr('data-tooltip', 'Refund scheduled after settlement');
           alert(res.data && res.data.message ? res.data.message : 'Refund pending');
           return;
         }
@@ -980,9 +978,10 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
 
   function handleRefundRequest(e, mode){
     e.preventDefault();
-    var $row = $(e.currentTarget).closest('tr[data-request]');
-    var tx  = $(e.currentTarget).data('tx');
-    var ticket = $(e.currentTarget).data('ticket');
+    var $btn = $(e.currentTarget);
+    var $row = $btn.closest('tr[data-request]');
+    var tx  = $btn.data('tx');
+    var ticket = $btn.data('ticket');
     var amount = $row.find('.tta-refund-amount').val();
     var action = (mode === 'delete') ? 'tta_delete_refund_request' : 'tta_process_refund_request';
     var data = {
@@ -994,6 +993,13 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     };
     $.post(TTA_Ajax.ajax_url, data, function(res){
       if(res.success){
+        if(res.data && res.data.pending){
+          $btn.prop('disabled', true)
+              .addClass('tta-disabled tta-tooltip-trigger')
+              .attr('data-tooltip', 'Refund scheduled after settlement');
+          alert(res.data && res.data.message ? res.data.message : 'Refund pending');
+          return;
+        }
         $row.remove();
         alert(res.data && res.data.message ? res.data.message : 'OK');
       }else{

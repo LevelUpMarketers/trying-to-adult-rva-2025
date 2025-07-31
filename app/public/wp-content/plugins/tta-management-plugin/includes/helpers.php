@@ -2631,7 +2631,7 @@ function tta_get_refund_requests() {
     $archive_table = $wpdb->prefix . 'tta_events_archive';
 
     $rows = $wpdb->get_results(
-        "SELECT mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name,
+        "SELECT mh.id, mh.member_id, mh.action_date, mh.action_data, mh.event_id, m.first_name, m.last_name,
                 COALESCE(e.name, ea.name) AS event_name,
                 COALESCE(e.page_id, ea.page_id) AS page_id
            FROM {$hist_table} mh
@@ -2657,6 +2657,7 @@ function tta_get_refund_requests() {
         ];
 
         $out[] = [
+            'history_id'    => intval( $r['id'] ),
             'date'          => $r['action_date'],
             'member_id'     => intval( $r['member_id'] ),
             'member_name'   => trim( $r['first_name'] . ' ' . $r['last_name'] ),
@@ -2666,6 +2667,8 @@ function tta_get_refund_requests() {
             'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
             'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
             'reason'        => sanitize_text_field( $data['reason'] ?? '' ),
+            'mode'          => sanitize_text_field( $data['mode'] ?? '' ),
+            'pending_reason'=> sanitize_text_field( $data['pending_reason'] ?? '' ),
             'attendee_id'   => $attendee['id'],
             'first_name'    => $attendee['first_name'],
             'last_name'     => $attendee['last_name'],
@@ -2976,6 +2979,8 @@ function tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) {
             'email'       => sanitize_email( $req['email'] ),
             'phone'       => sanitize_text_field( $req['phone'] ),
             'reason'      => sanitize_text_field( $req['reason'] ),
+            'mode'        => sanitize_text_field( $req['mode'] ?? '' ),
+            'pending_reason' => sanitize_text_field( $req['pending_reason'] ?? '' ),
             'amount_paid' => floatval( $req['amount_paid'] ),
             'gateway_id'  => sanitize_text_field( $req['transaction_id'] ),
             'created_at'  => $tx['created_at'] ?? '',
@@ -3468,6 +3473,35 @@ function tta_get_remaining_ticket_count( $event_ute_id ) {
     $remaining = max( 0, $remaining );
     TTA_Cache::set( $cache_key, $remaining, 60 );
     return $remaining;
+}
+
+/**
+ * Get the remaining stock for a ticket.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return int Remaining count.
+ */
+function tta_get_ticket_stock( $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    if ( ! $ticket_id ) {
+        return 0;
+    }
+
+    $cache_key = 'ticket_stock_' . $ticket_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    global $wpdb;
+    $tickets_table   = $wpdb->prefix . 'tta_tickets';
+    $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
+    $stock = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$tickets_table} WHERE id = %d", $ticket_id ) );
+    if ( null === $stock ) {
+        $stock = (int) $wpdb->get_var( $wpdb->prepare( "SELECT ticketlimit FROM {$tickets_archive} WHERE id = %d", $ticket_id ) );
+    }
+    TTA_Cache::set( $cache_key, $stock, 60 );
+    return $stock;
 }
 
 /**

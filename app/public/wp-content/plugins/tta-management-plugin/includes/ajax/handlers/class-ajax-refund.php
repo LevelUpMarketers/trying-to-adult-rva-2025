@@ -47,10 +47,17 @@ class TTA_Ajax_Refund {
             tta_cancel_attendance_internal( intval( $att['id'] ), false, false );
         }
 
+        $event_ute       = tta_get_event_ute_id( $event_id );
+        $pending_reason  = 'waitlist';
+        if ( $event_ute && tta_get_remaining_ticket_count( $event_ute ) > 0 ) {
+            $pending_reason = 'sellout';
+        }
         $action_data = [
             'transaction_id' => $tx_id,
             'ticket_id'     => $ticket_id,
             'reason'        => $reason,
+            'mode'          => 'cancel',
+            'pending_reason'=> $pending_reason,
             'attendee'      => array_merge( $att_details, [ 'amount_paid' => $amount ] ),
         ];
 
@@ -98,6 +105,15 @@ class TTA_Ajax_Refund {
         }
 
         TTA_Refund_Processor::process_refund_request( $req, $amount );
+
+        $still = tta_get_refund_request( $tx_id, $ticket_id, $req['attendee_id'] ?? 0 );
+        if ( $still ) {
+            wp_send_json_success( [
+                'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ),
+                'pending' => true,
+            ] );
+        }
+
         wp_send_json_success( [ 'message' => __( 'Refund processed.', 'tta' ) ] );
     }
 
