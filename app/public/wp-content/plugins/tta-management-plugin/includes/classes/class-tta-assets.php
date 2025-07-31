@@ -221,6 +221,10 @@ class TTA_Assets {
                     'limit_msg'      => __( "We're sorry, there's a limit of %d per ticket.", 'tta' ),
                     'prev_limit_msg' => __( "We're sorry, there's a limit of %d per ticket. You've already purchased tickets in a previous transaction.", 'tta' ),
                     'sold_out_msg'   => __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' ),
+                    'email_mismatch_msg' => __( 'Email addresses do not match.', 'tta' ),
+                    'password_mismatch_msg' => __( 'Passwords do not match.', 'tta' ),
+                    'request_failed_msg' => __( 'Request failed.', 'tta' ),
+                    'account_created_msg' => __( 'Account created! Reloading in %d…', 'tta' ),
                 ]
             );
         }

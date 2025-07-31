@@ -729,9 +729,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
               printf(
                 /* translators: 1: opening login button, 2: closing login button, 3: opening registration link, 4: closing registration link */
                 esc_html__( 'Ticket discounts may be available! Log in below to check. Don\'t have an account? Create one below or become a Member today!%1$s', 'tta' ),
-                '<div><a href="#tta-login-message" class="tta-button tta-button-primary">
-          Create Account</a><a href="/become-a-member" class="tta-button tta-button-primary">
-          Become a Member</a></div>',
+                '<div><a href="#tta-login-message" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="/become-a-member" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>',
               );
               ?>
             </p>
@@ -754,23 +752,47 @@ $lost_pw_html = sprintf(
 );
 
 // 3. Output form + link
-echo $form_html . $lost_pw_html;
+echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
 
+?>
 
-
-
-
-
-
-
-
-
-
-
-
-
-             
-              ?>
+              <form id="tta-register-form" style="display:none;">
+                <p>
+                  <label><?php esc_html_e( 'First Name', 'tta' ); ?><br />
+                    <input type="text" name="first_name" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Last Name', 'tta' ); ?><br />
+                    <input type="text" name="last_name" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
+                    <input type="email" name="email" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Verify Email', 'tta' ); ?><br />
+                    <input type="email" name="email_verify" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
+                    <input type="password" name="password" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Verify Password', 'tta' ); ?><br />
+                    <input type="password" name="password_verify" required />
+                  </label>
+                </p>
+                <p>
+                  <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
+                  <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+                </p>
+                <span id="tta-register-response" class="tta-admin-progress-response-p"></span>
+              </form>
             </div>
           </div>
         </section>
