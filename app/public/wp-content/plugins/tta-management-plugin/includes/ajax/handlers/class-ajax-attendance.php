@@ -213,8 +213,12 @@ class TTA_Ajax_Attendance {
                 if ( 'cancel' === $mode ) {
                     tta_cancel_attendance_internal( $id, true, false );
                 }
+                TTA_Refund_Processor::schedule_unsettled_refund( $tx['transaction_id'], intval( $att['ticket_id'] ), $id, $amount );
 
-                wp_send_json_success( [ 'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ) ] );
+                wp_send_json_success( [
+                    'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ),
+                    'pending' => true,
+                ] );
             }
 
             wp_send_json_error( [ 'message' => $res['error'] ] );
