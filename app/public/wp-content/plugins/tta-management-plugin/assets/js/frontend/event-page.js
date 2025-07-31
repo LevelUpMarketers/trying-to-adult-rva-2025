@@ -156,6 +156,11 @@ jQuery(function($){
       return;
     }
 
+    if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pass)){
+      $resp.addClass('error').text( tta_event.password_requirements_msg );
+      return;
+    }
+
     $btn.prop('disabled', true);
     $spin.show().css({opacity:0}).fadeTo(200,1);
 

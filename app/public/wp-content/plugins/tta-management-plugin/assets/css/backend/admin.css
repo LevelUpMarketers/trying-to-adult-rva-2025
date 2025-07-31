@@ -166,17 +166,18 @@
 }
 
 .tta-admin-progress-response-p{
+    display:block;
+    min-height:1.5em;
     margin-top:0!important;
     font-weight: bold;
     font-size: 17px!important;
     max-width: 800px;
-    overflow:hidden;
-    max-height:0;
-    transition:max-height .3s ease;
+    opacity:0;
+    transition:opacity .2s ease;
 }
 .tta-admin-progress-response-p.updated,
 .tta-admin-progress-response-p.error{
-    max-height:1000px;
+    opacity:1;
 }
 
 form p.submit{
