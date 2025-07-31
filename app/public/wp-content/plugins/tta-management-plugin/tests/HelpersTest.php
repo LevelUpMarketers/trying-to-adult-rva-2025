@@ -649,6 +649,8 @@ class HelpersTest extends TestCase {
         $this->assertSame('a@example.com', $rows[0]['email']);
         $this->assertSame(10.0, $rows[0]['amount_paid']);
         $this->assertSame(55, $rows[0]['attendee_id']);
+        $this->assertArrayHasKey('attendee', $rows[0]);
+        $this->assertSame('Ann', $rows[0]['attendee']['first_name']);
         $this->assertSame(1, $wpdb->results_calls);
         $cached = tta_get_refund_requests();
         $this->assertSame(1, $wpdb->results_calls);

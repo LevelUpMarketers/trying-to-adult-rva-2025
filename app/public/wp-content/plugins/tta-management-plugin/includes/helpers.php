@@ -2352,6 +2352,20 @@ function tta_get_member_history_summary( $member_id ) {
 
     $summary['events'] = count( array_unique( $event_ids ) );
 
+    // Subtract any refunds issued to the member.
+    $refund_rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT action_data FROM {$hist_table} WHERE member_id = %d AND action_type = 'refund'",
+            $member_id
+        ),
+        ARRAY_A
+    );
+    foreach ( $refund_rows as $row ) {
+        $data   = json_decode( $row['action_data'], true );
+        $amount = floatval( $data['amount'] ?? 0 );
+        $summary['total_spent'] -= $amount;
+    }
+
     $status_rows = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT a.status FROM {$att_table} a
@@ -2370,7 +2384,7 @@ function tta_get_member_history_summary( $member_id ) {
     }
 
     $summary['refunds'] = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$hist_table} WHERE member_id = %d AND action_type = 'refund_request'",
+        "SELECT COUNT(*) FROM {$hist_table} WHERE member_id = %d AND action_type = 'refund'",
         $member_id
     ) );
 
@@ -2633,6 +2647,15 @@ function tta_get_refund_requests() {
     foreach ( $rows as $r ) {
         $data = json_decode( $r['action_data'], true );
         $att = $data['attendee'] ?? [];
+        $attendee = [
+            'id'          => intval( $att['id'] ?? 0 ),
+            'first_name'  => sanitize_text_field( $att['first_name'] ?? '' ),
+            'last_name'   => sanitize_text_field( $att['last_name'] ?? '' ),
+            'email'       => sanitize_email( $att['email'] ?? '' ),
+            'phone'       => sanitize_text_field( $att['phone'] ?? '' ),
+            'amount_paid' => isset( $att['amount_paid'] ) ? floatval( $att['amount_paid'] ) : 0,
+        ];
+
         $out[] = [
             'date'          => $r['action_date'],
             'member_id'     => intval( $r['member_id'] ),
@@ -2643,12 +2666,13 @@ function tta_get_refund_requests() {
             'transaction_id'=> sanitize_text_field( $data['transaction_id'] ?? '' ),
             'ticket_id'     => intval( $data['ticket_id'] ?? 0 ),
             'reason'        => sanitize_text_field( $data['reason'] ?? '' ),
-            'attendee_id'   => intval( $att['id'] ?? 0 ),
-            'first_name'    => sanitize_text_field( $att['first_name'] ?? '' ),
-            'last_name'     => sanitize_text_field( $att['last_name'] ?? '' ),
-            'email'         => sanitize_email( $att['email'] ?? '' ),
-            'phone'         => sanitize_text_field( $att['phone'] ?? '' ),
-            'amount_paid'   => isset( $att['amount_paid'] ) ? floatval( $att['amount_paid'] ) : 0,
+            'attendee_id'   => $attendee['id'],
+            'first_name'    => $attendee['first_name'],
+            'last_name'     => $attendee['last_name'],
+            'email'         => $attendee['email'],
+            'phone'         => $attendee['phone'],
+            'amount_paid'   => $attendee['amount_paid'],
+            'attendee'      => $attendee,
         ];
     }
 

@@ -9,7 +9,7 @@ An **Export Members** form lets administrators download a spreadsheet with the s
 - Count of events they have purchased
 - Count of events checked in
 - Count of no‑shows
-- Number of refund or cancellation requests
+- Number of refunds or cancellation requests
 - A complete payment history table including event purchases and membership charges
 - Membership cancellation entries noting who performed the action and the last four digits of the card
 - Any private notes stored with the member record appear in the expanded detail view rather than as a table column
