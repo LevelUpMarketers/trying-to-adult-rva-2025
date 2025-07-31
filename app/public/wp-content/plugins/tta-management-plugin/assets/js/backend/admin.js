@@ -917,7 +917,8 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   function handleRefund(e, mode){
     e.preventDefault();
     var id = $(e.currentTarget).data('attendee');
-    var $row = $(e.currentTarget).closest('tr[data-attendee-id]');
+    var $btn = $(e.currentTarget);
+    var $row = $btn.closest('tr[data-attendee-id]');
     var amount = $row.find('.tta-refund-amount').val();
     $.post(TTA_Ajax.ajax_url, {
       action: 'tta_refund_attendee',
@@ -927,6 +928,15 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
       nonce: TTA_Ajax.attendee_admin_nonce
     }, function(res){
       if(res.success){
+        if(res.data && res.data.pending){
+          if(mode === 'cancel'){
+            $btn.prop('disabled', true)
+                .addClass('tta-disabled tta-tooltip-trigger')
+                .attr('data-tooltip', 'Refund scheduled after settlement');
+          }
+          alert(res.data && res.data.message ? res.data.message : 'Refund pending');
+          return;
+        }
         if(mode === 'cancel'){
           $row.remove();
           alert(res.data && res.data.message ? res.data.message : 'Refund processed');
