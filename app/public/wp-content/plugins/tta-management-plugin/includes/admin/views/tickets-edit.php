@@ -232,6 +232,12 @@ $tickets = $wpdb->get_results(
                       <?php esc_html_e( 'Date & Time Joined', 'tta' ); ?>
                     </th>
                     <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason this refund has not yet been issued.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Pending Reason', 'tta' ); ?>
+                    </th>
+                    <th>
                       <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
                         <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
                       </span>
@@ -365,18 +371,24 @@ $tickets = $wpdb->get_results(
                     </span>
                     <?php esc_html_e( 'Purchaser', 'tta' ); ?>
                   </th>
-                  <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
-                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                    </span>
-                    <?php esc_html_e( 'Refund $', 'tta' ); ?>
-                  </th>
-                  <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
-                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                    </span>
-                    <?php esc_html_e( 'Actions', 'tta' ); ?>
-                  </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Refund $', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason this refund has not yet been issued.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Pending Reason', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Actions', 'tta' ); ?>
+                    </th>
                 </tr>
               </thead>
               <tbody>
@@ -389,7 +401,7 @@ $tickets = $wpdb->get_results(
                     $txdate  = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
                     <tr class="tta-transaction-group">
-                      <td colspan="7" style="background:#f9f9f9;font-weight:bold;">
+                      <td colspan="8" style="background:#f9f9f9;font-weight:bold;">
                         <?php echo esc_html( sprintf( __( 'Transaction #%d%s%s', 'tta' ), $txn_id, $txid, $txdate ) ); ?>
                       </td>
                     </tr>
@@ -401,12 +413,16 @@ $tickets = $wpdb->get_results(
                   $paid  = floatval( $a['amount_paid'] );
                   ?>
                   <?php
-                  $pending_ref = tta_get_refund_request( $a['gateway_id'], intval( $a['ticket_id'] ), intval( $a['id'] ) );
+                  $pending_ref   = tta_get_refund_request( $a['gateway_id'], intval( $a['ticket_id'] ), intval( $a['id'] ) );
                   $cancel_classes = 'tta-refund-cancel-attendee';
                   $cancel_extra   = '';
+                  $keep_classes   = 'tta-refund-keep-attendee';
+                  $keep_extra     = '';
                   if ( $pending_ref ) {
                       $cancel_classes .= ' tta-disabled tta-tooltip-trigger';
                       $cancel_extra    = ' disabled="disabled" data-tooltip="' . esc_attr__( 'Refund scheduled after settlement.', 'tta' ) . '"';
+                      $keep_classes   .= ' tta-disabled tta-tooltip-trigger';
+                      $keep_extra      = ' disabled="disabled" data-tooltip="' . esc_attr__( 'Refund scheduled after settlement.', 'tta' ) . '"';
                   }
                   ?>
                   <tr data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>">
@@ -422,7 +438,7 @@ $tickets = $wpdb->get_results(
                       <button type="button" class="<?php echo esc_attr( $cancel_classes ); ?>" data-attendee="<?php echo esc_attr( $a['id'] ); ?>"<?php echo $cancel_extra; ?>>
                         <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
                       </button>
-                      <button type="button" class="tta-refund-keep-attendee" data-attendee="<?php echo esc_attr( $a['id'] ); ?>">
+                      <button type="button" class="<?php echo esc_attr( $keep_classes ); ?>" data-attendee="<?php echo esc_attr( $a['id'] ); ?>"<?php echo $keep_extra; ?>>
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
                       </button>
                       <button type="button" class="tta-cancel-attendee" data-attendee="<?php echo esc_attr( $a['id'] ); ?>">
@@ -482,18 +498,24 @@ $tickets = $wpdb->get_results(
                     </span>
                     <?php esc_html_e( 'Purchaser', 'tta' ); ?>
                   </th>
-                  <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
-                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                    </span>
-                    <?php esc_html_e( 'Refund $', 'tta' ); ?>
-                  </th>
-                  <th>
-                    <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
-                      <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
-                    </span>
-                    <?php esc_html_e( 'Actions', 'tta' ); ?>
-                  </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Specify a partial refund amount.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Refund $', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Reason this refund has not yet been issued.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Pending Reason', 'tta' ); ?>
+                    </th>
+                    <th>
+                      <span class="tta-tooltip-icon" data-tooltip="<?php esc_attr_e( 'Available actions for the attendee.', 'tta' ); ?>">
+                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ); ?>" alt="?">
+                      </span>
+                      <?php esc_html_e( 'Actions', 'tta' ); ?>
+                    </th>
                 </tr>
               </thead>
               <tbody>
@@ -504,32 +526,49 @@ $tickets = $wpdb->get_results(
                     $txid   = $a['gateway_id'] ? ' - ' . __( 'Transaction ID', 'tta' ) . ' ' . $a['gateway_id'] : '';
                     $txdate = $a['created_at'] ? ' - ' . mysql2date( 'n/j/Y g:i a', $a['created_at'] ) : '';
                   ?>
-                    <tr class="tta-transaction-group">
-                      <td colspan="7" style="background:#f9f9f9;font-weight:bold;">
+                      <tr class="tta-transaction-group">
+                        <td colspan="8" style="background:#f9f9f9;font-weight:bold;">
                         <?php echo esc_html( sprintf( __( 'Pending Refund%s%s', 'tta' ), $txid, $txdate ) ); ?>
                       </td>
                     </tr>
                   <?php endif; ?>
                   <?php
-                  $name  = trim( $a['first_name'] . ' ' . $a['last_name'] );
-                  $email  = $a['email'];
-                  $phone  = $a['phone'];
-                  $reason = $a['reason'];
-                  $paid   = floatval( $a['amount_paid'] );
-                  ?>
-                  <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
-                    <td><?php echo esc_html( $name ); ?></td>
-                    <td><?php echo esc_html( $email ); ?><?php echo $phone ? '<br>' . esc_html( $phone ) : ''; ?></td>
-                    <td><?php echo esc_html( $reason ); ?></td>
-                    <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
-                    <td><?php echo ! empty( $a['is_purchaser'] ) ? esc_html__( 'Yes', 'tta' ) : esc_html__( 'No', 'tta' ); ?></td>
-                    <td>
-                      <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">
-                    </td>
-                    <td>
-                      <button type="button" class="tta-refund-request-process" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
-                        <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
-                      </button>
+                    $name  = trim( $a['first_name'] . ' ' . $a['last_name'] );
+                    $email  = $a['email'];
+                    $phone  = $a['phone'];
+                    $reason = $a['reason'];
+                    if ( '' === $reason && ! empty( $a['mode'] ) ) {
+                        if ( 'cancel' === $a['mode'] ) {
+                            $reason = __( 'Admin manually issued a "Refund & Cancel Attendance" request. Waiting for transaction to settle.', 'tta' );
+                        } else {
+                            $reason = __( 'Admin manually issued a "Refund & Keep Attendance" request. Waiting for transaction to settle.', 'tta' );
+                        }
+                    }
+                    $paid   = floatval( $a['amount_paid'] );
+                    $stock  = tta_get_ticket_stock( $tid );
+                    $released = tta_get_released_refund_count( $tid );
+                    if ( 'settlement' === ( $a['pending_reason'] ?? '' ) ) {
+                        $pending_reason = __( 'Waiting for transaction to settle', 'tta' );
+                    } elseif ( $released > 0 && $stock > 0 ) {
+                        $pending_reason = __( 'Waiting for waitlist purchase', 'tta' );
+                    } else {
+                        $pending_reason = __( 'Event has yet to sell out', 'tta' );
+                    }
+                    ?>
+                    <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
+                      <td><?php echo esc_html( $name ); ?></td>
+                      <td><?php echo esc_html( $email ); ?><?php echo $phone ? '<br>' . esc_html( $phone ) : ''; ?></td>
+                      <td><?php echo esc_html( $reason ); ?></td>
+                      <td><?php echo $paid ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $paid, 2 ) ) : '&ndash;'; ?></td>
+                      <td><?php echo ! empty( $a['is_purchaser'] ) ? esc_html__( 'Yes', 'tta' ) : esc_html__( 'No', 'tta' ); ?></td>
+                      <td>
+                        <input type="number" class="tta-refund-amount" step="0.01" style="width:70px" placeholder="<?php esc_attr_e( 'Full', 'tta' ); ?>">
+                      </td>
+                      <td><?php echo esc_html( $pending_reason ); ?></td>
+                      <td>
+                        <button type="button" class="tta-refund-request-process" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                          <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
+                        </button>
                       <button type="button" class="tta-refund-request-process" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
                       </button>

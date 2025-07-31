@@ -188,6 +188,8 @@ class TTA_Ajax_Attendance {
                     'transaction_id' => $tx['transaction_id'],
                     'ticket_id'      => intval( $att['ticket_id'] ),
                     'reason'         => '',
+                    'mode'           => $mode,
+                    'pending_reason' => 'settlement',
                     'attendee'       => [
                         'id'         => $id,
                         'first_name' => $att['first_name'],
