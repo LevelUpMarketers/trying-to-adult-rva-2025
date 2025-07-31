@@ -112,3 +112,72 @@ jQuery(function($){
     }
   });
 });
+
+jQuery(function($){
+  $('#tta-login-message').on('click', '.tta-show-register', function(e){
+    e.preventDefault();
+    $('#tta-login-wrap').fadeOut(200, function(){
+      $('#tta-register-form').fadeIn(200);
+    });
+  });
+
+  $('#tta-register-form').on('submit', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var $form = $(this),
+        $btn  = $form.find('button'),
+        $spin = $form.find('.tta-admin-progress-spinner-svg'),
+        $resp = $('#tta-register-response');
+    $resp.removeClass('updated error').text('');
+
+    var email       = $form.find('[name="email"]').val();
+    var emailVerify = $form.find('[name="email_verify"]').val();
+    var pass        = $form.find('[name="password"]').val();
+    var passVerify  = $form.find('[name="password_verify"]').val();
+
+    if(email !== emailVerify){
+      $resp.addClass('error').text( tta_event.email_mismatch_msg );
+      return;
+    }
+
+    if(pass !== passVerify){
+      $resp.addClass('error').text( tta_event.password_mismatch_msg );
+      return;
+    }
+
+    $btn.prop('disabled', true);
+    $spin.show().css({opacity:0}).fadeTo(200,1);
+
+    $.post( tta_ajax.ajax_url, {
+      action: 'tta_register',
+      nonce: tta_ajax.nonce,
+      first_name: $form.find('[name="first_name"]').val(),
+      last_name:  $form.find('[name="last_name"]').val(),
+      email:      email,
+      email_verify: emailVerify,
+      password:   pass,
+      password_verify: passVerify
+    }, function(res){
+      $spin.fadeOut(200);
+      if(res.success){
+        var count = 5;
+        (function update(){
+          $resp.removeClass('error').addClass('updated')
+               .text( tta_event.account_created_msg.replace('%d', count) );
+          if(count-- > 0){
+            setTimeout(update, 1000);
+          } else {
+            window.location.reload();
+          }
+        })();
+      } else {
+        $btn.prop('disabled', false);
+        $resp.addClass('error').text(res.data.message || 'Error');
+      }
+    }, 'json').fail(function(){
+      $spin.fadeOut(200);
+      $btn.prop('disabled', false);
+      $resp.addClass('error').text( tta_event.request_failed_msg );
+    });
+  });
+});

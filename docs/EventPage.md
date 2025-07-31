@@ -27,7 +27,9 @@ Returned array keys:
 
 ## Message Center
 
-The Event Page template includes a **Message Center** block under the “About This Event” section. When a visitor is not logged in a small callout invites them to authenticate. The block begins with a **Log in or Register Here** heading followed by a login form that is visible by default. Clicking **Log in here** toggles the embedded form with the same accordion animation used elsewhere on the page. The form submits via `wp_login_form()` and redirects back to the event page on success. A link to the standard registration page is also provided.
+The Event Page template includes a **Message Center** block under the “About This Event” section. When a visitor is not logged in a small callout invites them to authenticate. The block begins with a **Log in or Register Here** heading followed by a login form that is visible by default. Clicking **Log in here** toggles the embedded form with the same accordion animation used elsewhere on the page.
+
+Guests can now create a free account directly within this block. Selecting **Create Account** fades out the login form and reveals a registration form requesting first name, last name, email (entered twice for verification), and password (also entered twice). A progress spinner and response area provide feedback. The form checks that the email and password fields match and ensures no existing WordPress user or member already uses the email address. On success, a confirmation message displays a five‑second countdown before the page reloads and automatically logs the new member in.
 
 ## Event Type and Ticket Context
 
