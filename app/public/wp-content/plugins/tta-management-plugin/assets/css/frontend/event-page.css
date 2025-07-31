@@ -84,6 +84,12 @@
   border-radius: 4px;
 }
 
+.tta-button-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
+}
+
 .tta-event-main #tta-login-message .tta-button-primary {
   margin-right:10px;
 }
@@ -410,17 +416,16 @@
   to { transform: rotate(360deg); }
 }
 .tta-admin-progress-response-p {
+  display:block;
+  min-height:1.5em;
   font-size:18px;
   font-weight:bold;
   opacity:0;
-  overflow:hidden;
-  max-height:0;
-  transition:opacity 0.2s ease,max-height 0.3s ease;
+  transition:opacity 0.2s ease;
 }
 .tta-admin-progress-response-p.updated,
 .tta-admin-progress-response-p.error {
   opacity:1;
-  max-height:1000px;
 }
 .tta-ticket-price {
   margin-left: auto;

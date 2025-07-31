@@ -223,6 +223,7 @@ class TTA_Assets {
                     'sold_out_msg'   => __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' ),
                     'email_mismatch_msg' => __( 'Email addresses do not match.', 'tta' ),
                     'password_mismatch_msg' => __( 'Passwords do not match.', 'tta' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
                     'request_failed_msg' => __( 'Request failed.', 'tta' ),
                     'account_created_msg' => __( 'Account created! Reloading in %d…', 'tta' ),
                 ]
@@ -394,6 +395,7 @@ class TTA_Assets {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
                 ]
             );
 

@@ -41,8 +41,14 @@ jQuery(function($){
 
     var email       = $form.find('[name="email"]').val();
     var emailVerify = $form.find('[name="email_verify"]').val();
+    var pass        = $form.find('[name="password"]').val();
     if(email !== emailVerify){
       $resp.addClass('error').text('Email addresses do not match.');
+      return;
+    }
+
+    if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pass)){
+      $resp.addClass('error').text( tta_ajax.password_requirements_msg );
       return;
     }
 
@@ -54,7 +60,7 @@ jQuery(function($){
       first_name: $form.find('[name="first_name"]').val(),
       last_name:  $form.find('[name="last_name"]').val(),
       email:      email,
-      password:   $form.find('[name="password"]').val()
+      password:   pass
     }, function(res){ handleResult($resp, $spin, $btn, res); }, 'json').fail(function(){
       handleResult($resp, $spin, $btn, { success:false, data:{ message:'Request failed.' } });
     });

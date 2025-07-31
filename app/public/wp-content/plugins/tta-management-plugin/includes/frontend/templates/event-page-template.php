@@ -789,6 +789,7 @@ echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
                 </p>
                 <p>
                   <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
+                  <a href="#tta-login-message" class="tta-button-link tta-cancel-register"><?php esc_html_e( 'Cancel Account Creation', 'tta' ); ?></a>
                   <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
                 </p>
                 <span id="tta-register-response" class="tta-admin-progress-response-p"></span>

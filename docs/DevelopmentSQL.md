@@ -253,11 +253,11 @@ ALTER TABLE `wp_j9bzlz98u3_tta_members`
 
 ## Track subscription status
 
-Version 1.4.0 adds a `subscription_status` column to `tta_members` which stores `active` or `cancelled` for each subscription.
+Version 1.4.0 adds a `subscription_status` column to `tta_members` which stores `active`, `cancelled`, or `paymentproblem` for each subscription. The column defaults to `NULL` for new members.
 
 ```sql
 ALTER TABLE `wp_j9bzlz98u3_tta_members`
-  ADD COLUMN `subscription_status` ENUM('active','cancelled') DEFAULT 'active' AFTER `subscription_id`;
+  ADD COLUMN `subscription_status` ENUM('active','cancelled','paymentproblem') DEFAULT NULL AFTER `subscription_id`;
 ```
 
 ## Add attendee email indexes

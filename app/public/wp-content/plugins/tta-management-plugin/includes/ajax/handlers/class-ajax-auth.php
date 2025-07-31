@@ -44,6 +44,9 @@ class TTA_Ajax_Auth {
         if ( $pass !== $pass_verify ) {
             wp_send_json_error( [ 'message' => __( 'Passwords do not match.', 'tta' ) ] );
         }
+        if ( ! preg_match( '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $pass ) ) {
+            wp_send_json_error( [ 'message' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ) ] );
+        }
         if ( email_exists( $email ) || tta_get_member_row_by_email( $email ) ) {
             wp_send_json_error( [ 'message' => __( 'Email already in use.', 'tta' ) ] );
         }
@@ -75,8 +78,9 @@ class TTA_Ajax_Auth {
                 'joined_at'        => current_time( 'mysql' ),
                 'member_type'      => 'member',
                 'membership_level' => 'free',
+                'subscription_status' => null,
             ],
-            [ '%d', '%s', '%s', '%s', '%s', '%s', '%s' ]
+            [ '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
         );
 
         if ( false === $inserted ) {

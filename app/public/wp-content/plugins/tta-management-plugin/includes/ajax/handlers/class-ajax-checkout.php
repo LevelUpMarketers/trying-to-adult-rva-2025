@@ -93,7 +93,7 @@ class TTA_Ajax_Checkout {
             if ( ! $sub['success'] ) {
                 wp_send_json_error( [ 'message' => $sub['error'] ] );
             }
-            tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'] );
+            tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'], 'active' );
             $_SESSION['tta_checkout_sub'] = [
                 'subscription_id' => $sub['subscription_id'],
                 'result_code'     => $sub['result_code'] ?? '',

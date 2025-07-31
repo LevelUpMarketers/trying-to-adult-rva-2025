@@ -141,7 +141,7 @@ class TTA_DB_Setup {
             member_type                     ENUM('member','volunteer','admin','super_admin') DEFAULT 'member',
             membership_level                ENUM('free','basic','premium') DEFAULT 'free',
             subscription_id                 VARCHAR(50) DEFAULT NULL,
-            subscription_status            ENUM('active','cancelled','paymentproblem') DEFAULT 'active',
+            subscription_status            ENUM('active','cancelled','paymentproblem') DEFAULT NULL,
             facebook                        VARCHAR(191) DEFAULT NULL,
             linkedin                        VARCHAR(191) DEFAULT NULL,
             instagram                       VARCHAR(191) DEFAULT NULL,
