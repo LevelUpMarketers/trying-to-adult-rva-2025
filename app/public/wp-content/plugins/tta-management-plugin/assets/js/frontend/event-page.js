@@ -113,20 +113,31 @@ jQuery(function($){
   });
 });
 
-jQuery(function($){
-  $('#tta-login-message').on('click', '.tta-show-register', function(e){
-    e.preventDefault();
-    $('#tta-login-wrap').fadeOut(200, function(){
-      $('#tta-register-form').fadeIn(200);
+  jQuery(function($){
+    $('#tta-login-message').on('click', '.tta-show-register', function(e){
+      e.preventDefault();
+      var $link = $(this);
+      $link.addClass('tta-button-disabled').attr('aria-disabled', 'true').attr('tabindex', '-1');
+      $('#tta-login-wrap').fadeOut(200, function(){
+        $('#tta-register-form').fadeIn(200);
+      });
     });
-  });
 
-  $('#tta-register-form').on('submit', function(e){
-    e.preventDefault();
-    e.stopPropagation();
-    var $form = $(this),
-        $btn  = $form.find('button'),
-        $spin = $form.find('.tta-admin-progress-spinner-svg'),
+    $('#tta-register-form').on('click', '.tta-cancel-register', function(e){
+      e.preventDefault();
+      $('#tta-register-form').fadeOut(200, function(){
+        $('#tta-login-wrap').fadeIn(200);
+      });
+      var $link = $('#tta-login-message .tta-show-register');
+      $link.removeClass('tta-button-disabled').removeAttr('aria-disabled tabindex');
+    });
+
+    $('#tta-register-form').on('submit', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      var $form = $(this),
+          $btn  = $form.find('button'),
+          $spin = $form.find('.tta-admin-progress-spinner-svg'),
         $resp = $('#tta-register-response');
     $resp.removeClass('updated error').text('');
 
