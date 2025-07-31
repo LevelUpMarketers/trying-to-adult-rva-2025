@@ -176,6 +176,12 @@ li.tta-event-list-item > div > a > span:hover{
   border-bottom: 0;
 }
 
+.tta-price-strike {
+  text-decoration: line-through;
+  color: #a00;
+  margin-right: 4px;
+}
+
 
 .tta-event-thumb {
   flex: 0 0 150px;

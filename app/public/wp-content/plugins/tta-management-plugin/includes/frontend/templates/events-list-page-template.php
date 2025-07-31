@@ -247,8 +247,45 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         $excerpt   = wp_trim_words( wp_strip_all_tags( $content ), 25, '…' );
         $remaining = tta_get_remaining_ticket_count( $ev['ute_id'] );
         $has_waitlist = ( '1' === (string) ( $ev['waitlistavailable'] ?? '0' ) );
-        $cost      = floatval( $ev['baseeventcost'] ?? 0 );
-        $cost_str  = $cost ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $cost, 2 ) ) : esc_html__( 'Free', 'tta' );
+
+        $base_cost    = floatval( $ev['baseeventcost'] ?? 0 );
+        $basic_cost   = floatval( $ev['discountedmembercost'] ?? $base_cost );
+        $premium_cost = floatval( $ev['premiummembercost'] ?? $basic_cost );
+
+        $base_str    = $base_cost    ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $base_cost, 2 ) )    : __( 'Free', 'tta' );
+        $basic_str   = $basic_cost   ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $basic_cost, 2 ) )   : __( 'Free', 'tta' );
+        $premium_str = $premium_cost ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $premium_cost, 2 ) ) : __( 'Free', 'tta' );
+
+        if ( $context['is_logged_in'] ) {
+            if ( 'basic' === $context['membership_level'] && $basic_cost !== $base_cost ) {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-basic'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str ),
+                    esc_html( $basic_str )
+                );
+            } elseif ( 'premium' === $context['membership_level'] && $premium_cost !== $base_cost ) {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-premium'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str ),
+                    esc_html( $premium_str )
+                );
+            } else {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class'><strong>%s</strong> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str )
+                );
+            }
+        } else {
+            $cost_html = sprintf(
+                "<span class='tta-ticket-price tta-event-costmod-class'><strong>%s</strong> %s</span>",
+                esc_html__( 'Cost:', 'tta' ),
+                esc_html( $base_str )
+            );
+        }
+
         $type_map  = [
             'free'       => __( 'Open Event', 'tta' ),
             'paid'       => __( 'Basic Membership Required', 'tta' ),
@@ -273,7 +310,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                         </li>
                         <li>
                             <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/money.svg' ); ?>" alt="">
-                            <div class="tta-event-details-icon-after"><strong><?php esc_html_e( 'Cost:', 'tta' ); ?></strong> <?php echo esc_html( $cost_str ); ?></div>
+                            <div class="tta-event-details-icon-after"><?php echo wp_kses_post( $cost_html ); ?></div>
                         </li>
                         <?php if ( $event_type ) : ?>
                         <li>

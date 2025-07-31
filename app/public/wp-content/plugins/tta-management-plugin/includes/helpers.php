@@ -3540,17 +3540,20 @@ function tta_get_upcoming_events( $paged = 1, $per_page = 5 ) {
     $events = [];
     foreach ( $rows as $row ) {
         $events[] = [
-            'id'            => intval( $row['id'] ),
-            'ute_id'        => sanitize_text_field( $row['ute_id'] ),
-            'name'          => sanitize_text_field( $row['name'] ),
-            'date'          => $row['date'],
-            'time'          => $row['time'],
-            'all_day_event' => ! empty( $row['all_day_event'] ),
-            'venuename'     => sanitize_text_field( $row['venuename'] ),
-            'address'       => sanitize_text_field( $row['address'] ),
-            'waitlistavailable' => ! empty( $row['waitlistavailable'] ),
-            'page_id'       => intval( $row['page_id'] ),
-            'mainimageid'   => intval( $row['mainimageid'] ),
+            'id'                 => intval( $row['id'] ),
+            'ute_id'             => sanitize_text_field( $row['ute_id'] ),
+            'name'               => sanitize_text_field( $row['name'] ),
+            'date'               => $row['date'],
+            'time'               => $row['time'],
+            'all_day_event'      => ! empty( $row['all_day_event'] ),
+            'venuename'          => sanitize_text_field( $row['venuename'] ),
+            'address'            => sanitize_text_field( $row['address'] ),
+            'waitlistavailable'  => ! empty( $row['waitlistavailable'] ),
+            'page_id'            => intval( $row['page_id'] ),
+            'mainimageid'        => intval( $row['mainimageid'] ),
+            'baseeventcost'      => floatval( $row['baseeventcost'] ?? 0 ),
+            'discountedmembercost' => floatval( $row['discountedmembercost'] ?? 0 ),
+            'premiummembercost'  => floatval( $row['premiummembercost'] ?? 0 ),
         ];
     }
 
