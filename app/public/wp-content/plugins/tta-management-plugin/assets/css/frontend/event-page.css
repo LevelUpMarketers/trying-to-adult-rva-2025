@@ -722,7 +722,15 @@ input[disabled]::before {
 /* Accordion fade + transition already in place from your description section */
 
 
+#tta-register-form > p{
+  display:inline-block;
+  margin-right: 10px;
+}
 
+.tta-event-main #tta-login-message #loginform .login-username, .tta-event-main #tta-login-message #loginform .login-password{
+  display:inline-block;
+  margin-right:10px;
+}
 
 
 
