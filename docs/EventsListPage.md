@@ -23,12 +23,14 @@ The layout consists of three columns:
   **Membership Perks** panel encouraging
   upgrades.
 2. **Center column** – the list of upcoming events ordered by date. Each row links
-  to the corresponding Event Page. Event images are set as background images on
-  a 150×150&nbsp;px container so every row stays the same size without image
-  distortion. They are right aligned.
+   to the corresponding Event Page. Event images are set as background images on
+   a 150×150&nbsp;px container so every row stays the same size without image
+   distortion. They are right aligned.
    Below each event name a list of key details appears with the same icons used on individual Event Pages.
+   The cost line shows the event's base price; when logged in and eligible for a member discount,
+   the base price is crossed out in red and replaced with the visitor's price for their membership level.
    When an event sells out the remaining ticket count is replaced with **Sold Out!** in red text.
-  The “Get Your Tickets” button changes to **Join The Waitlist** when a waitlist is available or **Sold Out** when not. This only happens when all ticket types for the event are sold out. The underlying event data includes a `waitlistavailable` flag used to determine availability.
+   The “Get Your Tickets” button changes to **Join The Waitlist** when a waitlist is available or **Sold Out** when not. This only happens when all ticket types for the event are sold out. The underlying event data includes a `waitlistavailable` flag used to determine availability.
 3. **Right column** – an advertising slot that displays one random ad image from
    the Ads admin page.
 
