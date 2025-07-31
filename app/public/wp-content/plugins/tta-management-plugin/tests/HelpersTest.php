@@ -426,6 +426,37 @@ class HelpersTest extends TestCase {
         $this->assertStringContainsString('wp_tta_tickets', $wpdb->last_query);
     }
 
+    public function test_ticket_cost_range_returns_min_max() {
+        global $wpdb;
+        $wpdb = new class {
+            public $prefix = 'wp_';
+            public $rows = [];
+            public $last_query = '';
+            public function get_results( $q, $o = ARRAY_A ) { $this->last_query = $q; return $this->rows; }
+            public function prepare( $q, ...$a ) { foreach ( $a as $v ) { $q = preg_replace( '/%s/', $v, $q, 1 ); } return $q; }
+        };
+        $wpdb->rows = [
+            [ 'baseeventcost' => 20, 'discountedmembercost' => 10, 'premiummembercost' => 9 ],
+            [ 'baseeventcost' => 90, 'discountedmembercost' => 70, 'premiummembercost' => 65 ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+
+        $range = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( 20.0, $range['base_min'] );
+        $this->assertSame( 90.0, $range['base_max'] );
+        $this->assertSame( 10.0, $range['basic_min'] );
+        $this->assertSame( 70.0, $range['basic_max'] );
+        $this->assertSame( 9.0, $range['premium_min'] );
+        $this->assertSame( 65.0, $range['premium_max'] );
+
+        // Confirm cached result is returned
+        $wpdb->rows = [];
+        $range2 = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( $range, $range2 );
+    }
+
     public function test_get_upcoming_events_returns_rows() {
         global $wpdb;
         $wpdb = new class {

@@ -3476,6 +3476,78 @@ function tta_get_remaining_ticket_count( $event_ute_id ) {
 }
 
 /**
+ * Get min and max ticket costs for an event.
+ *
+ * Returns an array with base, basic and premium cost ranges. Each key
+ * has `_min` and `_max` variants. Results are cached for five minutes.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return array{
+ *     base_min:float, base_max:float,
+ *     basic_min:float, basic_max:float,
+ *     premium_min:float, premium_max:float
+ * }
+ */
+function tta_get_ticket_cost_range( $event_ute_id ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return [
+            'base_min'    => 0.0,
+            'base_max'    => 0.0,
+            'basic_min'   => 0.0,
+            'basic_max'   => 0.0,
+            'premium_min' => 0.0,
+            'premium_max' => 0.0,
+        ];
+    }
+
+    $cache_key = 'ticket_cost_range_' . $event_ute_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $tickets_table   = $wpdb->prefix . 'tta_tickets';
+    $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
+
+    $sql = "(SELECT baseeventcost, discountedmembercost, premiummembercost FROM {$tickets_table} WHERE event_ute_id = %s) UNION ALL (SELECT baseeventcost, discountedmembercost, premiummembercost FROM {$tickets_archive} WHERE event_ute_id = %s)";
+    $rows = $wpdb->get_results( $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ), ARRAY_A );
+
+    $base  = [];
+    $basic = [];
+    $prem  = [];
+    foreach ( $rows as $r ) {
+        $base[]  = floatval( $r['baseeventcost'] );
+        $basic[] = floatval( $r['discountedmembercost'] );
+        $prem[]  = floatval( $r['premiummembercost'] );
+    }
+
+    if ( empty( $base ) ) {
+        $result = [
+            'base_min'    => 0.0,
+            'base_max'    => 0.0,
+            'basic_min'   => 0.0,
+            'basic_max'   => 0.0,
+            'premium_min' => 0.0,
+            'premium_max' => 0.0,
+        ];
+    } else {
+        $result = [
+            'base_min'    => min( $base ),
+            'base_max'    => max( $base ),
+            'basic_min'   => min( $basic ),
+            'basic_max'   => max( $basic ),
+            'premium_min' => min( $prem ),
+            'premium_max' => max( $prem ),
+        ];
+    }
+
+    TTA_Cache::set( $cache_key, $result, 300 );
+    return $result;
+}
+
+/**
  * Get the remaining stock for a ticket.
  *
  * @param int $ticket_id Ticket ID.

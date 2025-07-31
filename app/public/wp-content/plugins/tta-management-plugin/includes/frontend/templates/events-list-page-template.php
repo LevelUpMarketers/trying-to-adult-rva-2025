@@ -248,23 +248,39 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         $remaining = tta_get_remaining_ticket_count( $ev['ute_id'] );
         $has_waitlist = ( '1' === (string) ( $ev['waitlistavailable'] ?? '0' ) );
 
-        $base_cost    = floatval( $ev['baseeventcost'] ?? 0 );
-        $basic_cost   = floatval( $ev['discountedmembercost'] ?? $base_cost );
-        $premium_cost = floatval( $ev['premiummembercost'] ?? $basic_cost );
+        $cost_range = tta_get_ticket_cost_range( $ev['ute_id'] );
+        $base_min   = floatval( $cost_range['base_min'] );
+        $base_max   = floatval( $cost_range['base_max'] );
+        $basic_min  = floatval( $cost_range['basic_min'] );
+        $basic_max  = floatval( $cost_range['basic_max'] );
+        $premium_min = floatval( $cost_range['premium_min'] );
+        $premium_max = floatval( $cost_range['premium_max'] );
 
-        $base_str    = $base_cost    ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $base_cost, 2 ) )    : __( 'Free', 'tta' );
-        $basic_str   = $basic_cost   ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $basic_cost, 2 ) )   : __( 'Free', 'tta' );
-        $premium_str = $premium_cost ? sprintf( __( '$%s', 'tta' ), number_format_i18n( $premium_cost, 2 ) ) : __( 'Free', 'tta' );
+        $format_cost = static function( $min, $max ) {
+            if ( 0 === $min && 0 === $max ) {
+                return __( 'Free', 'tta' );
+            }
+            $min_str = sprintf( __( '$%s', 'tta' ), number_format_i18n( $min, 2 ) );
+            if ( $min === $max ) {
+                return $min_str;
+            }
+            $max_str = sprintf( __( '$%s', 'tta' ), number_format_i18n( $max, 2 ) );
+            return $min_str . ' - ' . $max_str;
+        };
+
+        $base_str    = $format_cost( $base_min, $base_max );
+        $basic_str   = $format_cost( $basic_min, $basic_max );
+        $premium_str = $format_cost( $premium_min, $premium_max );
 
         if ( $context['is_logged_in'] ) {
-            if ( 'basic' === $context['membership_level'] && $basic_cost !== $base_cost ) {
+            if ( 'basic' === $context['membership_level'] && ( $basic_min !== $base_min || $basic_max !== $base_max ) ) {
                 $cost_html = sprintf(
                     "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-basic'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
                     esc_html__( 'Cost:', 'tta' ),
                     esc_html( $base_str ),
                     esc_html( $basic_str )
                 );
-            } elseif ( 'premium' === $context['membership_level'] && $premium_cost !== $base_cost ) {
+            } elseif ( 'premium' === $context['membership_level'] && ( $premium_min !== $base_min || $premium_max !== $base_max ) ) {
                 $cost_html = sprintf(
                     "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-premium'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
                     esc_html__( 'Cost:', 'tta' ),
