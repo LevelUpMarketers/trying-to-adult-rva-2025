@@ -538,7 +538,7 @@ $tickets = $wpdb->get_results(
                     if ( 'settlement' === ( $a['pending_reason'] ?? '' ) ) {
                         $pending_reason = __( 'Waiting for transaction to settle', 'tta' );
                     } elseif ( $released > 0 && $stock > 0 ) {
-                        $pending_reason = __( 'Waiting for waitlist purchase', 'tta' );
+                        $pending_reason = __( 'Up for sale - waiting to be purchased', 'tta' );
                     } else {
                         $pending_reason = __( 'Event has yet to sell out', 'tta' );
                     }

@@ -3211,6 +3211,7 @@ function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true,
         if ( ! empty( $ticket['event_ute_id'] ) ) {
             TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
         }
+        TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
     }
 
     TTA_Cache::flush();
@@ -4379,6 +4380,7 @@ function tta_release_refund_tickets( $event_ute_id ) {
         if ( $pool > 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
             TTA_Cache::delete( 'tickets_' . $event_ute_id );
+            TTA_Cache::delete( 'ticket_stock_' . $tid );
             tta_set_released_refund_count( $tid, $pool );
             tta_notify_waitlist_ticket_available( $tid );
         }

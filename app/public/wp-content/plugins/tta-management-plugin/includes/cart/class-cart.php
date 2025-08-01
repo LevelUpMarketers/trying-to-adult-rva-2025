@@ -118,6 +118,8 @@ class TTA_Cart {
       TTA_Cache::delete( 'tickets_' . $event_ute_id );
     }
 
+    TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+
     if ( $should_notify ) {
       tta_notify_waitlist_ticket_available( $ticket_id );
     }
