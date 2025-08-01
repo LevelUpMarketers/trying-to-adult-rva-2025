@@ -108,7 +108,6 @@ class TTA_Refund_Processor {
      * @param int   $user_id Buyer user ID.
      */
     public static function handle_purchase( array $items, $user_id ) {
-        global $wpdb;
         $events = [];
 
         foreach ( $items as $it ) {
@@ -118,6 +117,11 @@ class TTA_Refund_Processor {
                 $events[ $event_ute ] = true;
             }
         }
+
+        // First process any refund requests that can now be issued. This must
+        // happen before releasing additional refund tickets so counts stay
+        // accurate and purchased refund tickets are removed from the pool.
+        self::retry_pending_requests();
 
         foreach ( array_keys( $events ) as $ute ) {
             tta_release_refund_tickets( $ute );
@@ -201,6 +205,7 @@ class TTA_Refund_Processor {
                     TTA_Cache::delete( 'tta_refund_requests' );
                 }
                 self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
+                tta_decrement_released_refund_count( intval( $req['ticket_id'] ) );
                 return;
             }
         }

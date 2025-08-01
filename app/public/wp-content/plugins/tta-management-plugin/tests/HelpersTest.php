@@ -776,6 +776,64 @@ class HelpersTest extends TestCase {
         $this->assertSame( 1, $this->wpdb->row_calls );
     }
 
+    public function test_refund_pool_count_excludes_settlement_requests() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        TTA_Cache::delete( 'pending_refund_attendees_9_20' );
+        $att1 = [
+            'id'         => 1,
+            'first_name' => 'Ann',
+            'last_name'  => 'Bee',
+            'email'      => 'a@example.com',
+            'phone'      => '123',
+            'amount_paid'=> 10.0,
+        ];
+        $att2 = [
+            'id'         => 2,
+            'first_name' => 'Carl',
+            'last_name'  => 'Dee',
+            'email'      => 'c@example.com',
+            'phone'      => '555',
+            'amount_paid'=> 10.0,
+        ];
+        $wpdb->results_data = [
+            [
+                'member_id'   => 7,
+                'action_date' => '2025-07-01 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'waitlist',
+                    'attendee'       => $att1,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Ann',
+                'last_name'  => 'Bee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+            [
+                'member_id'   => 8,
+                'action_date' => '2025-07-02 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'settlement',
+                    'attendee'       => $att2,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Carl',
+                'last_name'  => 'Dee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        $this->assertCount( 2, tta_get_ticket_pending_refund_attendees( 9, 20 ) );
+        $this->assertSame( 1, tta_get_ticket_refund_pool_count( 9, 20 ) );
+    }
+
     public function test_convert_links_transforms_markdown() {
         require_once __DIR__ . '/../includes/helpers.php';
         $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';

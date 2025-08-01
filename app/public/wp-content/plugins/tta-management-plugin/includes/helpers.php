@@ -3066,10 +3066,19 @@ function tta_get_ticket_refunded_attendees( $ticket_id, $event_id ) {
  *
  * @param int $ticket_id Ticket ID.
  * @param int $event_id  Event ID.
- * @return int
+ * @return int Number of refund requests eligible to release. Requests with a
+ *             pending reason of 'settlement' are excluded.
  */
 function tta_get_ticket_refund_pool_count( $ticket_id, $event_id ) {
-    return count( tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) );
+    $attendees = tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id );
+    $count     = 0;
+    foreach ( $attendees as $att ) {
+        if ( 'settlement' === ( $att['pending_reason'] ?? '' ) ) {
+            continue;
+        }
+        $count++;
+    }
+    return $count;
 }
 
 /**
