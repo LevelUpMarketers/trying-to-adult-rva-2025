@@ -834,6 +834,49 @@ class HelpersTest extends TestCase {
         $this->assertSame( 1, tta_get_ticket_refund_pool_count( 9, 20 ) );
     }
 
+    public function test_get_refund_requests_returns_oldest_first() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        $wpdb->results_data = [
+            [
+                'id'           => 1,
+                'member_id'    => 7,
+                'action_date'  => '2025-07-01 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Ann',
+                'last_name'    => 'Bee',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+            [
+                'id'           => 2,
+                'member_id'    => 8,
+                'action_date'  => '2025-07-02 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Bob',
+                'last_name'    => 'See',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        require_once __DIR__ . '/../includes/helpers.php';
+        $reqs = tta_get_refund_requests();
+        $this->assertSame( 'tx1', $reqs[0]['transaction_id'] );
+        $this->assertSame( 'tx2', $reqs[1]['transaction_id'] );
+    }
+
     public function test_convert_links_transforms_markdown() {
         require_once __DIR__ . '/../includes/helpers.php';
         $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';

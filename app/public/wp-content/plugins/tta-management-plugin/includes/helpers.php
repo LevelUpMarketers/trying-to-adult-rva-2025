@@ -2638,8 +2638,8 @@ function tta_get_refund_requests() {
            JOIN {$members_table} m ON mh.member_id = m.id
       LEFT JOIN {$events_table} e ON mh.event_id = e.id
       LEFT JOIN {$archive_table} ea ON mh.event_id = ea.id
-          WHERE mh.action_type = 'refund_request'
-       ORDER BY mh.action_date DESC",
+         WHERE mh.action_type = 'refund_request'
+      ORDER BY mh.action_date ASC",
         ARRAY_A
     );
 

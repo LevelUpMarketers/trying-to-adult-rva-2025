@@ -543,11 +543,17 @@ $tickets = $wpdb->get_results(
                         $pending_reason = __( 'Event has yet to sell out', 'tta' );
                     }
 
-                    $cancel_btn_classes = 'tta-refund-request-process';
-                    $cancel_btn_extra   = '';
-                    if ( __( 'Admin manually issued a "Refund & Cancel Attendance" request. Waiting for transaction to settle.', 'tta' ) === $reason ) {
+                    $is_settlement       = ( 'settlement' === ( $a['pending_reason'] ?? '' ) );
+                    $cancel_btn_classes  = 'tta-refund-request-process';
+                    $cancel_btn_extra    = '';
+                    $keep_btn_classes    = 'tta-refund-request-process';
+                    $keep_btn_extra      = '';
+                    if ( $is_settlement ) {
+                        $tooltip            = esc_attr__( 'Refund scheduled after settlement', 'tta' );
                         $cancel_btn_classes .= ' tta-disabled tta-tooltip-trigger';
-                        $cancel_btn_extra    = ' disabled="disabled" data-tooltip="' . esc_attr__( 'Refund scheduled after settlement', 'tta' ) . '"';
+                        $cancel_btn_extra    = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
+                        $keep_btn_classes   .= ' tta-disabled tta-tooltip-trigger';
+                        $keep_btn_extra      = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
                     }
                     ?>
                     <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
@@ -564,7 +570,7 @@ $tickets = $wpdb->get_results(
                         <button type="button" class="<?php echo esc_attr( $cancel_btn_classes ); ?>" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $cancel_btn_extra; ?>>
                           <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
                         </button>
-                      <button type="button" class="tta-refund-request-process" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                      <button type="button" class="<?php echo esc_attr( $keep_btn_classes ); ?>" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $keep_btn_extra; ?>>
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
                       </button>
                       <button type="button" class="tta-refund-request-delete" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
