@@ -426,6 +426,37 @@ class HelpersTest extends TestCase {
         $this->assertStringContainsString('wp_tta_tickets', $wpdb->last_query);
     }
 
+    public function test_ticket_cost_range_returns_min_max() {
+        global $wpdb;
+        $wpdb = new class {
+            public $prefix = 'wp_';
+            public $rows = [];
+            public $last_query = '';
+            public function get_results( $q, $o = ARRAY_A ) { $this->last_query = $q; return $this->rows; }
+            public function prepare( $q, ...$a ) { foreach ( $a as $v ) { $q = preg_replace( '/%s/', $v, $q, 1 ); } return $q; }
+        };
+        $wpdb->rows = [
+            [ 'baseeventcost' => 20, 'discountedmembercost' => 10, 'premiummembercost' => 9 ],
+            [ 'baseeventcost' => 90, 'discountedmembercost' => 70, 'premiummembercost' => 65 ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+
+        $range = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( 20.0, $range['base_min'] );
+        $this->assertSame( 90.0, $range['base_max'] );
+        $this->assertSame( 10.0, $range['basic_min'] );
+        $this->assertSame( 70.0, $range['basic_max'] );
+        $this->assertSame( 9.0, $range['premium_min'] );
+        $this->assertSame( 65.0, $range['premium_max'] );
+
+        // Confirm cached result is returned
+        $wpdb->rows = [];
+        $range2 = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( $range, $range2 );
+    }
+
     public function test_get_upcoming_events_returns_rows() {
         global $wpdb;
         $wpdb = new class {
@@ -743,6 +774,64 @@ class HelpersTest extends TestCase {
         $this->assertSame( 'Need refund', $req['reason'] );
         $this->assertSame( 'tx9', $req['transaction_id'] );
         $this->assertSame( 1, $this->wpdb->row_calls );
+    }
+
+    public function test_refund_pool_count_excludes_settlement_requests() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        TTA_Cache::delete( 'pending_refund_attendees_9_20' );
+        $att1 = [
+            'id'         => 1,
+            'first_name' => 'Ann',
+            'last_name'  => 'Bee',
+            'email'      => 'a@example.com',
+            'phone'      => '123',
+            'amount_paid'=> 10.0,
+        ];
+        $att2 = [
+            'id'         => 2,
+            'first_name' => 'Carl',
+            'last_name'  => 'Dee',
+            'email'      => 'c@example.com',
+            'phone'      => '555',
+            'amount_paid'=> 10.0,
+        ];
+        $wpdb->results_data = [
+            [
+                'member_id'   => 7,
+                'action_date' => '2025-07-01 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'waitlist',
+                    'attendee'       => $att1,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Ann',
+                'last_name'  => 'Bee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+            [
+                'member_id'   => 8,
+                'action_date' => '2025-07-02 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'settlement',
+                    'attendee'       => $att2,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Carl',
+                'last_name'  => 'Dee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        $this->assertCount( 2, tta_get_ticket_pending_refund_attendees( 9, 20 ) );
+        $this->assertSame( 1, tta_get_ticket_refund_pool_count( 9, 20 ) );
     }
 
     public function test_convert_links_transforms_markdown() {

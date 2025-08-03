@@ -3066,10 +3066,19 @@ function tta_get_ticket_refunded_attendees( $ticket_id, $event_id ) {
  *
  * @param int $ticket_id Ticket ID.
  * @param int $event_id  Event ID.
- * @return int
+ * @return int Number of refund requests eligible to release. Requests with a
+ *             pending reason of 'settlement' are excluded.
  */
 function tta_get_ticket_refund_pool_count( $ticket_id, $event_id ) {
-    return count( tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id ) );
+    $attendees = tta_get_ticket_pending_refund_attendees( $ticket_id, $event_id );
+    $count     = 0;
+    foreach ( $attendees as $att ) {
+        if ( 'settlement' === ( $att['pending_reason'] ?? '' ) ) {
+            continue;
+        }
+        $count++;
+    }
+    return $count;
 }
 
 /**
@@ -3202,6 +3211,7 @@ function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true,
         if ( ! empty( $ticket['event_ute_id'] ) ) {
             TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
         }
+        TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
     }
 
     TTA_Cache::flush();
@@ -3473,6 +3483,78 @@ function tta_get_remaining_ticket_count( $event_ute_id ) {
     $remaining = max( 0, $remaining );
     TTA_Cache::set( $cache_key, $remaining, 60 );
     return $remaining;
+}
+
+/**
+ * Get min and max ticket costs for an event.
+ *
+ * Returns an array with base, basic and premium cost ranges. Each key
+ * has `_min` and `_max` variants. Results are cached for five minutes.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return array{
+ *     base_min:float, base_max:float,
+ *     basic_min:float, basic_max:float,
+ *     premium_min:float, premium_max:float
+ * }
+ */
+function tta_get_ticket_cost_range( $event_ute_id ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return [
+            'base_min'    => 0.0,
+            'base_max'    => 0.0,
+            'basic_min'   => 0.0,
+            'basic_max'   => 0.0,
+            'premium_min' => 0.0,
+            'premium_max' => 0.0,
+        ];
+    }
+
+    $cache_key = 'ticket_cost_range_' . $event_ute_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $tickets_table   = $wpdb->prefix . 'tta_tickets';
+    $tickets_archive = $wpdb->prefix . 'tta_tickets_archive';
+
+    $sql = "(SELECT baseeventcost, discountedmembercost, premiummembercost FROM {$tickets_table} WHERE event_ute_id = %s) UNION ALL (SELECT baseeventcost, discountedmembercost, premiummembercost FROM {$tickets_archive} WHERE event_ute_id = %s)";
+    $rows = $wpdb->get_results( $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ), ARRAY_A );
+
+    $base  = [];
+    $basic = [];
+    $prem  = [];
+    foreach ( $rows as $r ) {
+        $base[]  = floatval( $r['baseeventcost'] );
+        $basic[] = floatval( $r['discountedmembercost'] );
+        $prem[]  = floatval( $r['premiummembercost'] );
+    }
+
+    if ( empty( $base ) ) {
+        $result = [
+            'base_min'    => 0.0,
+            'base_max'    => 0.0,
+            'basic_min'   => 0.0,
+            'basic_max'   => 0.0,
+            'premium_min' => 0.0,
+            'premium_max' => 0.0,
+        ];
+    } else {
+        $result = [
+            'base_min'    => min( $base ),
+            'base_max'    => max( $base ),
+            'basic_min'   => min( $basic ),
+            'basic_max'   => max( $basic ),
+            'premium_min' => min( $prem ),
+            'premium_max' => max( $prem ),
+        ];
+    }
+
+    TTA_Cache::set( $cache_key, $result, 300 );
+    return $result;
 }
 
 /**
@@ -4298,6 +4380,7 @@ function tta_release_refund_tickets( $event_ute_id ) {
         if ( $pool > 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
             TTA_Cache::delete( 'tickets_' . $event_ute_id );
+            TTA_Cache::delete( 'ticket_stock_' . $tid );
             tta_set_released_refund_count( $tid, $pool );
             tta_notify_waitlist_ticket_available( $tid );
         }

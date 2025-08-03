@@ -9,33 +9,9 @@ class TTA_Refund_Processor {
         }
     }
 
-    /** Schedule refund retry events twice daily. */
-    public static function schedule_retry_events() {
-        if ( ! wp_next_scheduled( 'tta_refund_retry_morning' ) ) {
-            $morning = strtotime( '08:15' );
-            if ( $morning <= time() ) {
-                $morning += DAY_IN_SECONDS;
-            }
-            wp_schedule_event( $morning, 'daily', 'tta_refund_retry_morning' );
-        }
-        if ( ! wp_next_scheduled( 'tta_refund_retry_night' ) ) {
-            $night = strtotime( '01:15' );
-            if ( $night <= time() ) {
-                $night += DAY_IN_SECONDS;
-            }
-            wp_schedule_event( $night, 'daily', 'tta_refund_retry_night' );
-        }
-    }
-
     /** Clear cron event. */
     public static function clear_event() {
         wp_clear_scheduled_hook( 'tta_refund_request_cron' );
-    }
-
-    /** Clear refund retry events. */
-    public static function clear_retry_events() {
-        wp_clear_scheduled_hook( 'tta_refund_retry_morning' );
-        wp_clear_scheduled_hook( 'tta_refund_retry_night' );
     }
 
     /**
@@ -94,11 +70,11 @@ class TTA_Refund_Processor {
     public static function init() {
         add_action( 'tta_after_purchase_logged', [ __CLASS__, 'handle_purchase' ], 10, 2 );
         add_action( 'tta_refund_request_cron', [ __CLASS__, 'expire_requests' ] );
-        add_action( 'tta_refund_retry_morning', [ __CLASS__, 'retry_pending_requests' ] );
-        add_action( 'tta_refund_retry_night', [ __CLASS__, 'retry_pending_requests' ] );
         add_action( 'tta_process_unsettled_refund', [ __CLASS__, 'process_unsettled_refund' ], 10, 4 );
+        // Clear legacy retry hooks replaced by per-request scheduling.
+        wp_clear_scheduled_hook( 'tta_refund_retry_morning' );
+        wp_clear_scheduled_hook( 'tta_refund_retry_night' );
         self::schedule_event();
-        self::schedule_retry_events();
     }
 
     /**
@@ -108,7 +84,6 @@ class TTA_Refund_Processor {
      * @param int   $user_id Buyer user ID.
      */
     public static function handle_purchase( array $items, $user_id ) {
-        global $wpdb;
         $events = [];
 
         foreach ( $items as $it ) {
@@ -118,6 +93,11 @@ class TTA_Refund_Processor {
                 $events[ $event_ute ] = true;
             }
         }
+
+        // First process any refund requests that can now be issued. This must
+        // happen before releasing additional refund tickets so counts stay
+        // accurate and purchased refund tickets are removed from the pool.
+        self::retry_pending_requests();
 
         foreach ( array_keys( $events ) as $ute ) {
             tta_release_refund_tickets( $ute );
@@ -201,6 +181,7 @@ class TTA_Refund_Processor {
                     TTA_Cache::delete( 'tta_refund_requests' );
                 }
                 self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
+                tta_decrement_released_refund_count( intval( $req['ticket_id'] ) );
                 return;
             }
         }

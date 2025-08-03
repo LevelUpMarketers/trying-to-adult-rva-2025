@@ -116,6 +116,7 @@ class TTA_Ajax_Attendance {
             if ( ! empty( $ticket['event_ute_id'] ) ) {
                 TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
             }
+            TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
         }
 
         TTA_Cache::flush();
@@ -275,6 +276,7 @@ class TTA_Ajax_Attendance {
                 if ( ! empty( $ticket['event_ute_id'] ) ) {
                     TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
                 }
+                TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
             }
             if ( $should_notify ) {
                 tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );

@@ -296,7 +296,7 @@ class CartTest extends TestCase {
 
     public function test_inventory_updates_clear_cache(){
         global $wpdb, $transients;
-        $transients = ['tta_cache_tickets_ev1' => ['foo']];
+        $transients = ['tta_cache_tickets_ev1' => ['foo'], 'tta_cache_ticket_stock_5' => 3];
         $wpdb = new class {
             public $prefix = 'wp_';
             public $queries = [];
@@ -333,6 +333,7 @@ class CartTest extends TestCase {
         $cart = new TTA_Cart();
         $cart->add_item(5,1,10);
         $this->assertArrayNotHasKey('tta_cache_tickets_ev1', $transients);
+        $this->assertArrayNotHasKey('tta_cache_ticket_stock_5', $transients);
     }
 
     public function test_ajax_add_to_cart_enforces_limit(){

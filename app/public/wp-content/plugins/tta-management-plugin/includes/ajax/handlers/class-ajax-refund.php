@@ -102,6 +102,7 @@ class TTA_Ajax_Refund {
             if ( $ute ) {
                 TTA_Cache::delete( 'tickets_' . $ute );
             }
+            TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
         }
 
         TTA_Refund_Processor::process_refund_request( $req, $amount );
