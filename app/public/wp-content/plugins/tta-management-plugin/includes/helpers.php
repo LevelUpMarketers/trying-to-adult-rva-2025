@@ -3208,10 +3208,7 @@ function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true,
         if ( $update_inventory ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
         }
-        if ( ! empty( $ticket['event_ute_id'] ) ) {
-            TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
-        }
-        TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
+        tta_clear_ticket_cache( $ticket['event_ute_id'] ?? '', intval( $att['ticket_id'] ) );
     }
 
     TTA_Cache::flush();
@@ -4341,6 +4338,26 @@ function tta_decrement_released_refund_count( $ticket_id, $diff = 1 ) {
 }
 
 /**
+ * Clear cached ticket and event availability data.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @param int    $ticket_id    Optional ticket ID.
+ */
+function tta_clear_ticket_cache( $event_ute_id, $ticket_id = 0 ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    $ticket_id    = intval( $ticket_id );
+
+    if ( $event_ute_id ) {
+        TTA_Cache::delete( 'tickets_' . $event_ute_id );
+        TTA_Cache::delete( 'tickets_remaining_' . $event_ute_id );
+    }
+
+    if ( $ticket_id > 0 ) {
+        TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+    }
+}
+
+/**
  * Determine if an event has any active cart reservations.
  *
  * @param string $event_ute_id Event ute_id.
@@ -4410,8 +4427,7 @@ function tta_release_refund_tickets( $event_ute_id ) {
         $pool = tta_get_ticket_refund_pool_count( $tid, $event_id );
         if ( $pool > 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
-            TTA_Cache::delete( 'tickets_' . $event_ute_id );
-            TTA_Cache::delete( 'ticket_stock_' . $tid );
+            tta_clear_ticket_cache( $event_ute_id, $tid );
             tta_set_released_refund_count( $tid, $pool );
             tta_notify_waitlist_ticket_available( $tid );
         }

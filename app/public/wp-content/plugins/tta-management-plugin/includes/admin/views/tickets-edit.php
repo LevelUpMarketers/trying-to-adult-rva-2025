@@ -548,12 +548,16 @@ $tickets = $wpdb->get_results(
                     $cancel_btn_extra    = '';
                     $keep_btn_classes    = 'tta-refund-request-process';
                     $keep_btn_extra      = '';
+                    $delete_btn_classes  = 'tta-refund-request-delete';
+                    $delete_btn_extra    = '';
                     if ( $is_settlement ) {
                         $tooltip            = esc_attr__( 'Refund scheduled after settlement', 'tta' );
                         $cancel_btn_classes .= ' tta-disabled tta-tooltip-trigger';
                         $cancel_btn_extra    = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
                         $keep_btn_classes   .= ' tta-disabled tta-tooltip-trigger';
                         $keep_btn_extra      = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
+                        $delete_btn_classes .= ' tta-disabled tta-tooltip-trigger';
+                        $delete_btn_extra    = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
                     }
                     ?>
                     <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
@@ -573,7 +577,7 @@ $tickets = $wpdb->get_results(
                       <button type="button" class="<?php echo esc_attr( $keep_btn_classes ); ?>" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $keep_btn_extra; ?>>
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
                       </button>
-                      <button type="button" class="tta-refund-request-delete" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                      <button type="button" class="<?php echo esc_attr( $delete_btn_classes ); ?>" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $delete_btn_extra; ?>>
                         <?php esc_html_e( 'Cancel Attendance (No Refund)', 'tta' ); ?>
                       </button>
                     </td>

@@ -99,10 +99,7 @@ class TTA_Ajax_Refund {
         if ( $released <= 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", $ticket_id ) );
             $ute = tta_get_event_ute_id( $req['event_id'] );
-            if ( $ute ) {
-                TTA_Cache::delete( 'tickets_' . $ute );
-            }
-            TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+            tta_clear_ticket_cache( $ute, $ticket_id );
         }
 
         TTA_Refund_Processor::process_refund_request( $req, $amount );

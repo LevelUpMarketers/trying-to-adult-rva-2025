@@ -55,7 +55,7 @@ class TTA_Cart_Cleanup {
             if ( ! empty( $row['event_ute_id'] ) ) {
                 $touched_events[ $row['event_ute_id'] ] = true;
             }
-            TTA_Cache::delete( 'ticket_stock_' . intval( $row['ticket_id'] ) );
+            tta_clear_ticket_cache( '', intval( $row['ticket_id'] ) );
         }
 
         $wpdb->query(
@@ -66,7 +66,7 @@ class TTA_Cart_Cleanup {
         );
 
         foreach ( array_keys( $touched_events ) as $evt ) {
-            TTA_Cache::delete( 'tickets_' . $evt );
+            tta_clear_ticket_cache( $evt );
         }
     }
 

@@ -130,9 +130,14 @@ class TTA_Refund_Processor {
             ) );
 
             $sold_from_pool = max( 0, $released - $stock );
-            $to_refund      = min( count( $list ), $sold_from_pool );
+
+            $eligible = array_values( array_filter( $list, function( $req ) {
+                return 'settlement' !== ( $req['pending_reason'] ?? '' );
+            } ) );
+
+            $to_refund = min( count( $eligible ), $sold_from_pool );
             for ( $i = 0; $i < $to_refund; $i++ ) {
-                self::process_refund_request( $list[ $i ] );
+                self::process_refund_request( $eligible[ $i ] );
             }
         }
     }
