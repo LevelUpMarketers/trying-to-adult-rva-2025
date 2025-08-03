@@ -4341,6 +4341,33 @@ function tta_decrement_released_refund_count( $ticket_id, $diff = 1 ) {
 }
 
 /**
+ * Determine if an event has any active cart reservations.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @return bool True when unexpired cart items exist.
+ */
+function tta_event_has_active_cart_reservations( $event_ute_id ) {
+    global $wpdb;
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    if ( '' === $event_ute_id ) {
+        return false;
+    }
+    $cart_table    = $wpdb->prefix . 'tta_cart_items';
+    $tickets_table = $wpdb->prefix . 'tta_tickets';
+
+    $count = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$cart_table} ci
+             JOIN {$tickets_table} t ON ci.ticket_id = t.id
+             WHERE t.event_ute_id = %s AND ci.expires_at > NOW()",
+            $event_ute_id
+        )
+    );
+
+    return $count > 0;
+}
+
+/**
  * Release tickets from the refund pool when an event sells out.
  *
  * @param string $event_ute_id Event ute_id.
@@ -4356,6 +4383,10 @@ function tta_release_refund_tickets( $event_ute_id ) {
     }
     $events_table  = $wpdb->prefix . 'tta_events';
     $tickets_table = $wpdb->prefix . 'tta_tickets';
+
+    if ( tta_event_has_active_cart_reservations( $event_ute_id ) ) {
+        return;
+    }
 
     $event_id = tta_get_event_id_by_ute( $event_ute_id );
     if ( ! $event_id ) {
