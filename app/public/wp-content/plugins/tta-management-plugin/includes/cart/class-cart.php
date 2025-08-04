@@ -40,8 +40,9 @@ class TTA_Cart {
     if ( $row ) {
       $this->cart_id = (int)$row['id'];
     } elseif ( $create ) {
-      $now = current_time('mysql');
-      $expires = date( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) + 1800 );
+      $now_ts = current_time( 'timestamp', true );
+      $now    = gmdate( 'Y-m-d H:i:s', $now_ts );
+      $expires = gmdate( 'Y-m-d H:i:s', $now_ts + 1800 );
       $this->wpdb->insert(
         $this->carts_table,
         [
@@ -114,11 +115,7 @@ class TTA_Cart {
         $ticket_id
       )
     );
-    if ( $event_ute_id ) {
-      TTA_Cache::delete( 'tickets_' . $event_ute_id );
-    }
-
-    TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+    tta_clear_ticket_cache( $event_ute_id, $ticket_id );
 
     if ( $should_notify ) {
       tta_notify_waitlist_ticket_available( $ticket_id );
@@ -185,7 +182,7 @@ class TTA_Cart {
         ['%d','%f'],['%d','%d']
       );
     } else {
-      $expire = date( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) + 300 );
+      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 300 );
       $this->wpdb->insert(
         $this->items_table,
         [
@@ -287,7 +284,7 @@ class TTA_Cart {
         ['%d'],['%d','%d']
       );
     } else {
-      $expire = date( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) + 300 );
+      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 300 );
       $this->wpdb->insert(
         $this->items_table,
         [

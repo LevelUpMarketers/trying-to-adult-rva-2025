@@ -1647,12 +1647,8 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             }
             $tx  = $req['transaction_id'];
             $tid = intval( $req['ticket_id'] );
-            $refunds[ $tx ][ $tid ] = $req;
-            if ( isset( $txn_map[ $tx ] ) ) {
-                $txn_map[ $tx ] += 1;
-            } else {
-                $txn_map[ $tx ] = 1;
-            }
+            $refunds[ $tx ][ $tid ][] = $req;
+            $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
         }
 
         if ( $events ) {
@@ -1783,18 +1779,20 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                         }
                     }
                     if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
-                        $req  = $refunds[ $gateway_tx ][ $tid ];
-                        $item['refund_pending'] = true;
-                        $item['refund_attendee'] = [
-                            'first_name' => $req['first_name'],
-                            'last_name'  => $req['last_name'],
-                            'email'      => $req['email'],
-                        ];
-                        if ( 0 === $item['quantity'] ) {
-                            $item['quantity'] = 1;
+                        foreach ( $refunds[ $gateway_tx ][ $tid ] as $req ) {
+                            $clone = $item;
+                            $clone['refund_pending'] = true;
+                            $clone['refund_attendee'] = [
+                                'first_name' => $req['first_name'],
+                                'last_name'  => $req['last_name'],
+                                'email'      => $req['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
                         }
-                        $new_items[] = $item;
-                    } elseif ( $item['quantity'] > 0 ) {
+                    }
+                    if ( $item['quantity'] > 0 ) {
                         $new_items[] = $item;
                     }
                 }
@@ -2638,8 +2636,8 @@ function tta_get_refund_requests() {
            JOIN {$members_table} m ON mh.member_id = m.id
       LEFT JOIN {$events_table} e ON mh.event_id = e.id
       LEFT JOIN {$archive_table} ea ON mh.event_id = ea.id
-          WHERE mh.action_type = 'refund_request'
-       ORDER BY mh.action_date DESC",
+         WHERE mh.action_type = 'refund_request'
+      ORDER BY mh.action_date ASC",
         ARRAY_A
     );
 
@@ -3208,10 +3206,7 @@ function tta_cancel_attendance_internal( $attendee_id, $update_inventory = true,
         if ( $update_inventory ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
         }
-        if ( ! empty( $ticket['event_ute_id'] ) ) {
-            TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
-        }
-        TTA_Cache::delete( 'ticket_stock_' . intval( $att['ticket_id'] ) );
+        tta_clear_ticket_cache( $ticket['event_ute_id'] ?? '', intval( $att['ticket_id'] ) );
     }
 
     TTA_Cache::flush();
@@ -4294,6 +4289,49 @@ function tta_get_released_refund_map() {
 }
 
 /**
+ * Track which tickets have completely sold out at least once.
+ *
+ * Stored as an option mapping ticket ID to a boolean-like flag. This allows
+ * refund requests submitted after the initial sell out to be released
+ * immediately.
+ *
+ * @return array
+ */
+function tta_get_sold_out_map() {
+    $map = get_option( 'tta_ticket_sold_out_once', [] );
+    return is_array( $map ) ? array_map( 'intval', $map ) : [];
+}
+
+/**
+ * Determine if a ticket has sold out at least once.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return bool
+ */
+function tta_has_ticket_sold_out( $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    $map       = tta_get_sold_out_map();
+    return ! empty( $map[ $ticket_id ] );
+}
+
+/**
+ * Mark a ticket as having sold out at least once.
+ *
+ * @param int $ticket_id Ticket ID.
+ */
+function tta_mark_ticket_sold_out( $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    if ( $ticket_id <= 0 ) {
+        return;
+    }
+    $map = tta_get_sold_out_map();
+    if ( empty( $map[ $ticket_id ] ) ) {
+        $map[ $ticket_id ] = 1;
+        update_option( 'tta_ticket_sold_out_once', $map, false );
+    }
+}
+
+/**
  * Get released count for a ticket.
  *
  * @param int $ticket_id Ticket ID.
@@ -4341,6 +4379,44 @@ function tta_decrement_released_refund_count( $ticket_id, $diff = 1 ) {
 }
 
 /**
+ * Clear cached ticket and event availability data.
+ *
+ * @param string $event_ute_id Event ute_id.
+ * @param int    $ticket_id    Optional ticket ID.
+ */
+function tta_clear_ticket_cache( $event_ute_id, $ticket_id = 0 ) {
+    $event_ute_id = sanitize_text_field( $event_ute_id );
+    $ticket_id    = intval( $ticket_id );
+
+    if ( $event_ute_id ) {
+        TTA_Cache::delete( 'tickets_' . $event_ute_id );
+        TTA_Cache::delete( 'tickets_remaining_' . $event_ute_id );
+    }
+
+    if ( $ticket_id > 0 ) {
+        TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+    }
+
+    // Bust higher level caches so events list counts refresh immediately.
+    TTA_Cache::delete_group( 'upcoming_events_' );
+    TTA_Cache::delete_group( 'event_days_' );
+}
+
+/**
+ * Clear cached pending refund attendee data for a ticket/event combo.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @param int $event_id  Event ID.
+ */
+function tta_clear_pending_refund_cache( $ticket_id, $event_id ) {
+    $ticket_id = intval( $ticket_id );
+    $event_id  = intval( $event_id );
+    if ( $ticket_id && $event_id ) {
+        TTA_Cache::delete( 'pending_refund_attendees_' . $ticket_id . '_' . $event_id );
+    }
+}
+
+/**
  * Determine if an event has any active cart reservations.
  *
  * @param string $event_ute_id Event ute_id.
@@ -4359,8 +4435,9 @@ function tta_event_has_active_cart_reservations( $event_ute_id ) {
         $wpdb->prepare(
             "SELECT COUNT(*) FROM {$cart_table} ci
              JOIN {$tickets_table} t ON ci.ticket_id = t.id
-             WHERE t.event_ute_id = %s AND ci.expires_at > NOW()",
-            $event_ute_id
+             WHERE t.event_ute_id = %s AND ci.expires_at > %s",
+            $event_ute_id,
+            current_time( 'mysql', true )
         )
     );
 
@@ -4404,17 +4481,23 @@ function tta_release_refund_tickets( $event_ute_id ) {
     foreach ( $tickets as $t ) {
         $tid   = intval( $t['id'] );
         $limit = intval( $t['ticketlimit'] );
-        if ( $limit > 0 ) {
+        if ( $limit <= 0 ) {
+            tta_mark_ticket_sold_out( $tid );
+        }
+
+        if ( ! tta_has_ticket_sold_out( $tid ) ) {
+            continue; // do not release refund tickets until initial sellout.
+        }
+
+        $pool = tta_get_ticket_refund_pool_count( $tid, $event_id );
+        if ( $pool <= $limit ) {
             continue;
         }
-        $pool = tta_get_ticket_refund_pool_count( $tid, $event_id );
-        if ( $pool > 0 ) {
-            $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
-            TTA_Cache::delete( 'tickets_' . $event_ute_id );
-            TTA_Cache::delete( 'ticket_stock_' . $tid );
-            tta_set_released_refund_count( $tid, $pool );
-            tta_notify_waitlist_ticket_available( $tid );
-        }
+        $diff = $pool - $limit;
+        $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $diff, $tid ) );
+        tta_clear_ticket_cache( $event_ute_id, $tid );
+        tta_set_released_refund_count( $tid, $pool );
+        tta_notify_waitlist_ticket_available( $tid );
     }
 }
 
@@ -4473,6 +4556,28 @@ function tta_remove_purchased_from_waitlists( array $items, $user_id ) {
         }
     }
     TTA_Cache::flush();
+}
+
+/**
+ * Check if a ticket currently has any waitlist entries.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return bool True when the waitlist table has rows for the ticket.
+ */
+function tta_ticket_has_waitlist_entries( $ticket_id ) {
+    global $wpdb;
+    $ticket_id     = intval( $ticket_id );
+    if ( $ticket_id <= 0 ) {
+        return false;
+    }
+    $waitlist_table = $wpdb->prefix . 'tta_waitlist';
+    $count = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$waitlist_table} WHERE ticket_id = %d",
+            $ticket_id
+        )
+    );
+    return $count > 0;
 }
 
 /**

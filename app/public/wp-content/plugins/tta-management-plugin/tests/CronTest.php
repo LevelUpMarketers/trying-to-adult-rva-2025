@@ -7,7 +7,7 @@ class CronTest extends TestCase {
         if (!function_exists('wp_next_scheduled')) { function wp_next_scheduled($h){ return false; } }
         if (!function_exists('wp_schedule_event')) { function wp_schedule_event($t,$rec,$hook){ $GLOBALS['scheduled'][] = [$t,$rec,$hook]; } }
         if (!function_exists('wp_clear_scheduled_hook')) { function wp_clear_scheduled_hook($hook){ $GLOBALS['cleared'][] = $hook; } }
-        if (!function_exists('current_time')) { function current_time($type){ return time(); } }
+        if (!function_exists('current_time')) { function current_time($type='mysql',$gmt=false){ return time(); } }
         if (!function_exists('add_filter')) { function add_filter($h,$cb){ $GLOBALS['filters'][] = [$h,$cb]; return true; } }
         require_once __DIR__ . '/../includes/cart/class-cart-cleanup.php';
         require_once __DIR__ . '/../includes/classes/class-tta-refund-processor.php';

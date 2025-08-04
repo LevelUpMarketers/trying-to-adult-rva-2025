@@ -245,7 +245,7 @@ class CartTest extends TestCase {
             public function query($q){ $this->queries[] = $q; }
             public function prepare($q,...$a){ foreach($a as $v){ $q=preg_replace('/%d/',$v,$q,1); $q=preg_replace('/%s/',$v,$q,1);} return $q; }
         };
-        if(!function_exists('current_time')){ function current_time($t){ return 'now'; } }
+        if(!function_exists('current_time')){ function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         require_once __DIR__ . '/../includes/cart/class-cart-cleanup.php';
         TTA_Cart_Cleanup::clean_expired_items();
         $sql = implode("\n", $wpdb->queries);
@@ -282,7 +282,7 @@ class CartTest extends TestCase {
             public function delete($t,$w,$f){ $this->queries[]='DELETE'; unset($this->items[$w['ticket_id']]); }
         };
         if(!function_exists('wp_generate_uuid4')){ function wp_generate_uuid4(){ return 'x'; } }
-        if(!function_exists('current_time')){ function current_time($t='mysql'){ return 'now'; } }
+        if(!function_exists('current_time')){ function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         if(!function_exists('get_current_user_id')){ function get_current_user_id(){ return 0; } }
         if(!function_exists('home_url')){ function home_url($p=''){ return '/'.$p; } }
         require_once __DIR__ . '/../includes/cart/class-cart.php';
@@ -326,7 +326,7 @@ class CartTest extends TestCase {
         if(!function_exists('set_transient')){ function set_transient($k,$v,$t=0){ global $transients; $transients[$k]=$v; } }
         if(!function_exists('delete_transient')){ function delete_transient($k){ global $transients; unset($transients[$k]); } }
         if(!function_exists('wp_generate_uuid4')){ function wp_generate_uuid4(){ return 'x'; } }
-        if(!function_exists('current_time')){ function current_time($t='mysql'){ return 'now'; } }
+        if(!function_exists('current_time')){ function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         if(!function_exists('get_current_user_id')){ function get_current_user_id(){ return 0; } }
         require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
         require_once __DIR__ . '/../includes/cart/class-cart.php';
@@ -375,7 +375,7 @@ class CartTest extends TestCase {
         if(!function_exists('add_action')){ function add_action($t,$c){} }
         if(!function_exists('is_user_logged_in')){ function is_user_logged_in(){ return false; } }
         if(!function_exists('wp_generate_uuid4')){ function wp_generate_uuid4(){ return 'x'; } }
-        if(!function_exists('current_time')){ function current_time($t='mysql'){ return 'now'; } }
+        if(!function_exists('current_time')){ function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         if(!function_exists('get_current_user_id')){ function get_current_user_id(){ return 0; } }
 
         require_once __DIR__ . '/../includes/helpers.php';
@@ -434,7 +434,7 @@ class CartTest extends TestCase {
         if(!function_exists('add_action')){ function add_action($t,$c){} }
         if(!function_exists('is_user_logged_in')){ function is_user_logged_in(){ return false; } }
         if(!function_exists('wp_generate_uuid4')){ function wp_generate_uuid4(){ return 'x'; } }
-        if(!function_exists('current_time')){ function current_time($t='mysql'){ return 'now'; } }
+        if(!function_exists('current_time')){ function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         if(!function_exists('get_current_user_id')){ function get_current_user_id(){ return 0; } }
 
         require_once __DIR__ . '/../includes/helpers.php';

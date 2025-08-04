@@ -47,11 +47,8 @@ class TTA_Ajax_Refund {
             tta_cancel_attendance_internal( intval( $att['id'] ), false, false );
         }
 
-        $event_ute       = tta_get_event_ute_id( $event_id );
-        $pending_reason  = 'waitlist';
-        if ( $event_ute && tta_get_remaining_ticket_count( $event_ute ) > 0 ) {
-            $pending_reason = 'sellout';
-        }
+        $event_ute      = tta_get_event_ute_id( $event_id );
+        $pending_reason = tta_has_ticket_sold_out( $ticket_id ) ? 'waitlist' : 'sellout';
         $action_data = [
             'transaction_id' => $tx_id,
             'ticket_id'     => $ticket_id,
@@ -69,6 +66,11 @@ class TTA_Ajax_Refund {
             'action_data' => wp_json_encode( $action_data ),
         ], [ '%d','%d','%d','%s','%s' ] );
         TTA_Cache::delete( 'tta_refund_requests' );
+        tta_clear_pending_refund_cache( $ticket_id, $event_id );
+        if ( $event_ute ) {
+            tta_release_refund_tickets( $event_ute );
+            tta_clear_ticket_cache( $event_ute, $ticket_id );
+        }
         wp_send_json_success( [ 'message' => __( 'Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it\'s sold, you\'ll automatically receive a refund. There\'s nothing else for you to do! Check back here periodically to see the status of your refund request.', 'tta' ) ] );
     }
 
@@ -99,10 +101,7 @@ class TTA_Ajax_Refund {
         if ( $released <= 0 ) {
             $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", $ticket_id ) );
             $ute = tta_get_event_ute_id( $req['event_id'] );
-            if ( $ute ) {
-                TTA_Cache::delete( 'tickets_' . $ute );
-            }
-            TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
+            tta_clear_ticket_cache( $ute, $ticket_id );
         }
 
         TTA_Refund_Processor::process_refund_request( $req, $amount );

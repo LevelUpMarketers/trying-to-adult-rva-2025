@@ -532,22 +532,35 @@ $tickets = $wpdb->get_results(
                             $reason = __( 'Admin manually issued a "Refund & Keep Attendance" request. Waiting for transaction to settle.', 'tta' );
                         }
                     }
-                    $paid   = floatval( $a['amount_paid'] );
-                    $stock  = tta_get_ticket_stock( $tid );
+                    $paid     = floatval( $a['amount_paid'] );
+                    $stock    = tta_get_ticket_stock( $tid );
                     $released = tta_get_released_refund_count( $tid );
+                    $waitlist = tta_ticket_has_waitlist_entries( $tid );
                     if ( 'settlement' === ( $a['pending_reason'] ?? '' ) ) {
                         $pending_reason = __( 'Waiting for transaction to settle', 'tta' );
                     } elseif ( $released > 0 && $stock > 0 ) {
                         $pending_reason = __( 'Up for sale - waiting to be purchased', 'tta' );
+                    } elseif ( $waitlist ) {
+                        $pending_reason = __( 'Ticket has yet to sell out. Those on the waitlist have been notified that a ticket is available', 'tta' );
                     } else {
-                        $pending_reason = __( 'Event has yet to sell out', 'tta' );
+                        $pending_reason = __( 'Ticket has yet to sell out', 'tta' );
                     }
 
-                    $cancel_btn_classes = 'tta-refund-request-process';
-                    $cancel_btn_extra   = '';
-                    if ( __( 'Admin manually issued a "Refund & Cancel Attendance" request. Waiting for transaction to settle.', 'tta' ) === $reason ) {
+                    $is_settlement       = ( 'settlement' === ( $a['pending_reason'] ?? '' ) );
+                    $cancel_btn_classes  = 'tta-refund-request-process';
+                    $cancel_btn_extra    = '';
+                    $keep_btn_classes    = 'tta-refund-request-process';
+                    $keep_btn_extra      = '';
+                    $delete_btn_classes  = 'tta-refund-request-delete';
+                    $delete_btn_extra    = '';
+                    if ( $is_settlement ) {
+                        $tooltip            = esc_attr__( 'Refund scheduled after settlement', 'tta' );
                         $cancel_btn_classes .= ' tta-disabled tta-tooltip-trigger';
-                        $cancel_btn_extra    = ' disabled="disabled" data-tooltip="' . esc_attr__( 'Refund scheduled after settlement', 'tta' ) . '"';
+                        $cancel_btn_extra    = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
+                        $keep_btn_classes   .= ' tta-disabled tta-tooltip-trigger';
+                        $keep_btn_extra      = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
+                        $delete_btn_classes .= ' tta-disabled tta-tooltip-trigger';
+                        $delete_btn_extra    = ' disabled="disabled" data-tooltip="' . $tooltip . '"';
                     }
                     ?>
                     <tr data-request data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>" data-event="<?php echo esc_attr( $event_id ); ?>">
@@ -564,10 +577,10 @@ $tickets = $wpdb->get_results(
                         <button type="button" class="<?php echo esc_attr( $cancel_btn_classes ); ?>" data-mode="cancel" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $cancel_btn_extra; ?>>
                           <?php esc_html_e( 'Refund & Cancel Attendance', 'tta' ); ?>
                         </button>
-                      <button type="button" class="tta-refund-request-process" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                      <button type="button" class="<?php echo esc_attr( $keep_btn_classes ); ?>" data-mode="keep" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $keep_btn_extra; ?>>
                         <?php esc_html_e( 'Refund & Keep Attendance', 'tta' ); ?>
                       </button>
-                      <button type="button" class="tta-refund-request-delete" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>">
+                      <button type="button" class="<?php echo esc_attr( $delete_btn_classes ); ?>" data-tx="<?php echo esc_attr( $a['gateway_id'] ); ?>" data-ticket="<?php echo esc_attr( $tid ); ?>"<?php echo $delete_btn_extra; ?>>
                         <?php esc_html_e( 'Cancel Attendance (No Refund)', 'tta' ); ?>
                       </button>
                     </td>

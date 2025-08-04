@@ -130,9 +130,14 @@ class TTA_Refund_Processor {
             ) );
 
             $sold_from_pool = max( 0, $released - $stock );
-            $to_refund      = min( count( $list ), $sold_from_pool );
+
+            $eligible = array_values( array_filter( $list, function( $req ) {
+                return 'settlement' !== ( $req['pending_reason'] ?? '' );
+            } ) );
+
+            $to_refund = min( count( $eligible ), $sold_from_pool );
             for ( $i = 0; $i < $to_refund; $i++ ) {
-                self::process_refund_request( $list[ $i ] );
+                self::process_refund_request( $eligible[ $i ] );
             }
         }
     }
@@ -179,6 +184,7 @@ class TTA_Refund_Processor {
                         [ '%d' ]
                     );
                     TTA_Cache::delete( 'tta_refund_requests' );
+                    tta_clear_pending_refund_cache( intval( $req['ticket_id'] ), intval( $req['event_id'] ) );
                 }
                 self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
                 tta_decrement_released_refund_count( intval( $req['ticket_id'] ) );

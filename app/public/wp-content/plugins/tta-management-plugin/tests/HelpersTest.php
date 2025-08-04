@@ -68,6 +68,53 @@ class DummyWpdbHelpers {
     }
 }
 
+require_once __DIR__ . '/../includes/classes/class-tta-refund-processor.php';
+
+class TTA_Refund_Processor_Test extends TTA_Refund_Processor {
+    public static $processed = [];
+
+    public static function process_refund_request( array $req, $amount_override = null ) {
+        self::$processed[] = $req['transaction_id'];
+    }
+
+    public static function retry_pending_requests() {
+        global $wpdb;
+        $requests = tta_get_refund_requests();
+        if ( ! $requests ) {
+            return;
+        }
+
+        $grouped = [];
+        foreach ( $requests as $req ) {
+            $tid = intval( $req['ticket_id'] );
+            $grouped[ $tid ][] = $req;
+        }
+
+        foreach ( $grouped as $tid => $list ) {
+            $released = tta_get_released_refund_count( $tid );
+            if ( $released <= 0 ) {
+                continue;
+            }
+
+            $stock = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
+                $tid
+            ) );
+
+            $sold_from_pool = max( 0, $released - $stock );
+
+            $eligible = array_values( array_filter( $list, function( $req ) {
+                return 'settlement' !== ( $req['pending_reason'] ?? '' );
+            } ) );
+
+            $to_refund = min( count( $eligible ), $sold_from_pool );
+            for ( $i = 0; $i < $to_refund; $i++ ) {
+                static::process_refund_request( $eligible[ $i ] );
+            }
+        }
+    }
+}
+
 class HelpersTest extends TestCase {
     private $wpdb;
 
@@ -99,7 +146,7 @@ class HelpersTest extends TestCase {
         if (!function_exists('get_permalink')) { function get_permalink($id){ return 'post/'.$id; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
         if (!function_exists('wp_json_encode')) { function wp_json_encode($data, $options = 0, $depth = 512){ return json_encode($data, $options, $depth); } }
-        if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }
+        if (!function_exists('current_time')) { function current_time($type = 'mysql', $gmt = false){ return 'timestamp' === $type ? time() : date('Y-m-d H:i:s'); } }
         if (!function_exists('get_option')) { function get_option($k,$d=null){ return $GLOBALS['options'][$k] ?? $d; } }
         if (!function_exists('update_option')) { function update_option($k,$v,$autoload=true){ $GLOBALS['options'][$k]=$v; } }
         if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
@@ -832,6 +879,92 @@ class HelpersTest extends TestCase {
         require_once __DIR__ . '/../includes/helpers.php';
         $this->assertCount( 2, tta_get_ticket_pending_refund_attendees( 9, 20 ) );
         $this->assertSame( 1, tta_get_ticket_refund_pool_count( 9, 20 ) );
+    }
+
+    public function test_get_refund_requests_returns_oldest_first() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        $wpdb->results_data = [
+            [
+                'id'           => 1,
+                'member_id'    => 7,
+                'action_date'  => '2025-07-01 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Ann',
+                'last_name'    => 'Bee',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+            [
+                'id'           => 2,
+                'member_id'    => 8,
+                'action_date'  => '2025-07-02 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Bob',
+                'last_name'    => 'See',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        require_once __DIR__ . '/../includes/helpers.php';
+        $reqs = tta_get_refund_requests();
+        $this->assertSame( 'tx1', $reqs[0]['transaction_id'] );
+        $this->assertSame( 'tx2', $reqs[1]['transaction_id'] );
+    }
+
+    public function test_retry_pending_requests_skips_settlement() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        $wpdb->results_data = [
+            [
+                'id'           => 1,
+                'member_id'    => 7,
+                'action_date'  => '2025-07-01 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 5,
+                    'pending_reason' => 'settlement',
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Ann',
+                'last_name'    => 'Bee',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+            [
+                'id'           => 2,
+                'member_id'    => 8,
+                'action_date'  => '2025-07-02 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 5,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Bob',
+                'last_name'    => 'See',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+        ];
+        update_option( 'tta_refund_pool_released', [ 5 => 1 ] );
+        $wpdb->var_value = 0;
+        TTA_Refund_Processor_Test::$processed = [];
+        TTA_Refund_Processor_Test::retry_pending_requests();
+        $this->assertSame( [ 'tx2' ], TTA_Refund_Processor_Test::$processed );
     }
 
     public function test_convert_links_transforms_markdown() {

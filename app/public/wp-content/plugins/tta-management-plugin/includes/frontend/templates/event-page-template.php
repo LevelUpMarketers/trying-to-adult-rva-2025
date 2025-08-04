@@ -182,6 +182,7 @@ $tooltip_message = '';
 $disable_controls = false;
 $waitlist_disabled = ! $is_logged_in;
 $waitlist_tooltip  = __( 'You must be logged in to join the waitlist.', 'tta' );
+$waitlist_ticket_ids = [];
 $show_upgrade_btn  = false;
 $upgrade_label     = '';
 
@@ -324,6 +325,8 @@ if ( $is_archived ) {
     $waitlist_disabled = true;
     $waitlist_tooltip  = __( 'The waitlist is closed for this event.', 'tta' );
 }
+
+$has_active_reservations = tta_event_has_active_cart_reservations( $event['ute_id'] );
 
 if ( $is_logged_in ) {
 
@@ -873,7 +876,7 @@ echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
                 </div>
                 <div class="tta-ticket-notice" aria-live="polite"></div>
               </div>
-              <?php if ( $is_sold_out && $has_waitlist ) : ?>
+              <?php if ( $is_sold_out && $has_waitlist && ! $has_active_reservations ) : ?>
               <?php
                 $ticket_waitlist_disabled = $waitlist_disabled;
                 $ticket_waitlist_tooltip  = $waitlist_tooltip;

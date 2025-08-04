@@ -103,7 +103,7 @@ class MemberTest extends TestCase {
         if (!function_exists('wp_insert_user')) { function wp_insert_user($d){ $id=count($GLOBALS['wp_users'])+1; $GLOBALS['wp_users'][$d['user_email']] = ['ID'=>$id,'user_login'=>$d['user_login'],'user_email'=>$d['user_email']]; $GLOBALS['usernames'][$d['user_login']]=$id; return $id; } }
         if (!function_exists('is_wp_error')) { function is_wp_error($v){ return false; } }
         if (!function_exists('wp_delete_user')) { function wp_delete_user($id){ $GLOBALS['deleted_users'][]=$id; } }
-        if (!function_exists('current_time')) { function current_time($t){ return 'now'; } }
+        if (!function_exists('current_time')) { function current_time($t='mysql',$gmt=false){ return $t==='timestamp'?0:'now'; } }
         if (!function_exists('update_user_meta')) { function update_user_meta($u,$k,$v){ $GLOBALS['user_meta'][$u][$k]=$v; } }
         if (!function_exists('get_userdata')) { function get_userdata($uid){ foreach($GLOBALS['wp_users'] as $u){ if($u['ID']==$uid) return (object)$u; } return false; } }
         if (!function_exists('wp_update_user')) { function wp_update_user($d){
