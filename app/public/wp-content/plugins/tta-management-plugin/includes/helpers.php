@@ -4289,6 +4289,49 @@ function tta_get_released_refund_map() {
 }
 
 /**
+ * Track which tickets have completely sold out at least once.
+ *
+ * Stored as an option mapping ticket ID to a boolean-like flag. This allows
+ * refund requests submitted after the initial sell out to be released
+ * immediately.
+ *
+ * @return array
+ */
+function tta_get_sold_out_map() {
+    $map = get_option( 'tta_ticket_sold_out_once', [] );
+    return is_array( $map ) ? array_map( 'intval', $map ) : [];
+}
+
+/**
+ * Determine if a ticket has sold out at least once.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return bool
+ */
+function tta_has_ticket_sold_out( $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    $map       = tta_get_sold_out_map();
+    return ! empty( $map[ $ticket_id ] );
+}
+
+/**
+ * Mark a ticket as having sold out at least once.
+ *
+ * @param int $ticket_id Ticket ID.
+ */
+function tta_mark_ticket_sold_out( $ticket_id ) {
+    $ticket_id = intval( $ticket_id );
+    if ( $ticket_id <= 0 ) {
+        return;
+    }
+    $map = tta_get_sold_out_map();
+    if ( empty( $map[ $ticket_id ] ) ) {
+        $map[ $ticket_id ] = 1;
+        update_option( 'tta_ticket_sold_out_once', $map, false );
+    }
+}
+
+/**
  * Get released count for a ticket.
  *
  * @param int $ticket_id Ticket ID.
@@ -4360,6 +4403,20 @@ function tta_clear_ticket_cache( $event_ute_id, $ticket_id = 0 ) {
 }
 
 /**
+ * Clear cached pending refund attendee data for a ticket/event combo.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @param int $event_id  Event ID.
+ */
+function tta_clear_pending_refund_cache( $ticket_id, $event_id ) {
+    $ticket_id = intval( $ticket_id );
+    $event_id  = intval( $event_id );
+    if ( $ticket_id && $event_id ) {
+        TTA_Cache::delete( 'pending_refund_attendees_' . $ticket_id . '_' . $event_id );
+    }
+}
+
+/**
  * Determine if an event has any active cart reservations.
  *
  * @param string $event_ute_id Event ute_id.
@@ -4378,8 +4435,9 @@ function tta_event_has_active_cart_reservations( $event_ute_id ) {
         $wpdb->prepare(
             "SELECT COUNT(*) FROM {$cart_table} ci
              JOIN {$tickets_table} t ON ci.ticket_id = t.id
-             WHERE t.event_ute_id = %s AND ci.expires_at > NOW()",
-            $event_ute_id
+             WHERE t.event_ute_id = %s AND ci.expires_at > %s",
+            $event_ute_id,
+            current_time( 'mysql', true )
         )
     );
 
@@ -4423,7 +4481,15 @@ function tta_release_refund_tickets( $event_ute_id ) {
     foreach ( $tickets as $t ) {
         $tid   = intval( $t['id'] );
         $limit = intval( $t['ticketlimit'] );
-        $pool  = tta_get_ticket_refund_pool_count( $tid, $event_id );
+        if ( $limit <= 0 ) {
+            tta_mark_ticket_sold_out( $tid );
+        }
+
+        if ( ! tta_has_ticket_sold_out( $tid ) ) {
+            continue; // do not release refund tickets until initial sellout.
+        }
+
+        $pool = tta_get_ticket_refund_pool_count( $tid, $event_id );
         if ( $pool <= $limit ) {
             continue;
         }

@@ -184,6 +184,7 @@ class TTA_Refund_Processor {
                         [ '%d' ]
                     );
                     TTA_Cache::delete( 'tta_refund_requests' );
+                    tta_clear_pending_refund_cache( intval( $req['ticket_id'] ), intval( $req['event_id'] ) );
                 }
                 self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
                 tta_decrement_released_refund_count( intval( $req['ticket_id'] ) );

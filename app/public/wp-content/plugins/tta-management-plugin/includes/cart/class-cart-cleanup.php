@@ -17,7 +17,7 @@ class TTA_Cart_Cleanup {
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$table} WHERE expires_at < %s",
-                current_time( 'mysql' )
+                current_time( 'mysql', true )
             )
         );
     }
@@ -38,7 +38,7 @@ class TTA_Cart_Cleanup {
         $expired = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT i.ticket_id, i.quantity, t.event_ute_id FROM {$items_table} i JOIN {$tickets_table} t ON i.ticket_id = t.id WHERE i.expires_at < %s",
-                current_time( 'mysql' )
+                current_time( 'mysql', true )
             ),
             ARRAY_A
         );
@@ -61,7 +61,7 @@ class TTA_Cart_Cleanup {
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM {$items_table} WHERE expires_at < %s",
-                current_time( 'mysql' )
+                current_time( 'mysql', true )
             )
         );
 

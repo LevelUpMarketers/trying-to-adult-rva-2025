@@ -146,7 +146,7 @@ class HelpersTest extends TestCase {
         if (!function_exists('get_permalink')) { function get_permalink($id){ return 'post/'.$id; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
         if (!function_exists('wp_json_encode')) { function wp_json_encode($data, $options = 0, $depth = 512){ return json_encode($data, $options, $depth); } }
-        if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }
+        if (!function_exists('current_time')) { function current_time($type = 'mysql', $gmt = false){ return 'timestamp' === $type ? time() : date('Y-m-d H:i:s'); } }
         if (!function_exists('get_option')) { function get_option($k,$d=null){ return $GLOBALS['options'][$k] ?? $d; } }
         if (!function_exists('update_option')) { function update_option($k,$v,$autoload=true){ $GLOBALS['options'][$k]=$v; } }
         if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
