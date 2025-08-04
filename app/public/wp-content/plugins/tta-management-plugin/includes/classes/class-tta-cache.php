@@ -58,6 +58,31 @@ class TTA_Cache {
     }
 
     /**
+     * Delete all cached values beginning with a given prefix.
+     *
+     * @param string $prefix Cache key prefix.
+     */
+    public static function delete_group( $prefix ) {
+        global $wpdb;
+        $base    = self::$prefix . $prefix;
+        $like    = method_exists( $wpdb, 'esc_like' ) ? $wpdb->esc_like( $base ) : addcslashes( $base, '_%' );
+        $pattern = $like . '%';
+        $option_names = [];
+        if ( method_exists( $wpdb, 'get_col' ) ) {
+            $option_names = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+                    '_transient_%' . $pattern
+                )
+            );
+        }
+        foreach ( $option_names as $option_name ) {
+            $transient = substr( $option_name, strlen( '_transient_' ) );
+            delete_transient( $transient );
+        }
+    }
+
+    /**
      * Fetch a cached value or compute it using a callback.
      *
      * @param string   $key

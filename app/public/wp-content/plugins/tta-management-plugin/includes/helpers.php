@@ -1647,12 +1647,8 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             }
             $tx  = $req['transaction_id'];
             $tid = intval( $req['ticket_id'] );
-            $refunds[ $tx ][ $tid ] = $req;
-            if ( isset( $txn_map[ $tx ] ) ) {
-                $txn_map[ $tx ] += 1;
-            } else {
-                $txn_map[ $tx ] = 1;
-            }
+            $refunds[ $tx ][ $tid ][] = $req;
+            $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
         }
 
         if ( $events ) {
@@ -1783,18 +1779,20 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                         }
                     }
                     if ( isset( $refunds[ $gateway_tx ][ $tid ] ) ) {
-                        $req  = $refunds[ $gateway_tx ][ $tid ];
-                        $item['refund_pending'] = true;
-                        $item['refund_attendee'] = [
-                            'first_name' => $req['first_name'],
-                            'last_name'  => $req['last_name'],
-                            'email'      => $req['email'],
-                        ];
-                        if ( 0 === $item['quantity'] ) {
-                            $item['quantity'] = 1;
+                        foreach ( $refunds[ $gateway_tx ][ $tid ] as $req ) {
+                            $clone = $item;
+                            $clone['refund_pending'] = true;
+                            $clone['refund_attendee'] = [
+                                'first_name' => $req['first_name'],
+                                'last_name'  => $req['last_name'],
+                                'email'      => $req['email'],
+                            ];
+                            $clone['quantity'] = 1;
+                            $clone['attendees'] = [];
+                            $new_items[] = $clone;
                         }
-                        $new_items[] = $item;
-                    } elseif ( $item['quantity'] > 0 ) {
+                    }
+                    if ( $item['quantity'] > 0 ) {
                         $new_items[] = $item;
                     }
                 }
@@ -4355,6 +4353,10 @@ function tta_clear_ticket_cache( $event_ute_id, $ticket_id = 0 ) {
     if ( $ticket_id > 0 ) {
         TTA_Cache::delete( 'ticket_stock_' . $ticket_id );
     }
+
+    // Bust higher level caches so events list counts refresh immediately.
+    TTA_Cache::delete_group( 'upcoming_events_' );
+    TTA_Cache::delete_group( 'event_days_' );
 }
 
 /**
@@ -4421,16 +4423,15 @@ function tta_release_refund_tickets( $event_ute_id ) {
     foreach ( $tickets as $t ) {
         $tid   = intval( $t['id'] );
         $limit = intval( $t['ticketlimit'] );
-        if ( $limit > 0 ) {
+        $pool  = tta_get_ticket_refund_pool_count( $tid, $event_id );
+        if ( $pool <= $limit ) {
             continue;
         }
-        $pool = tta_get_ticket_refund_pool_count( $tid, $event_id );
-        if ( $pool > 0 ) {
-            $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $pool, $tid ) );
-            tta_clear_ticket_cache( $event_ute_id, $tid );
-            tta_set_released_refund_count( $tid, $pool );
-            tta_notify_waitlist_ticket_available( $tid );
-        }
+        $diff = $pool - $limit;
+        $wpdb->query( $wpdb->prepare( "UPDATE {$tickets_table} SET ticketlimit = ticketlimit + %d WHERE id = %d", $diff, $tid ) );
+        tta_clear_ticket_cache( $event_ute_id, $tid );
+        tta_set_released_refund_count( $tid, $pool );
+        tta_notify_waitlist_ticket_available( $tid );
     }
 }
 
@@ -4489,6 +4490,28 @@ function tta_remove_purchased_from_waitlists( array $items, $user_id ) {
         }
     }
     TTA_Cache::flush();
+}
+
+/**
+ * Check if a ticket currently has any waitlist entries.
+ *
+ * @param int $ticket_id Ticket ID.
+ * @return bool True when the waitlist table has rows for the ticket.
+ */
+function tta_ticket_has_waitlist_entries( $ticket_id ) {
+    global $wpdb;
+    $ticket_id     = intval( $ticket_id );
+    if ( $ticket_id <= 0 ) {
+        return false;
+    }
+    $waitlist_table = $wpdb->prefix . 'tta_waitlist';
+    $count = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$waitlist_table} WHERE ticket_id = %d",
+            $ticket_id
+        )
+    );
+    return $count > 0;
 }
 
 /**

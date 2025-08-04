@@ -532,15 +532,18 @@ $tickets = $wpdb->get_results(
                             $reason = __( 'Admin manually issued a "Refund & Keep Attendance" request. Waiting for transaction to settle.', 'tta' );
                         }
                     }
-                    $paid   = floatval( $a['amount_paid'] );
-                    $stock  = tta_get_ticket_stock( $tid );
+                    $paid     = floatval( $a['amount_paid'] );
+                    $stock    = tta_get_ticket_stock( $tid );
                     $released = tta_get_released_refund_count( $tid );
+                    $waitlist = tta_ticket_has_waitlist_entries( $tid );
                     if ( 'settlement' === ( $a['pending_reason'] ?? '' ) ) {
                         $pending_reason = __( 'Waiting for transaction to settle', 'tta' );
                     } elseif ( $released > 0 && $stock > 0 ) {
                         $pending_reason = __( 'Up for sale - waiting to be purchased', 'tta' );
+                    } elseif ( $waitlist ) {
+                        $pending_reason = __( 'Ticket has yet to sell out. Those on the waitlist have been notified that a ticket is available', 'tta' );
                     } else {
-                        $pending_reason = __( 'Event has yet to sell out', 'tta' );
+                        $pending_reason = __( 'Ticket has yet to sell out', 'tta' );
                     }
 
                     $is_settlement       = ( 'settlement' === ( $a['pending_reason'] ?? '' ) );

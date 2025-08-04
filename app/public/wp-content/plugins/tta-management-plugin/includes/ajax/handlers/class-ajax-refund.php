@@ -69,6 +69,10 @@ class TTA_Ajax_Refund {
             'action_data' => wp_json_encode( $action_data ),
         ], [ '%d','%d','%d','%s','%s' ] );
         TTA_Cache::delete( 'tta_refund_requests' );
+        if ( $event_ute ) {
+            tta_release_refund_tickets( $event_ute );
+            tta_clear_ticket_cache( $event_ute, $ticket_id );
+        }
         wp_send_json_success( [ 'message' => __( 'Your refund request has been submitted! Per our Refund Policy, once all remaining tickets are sold, your ticket will be available for purchase by other members. Once it\'s sold, you\'ll automatically receive a refund. There\'s nothing else for you to do! Check back here periodically to see the status of your refund request.', 'tta' ) ] );
     }
 
