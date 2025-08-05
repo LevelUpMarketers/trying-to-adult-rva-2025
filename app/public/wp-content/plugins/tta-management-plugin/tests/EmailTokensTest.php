@@ -16,6 +16,9 @@ class EmailTokensTest extends TestCase {
         if (!function_exists('date_i18n')) {
             function date_i18n($f,$ts){ return date($f,$ts); }
         }
+        if (!function_exists('esc_url')) {
+            function esc_url($v){ return $v; }
+        }
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/email/class-email-handler.php';
     }
@@ -58,5 +61,35 @@ class EmailTokensTest extends TestCase {
 
         $this->assertSame('Tucker', $tokens1['{attendee_first_name}']);
         $this->assertSame('Jill', $tokens2['{attendee_first_name}']);
+    }
+
+    public function test_build_tokens_includes_event_address_link() {
+        $handler = TTA_Email_Handler::get_instance();
+        $ref = new \ReflectionClass($handler);
+        $method = $ref->getMethod('build_tokens');
+        $method->setAccessible(true);
+
+        $event = [
+            'name'    => 'Event',
+            'date'    => '2025-06-30',
+            'time'    => '18:00|20:00',
+            'address' => '500 Sample St, Richmond VA',
+        ];
+        $member = [
+            'first_name' => 'Bob',
+            'last_name'  => 'Smith',
+            'user_email' => 'bob@example.com',
+            'member'     => [],
+            'membership_level' => '',
+        ];
+        $attendees = [];
+
+        $tokens = $method->invoke($handler, $event, $member, $attendees);
+
+        $this->assertArrayHasKey('{event_address_link}', $tokens);
+        $this->assertSame(
+            'https://maps.google.com/?q=500%20Sample%20St%2C%20Richmond%20VA',
+            $tokens['{event_address_link}']
+        );
     }
 }

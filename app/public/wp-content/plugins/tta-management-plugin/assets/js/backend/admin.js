@@ -1219,6 +1219,7 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var map  = {
         '{event_name}': ev.name || 'Sample Event',
         '{event_address}': ev.address || '123 Main St',
+        '{event_address_link}': ev.address_link || '#',
         '{event_link}': ev.page_url || '#',
         '{dashboard_profile_url}': ev.dashboard_profile_url || '#',
         '{dashboard_upcoming_url}': ev.dashboard_upcoming_url || '#',

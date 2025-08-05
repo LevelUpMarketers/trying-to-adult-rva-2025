@@ -200,6 +200,7 @@ class TTA_Comms_Admin {
             echo '<span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the event.', 'tta' ) . '"></span><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_name}">{event_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_address}">{event_address}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{event_address_link}">{event_address_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_link}">{event_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_date}">{event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_time}">{event_time}</button> ';

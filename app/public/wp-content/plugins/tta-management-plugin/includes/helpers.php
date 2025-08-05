@@ -4784,6 +4784,9 @@ function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
     $tokens = [
         '{event_name}'           => $event['name'] ?? '',
         '{event_address}'        => $event['address'] ?? '',
+        '{event_address_link}'   => isset( $event['address'] ) && $event['address'] !== ''
+            ? esc_url( 'https://maps.google.com/?q=' . rawurlencode( $event['address'] ) )
+            : '',
         '{event_link}'           => $event['page_url'] ?? '',
         '{dashboard_profile_url}'  => home_url( '/member-dashboard/?tab=profile' ),
         '{dashboard_upcoming_url}' => home_url( '/member-dashboard/?tab=upcoming' ),

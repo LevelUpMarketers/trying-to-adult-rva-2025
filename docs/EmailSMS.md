@@ -55,6 +55,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 ```
 {event_name}
 {event_address}
+{event_address_link}
 {event_link}
 {dashboard_profile_url}
 {dashboard_upcoming_url}
@@ -70,6 +71,8 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {member_cost}
 {premium_cost}
 ```
+
+`{event_address_link}` outputs a Google Maps URL for the event address.
 
 Dashboard URL tokens accept an optional `anchor` attribute. For example:
 
