@@ -4943,6 +4943,12 @@ function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
         '{assistance_phone}'      => ! empty( $context['member']['phone'] ) ? $context['member']['phone'] : 'N/A',
     ];
 
+    $names = tta_get_event_host_volunteer_names( $event['id'] );
+    $tokens['{event_host}']       = $names['hosts'] ? implode( ', ', $names['hosts'] ) : 'TBD';
+    $tokens['{event_hosts}']      = $tokens['{event_host}'];
+    $tokens['{event_volunteer}']  = $names['volunteers'] ? implode( ', ', $names['volunteers'] ) : 'TBD';
+    $tokens['{event_volunteers}'] = $tokens['{event_volunteer}'];
+
     $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
     $subject     = tta_strip_bold( strtr( $subject_raw, $tokens ) );
     $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
