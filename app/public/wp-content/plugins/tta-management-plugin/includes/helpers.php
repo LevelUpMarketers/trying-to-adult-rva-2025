@@ -3357,7 +3357,7 @@ function tta_get_next_event() {
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
+            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, hosts, volunteers, host_notes FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
             current_time( 'Y-m-d' )
         ),
         ARRAY_A
@@ -3384,6 +3384,11 @@ function tta_get_next_event() {
         'date_formatted'     => tta_format_event_date( $row['date'] ),
         'time_formatted'     => tta_format_event_time( $row['time'] ),
     ];
+
+    $names = tta_get_event_host_volunteer_names( $event['id'] );
+    $event['host_names']       = implode( ', ', $names['hosts'] );
+    $event['volunteer_names']  = implode( ', ', $names['volunteers'] );
+    $event['host_notes']       = sanitize_textarea_field( $row['host_notes'] ?? '' );
 
     TTA_Cache::set( $cache_key, $event, 300 );
     return $event;

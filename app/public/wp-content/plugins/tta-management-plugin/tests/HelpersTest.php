@@ -405,6 +405,9 @@ class HelpersTest extends TestCase {
             'baseeventcost' => 10,
             'discountedmembercost' => 8,
             'premiummembercost' => 7,
+            'hosts' => 'Ann Bee',
+            'volunteers' => 'Ben Dee',
+            'host_notes' => 'Bring ID',
         ];
         TTA_Cache::delete('tta_next_event');
         $ev1 = tta_get_next_event();
@@ -413,6 +416,9 @@ class HelpersTest extends TestCase {
         $this->assertSame('Soon Event', $ev1['name']);
         $this->assertSame('February 1st, 2030', $ev1['date_formatted']);
         $this->assertSame('8:00 pm - 10:00 pm', $ev1['time_formatted']);
+        $this->assertSame('Ann Bee', $ev1['host_names']);
+        $this->assertSame('Ben Dee', $ev1['volunteer_names']);
+        $this->assertSame('Bring ID', $ev1['host_notes']);
     }
 
     public function test_set_attendance_status_updates_db() {
