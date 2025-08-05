@@ -1198,8 +1198,32 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     $(field).trigger('blur');
   });
 
+  $(document).on('click', '.tta-bold-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    var sel   = val.substring(start, end);
+    var md    = '**' + sel + '**';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = start;
+    field.selectionEnd   = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  function convertBold(text){
+    return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function stripBold(text){
+    return text.replace(/\*\*([^*]+)\*\*/g, '$1');
   }
 
   function expandAnchors(text,map){
@@ -1234,10 +1258,10 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{base_cost}': ev.base_cost || '0',
         '{member_cost}': ev.member_cost || '0',
         '{premium_cost}': ev.premium_cost || '0',
-        '{event_host}': ev.host_names || '',
-        '{event_hosts}': ev.host_names || '',
-        '{event_volunteer}': ev.volunteer_names || '',
-        '{event_volunteers}': ev.volunteer_names || '',
+        '{event_host}': ev.host_names || 'TBD',
+        '{event_hosts}': ev.host_names || 'TBD',
+        '{event_volunteer}': ev.volunteer_names || 'TBD',
+        '{event_volunteers}': ev.volunteer_names || 'TBD',
         '{host_notes}': ev.host_notes || '',
         '{first_name}': mem.first_name || 'First',
         '{last_name}': mem.last_name || 'Last',
@@ -1270,7 +1294,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
       body = body.split(tok).join(val);
       sms  = sms.split(tok).join(val);
     });
-    body = convertLinks(body);
+    subj = stripBold(subj);
+    body = convertBold(convertLinks(body));
+    sms  = stripBold(sms);
     var bodyHtml = body.replace(/\n/g, '<br>');
     $form.find('.tta-email-preview-subject').text(subj);
     $form.find('.tta-email-preview-body').html(bodyHtml);

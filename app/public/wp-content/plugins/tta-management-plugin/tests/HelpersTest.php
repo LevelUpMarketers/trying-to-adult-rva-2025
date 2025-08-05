@@ -1017,4 +1017,11 @@ class HelpersTest extends TestCase {
         $exp = 'Go http://example.com/member-dashboard/?tab=upcoming now.';
         $this->assertSame( $exp, tta_expand_anchor_tokens( $in, $tokens ) );
     }
+
+    public function test_convert_bold_and_strip_bold() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $in = 'Hello **World**';
+        $this->assertSame( 'Hello <strong>World</strong>', tta_convert_bold( $in ) );
+        $this->assertSame( 'Hello World', tta_strip_bold( $in ) );
+    }
 }

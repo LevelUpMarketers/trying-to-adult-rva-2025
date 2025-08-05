@@ -199,6 +199,34 @@ function tta_convert_links( $text ) {
 }
 
 /**
+ * Convert Markdown-style bold markers to HTML strong tags.
+ *
+ * Wraps any `**text**` sequences in `<strong>` tags with escaped text.
+ *
+ * @param string $text Raw message content.
+ * @return string Text with `<strong>` tags.
+ */
+function tta_convert_bold( $text ) {
+    return preg_replace_callback(
+        '/\*\*(.*?)\*\*/',
+        static function ( $m ) {
+            return '<strong>' . esc_html( $m[1] ) . '</strong>';
+        },
+        $text
+    );
+}
+
+/**
+ * Strip Markdown-style bold markers, returning plain text.
+ *
+ * @param string $text Raw message content.
+ * @return string Text without `**` markers.
+ */
+function tta_strip_bold( $text ) {
+    return preg_replace( '/\*\*(.*?)\*\*/', '$1', $text );
+}
+
+/**
  * Expand dashboard URL tokens with optional anchor text.
  *
  * Replaces patterns like `{dashboard_upcoming_url anchor="View"}` with either

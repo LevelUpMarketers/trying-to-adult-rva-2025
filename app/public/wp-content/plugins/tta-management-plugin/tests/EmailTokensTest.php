@@ -120,6 +120,8 @@ class EmailTokensTest extends TestCase {
         $this->assertArrayHasKey('{event_host}', $tokens);
         $this->assertArrayHasKey('{event_volunteer}', $tokens);
         $this->assertArrayHasKey('{host_notes}', $tokens);
+        $this->assertSame('TBD', $tokens['{event_host}']);
+        $this->assertSame('TBD', $tokens['{event_volunteer}']);
         $this->assertSame('Bring snacks', $tokens['{host_notes}']);
     }
 }

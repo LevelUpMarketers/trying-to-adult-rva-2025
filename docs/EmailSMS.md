@@ -127,6 +127,9 @@ Each attendee receives a personalized email where these tokens reflect their own
 {host_notes}
 ```
 
+If no hosts or volunteers are assigned to an event, `{event_host}` and
+`{event_volunteer}` default to `TBD`.
+
 ### Refund Information
 
 ```
@@ -140,13 +143,20 @@ Each attendee receives a personalized email where these tokens reflect their own
 {refund_event_time}
 ```
 
-Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.
+### Formatting & Styling
 
-### Hyperlinks
+The editor provides helper buttons beneath the token sections:
 
-Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. Both the link text and the URL can be tokens, so `[{event_name}]({event_link})` resolves to a link with the event name and URL.
+- **Link This Text** – prompts for a URL or token and wraps the selected text
+  in `[text](url)` Markdown. Links are converted to clickable `<a>` tags when
+  the email is sent.
+- **Line Break** – inserts a newline. Email previews render these as HTML
+  `<br>` tags so the saved text remains plain.
+- **bold** – wraps the highlighted text with `**` markers. The enclosed text
+  appears in bold in the final email.
 
-Use the **Link This Text** button below the template fields to create these links without typing the Markdown. Highlight any text or token in the email body, click the button, and paste a URL or token. The selected text becomes the anchor for the provided link, and tokens are substituted when the email is sent.
+Template text can include Markdown-style links directly, so
+`[{event_name}]({event_link})` resolves to a link with the event name and URL.
 
 ### Formatting Helpers
 
