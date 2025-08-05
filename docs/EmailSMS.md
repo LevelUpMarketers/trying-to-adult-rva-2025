@@ -114,9 +114,10 @@ empty or omitted the full URL is printed.
 {attendee4_last_name}
 {attendee4_email}
 {attendee4_phone}
+{assistance_message}
 ```
 
-Each attendee receives a personalized email where these tokens reflect their own details.
+Each attendee receives a personalized email where these tokens reflect their own details. `{assistance_message}` contains any note submitted through the assistance form on the member dashboard.
 
 ### Host & Volunteer Information
 
@@ -128,15 +129,6 @@ Each attendee receives a personalized email where these tokens reflect their own
 
 If no hosts or volunteers are assigned to an event, `{event_host}` and
 `{event_volunteer}` default to `TBD`.
-
-### Assistance Request
-
-```
-{assistance_message}
-```
-
-Used in the `assistance_request` template to show the note a member sends from
-the assistance form on their dashboard.
 
 ### Refund Information
 
@@ -162,6 +154,9 @@ The editor provides helper buttons beneath the token sections:
   `<br>` tags so the saved text remains plain.
 - **Bold** – wraps the highlighted text with `**` markers. The enclosed text
   appears in bold in the final email.
+ - **Italic** – wraps the highlighted text with `*` markers. Text appears in italics in the final email.
+
+Styling markers can be combined, so `***bold & italic***` renders as bold and italic.
 
 Template text can include Markdown-style links directly, so
 `[{event_name}]({event_link})` resolves to a link with the event name and URL.

@@ -1214,16 +1214,43 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     $(field).trigger('blur');
   });
 
+  $(document).on('click', '.tta-italic-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    var sel   = val.substring(start, end);
+    var md    = '*' + sel + '*';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = start;
+    field.selectionEnd   = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  function convertBoldItalic(text){
+    return text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
   }
 
   function convertBold(text){
     return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   }
 
-  function stripBold(text){
-    return text.replace(/\*\*([^*]+)\*\*/g, '$1');
+  function convertItalic(text){
+    return text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+
+  function stripFormatting(text){
+    return text
+      .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1');
   }
 
   function expandAnchors(text,map){
@@ -1302,9 +1329,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
       body = body.split(tok).join(val);
       sms  = sms.split(tok).join(val);
     });
-    subj = stripBold(subj);
-    body = convertBold(convertLinks(body));
-    sms  = stripBold(sms);
+    subj = stripFormatting(subj);
+    body = convertItalic(convertBold(convertBoldItalic(convertLinks(body))));
+    sms  = stripFormatting(sms);
     var bodyHtml = body.replace(/\n/g, '<br>');
     $form.find('.tta-email-preview-subject').text(subj);
     $form.find('.tta-email-preview-body').html(bodyHtml);

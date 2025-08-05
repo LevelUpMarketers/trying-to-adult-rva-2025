@@ -246,15 +246,13 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_first_name}">{attendee4_first_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_last_name}">{attendee4_last_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_email}">{attendee4_email}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_phone}">{attendee4_phone}</button></div>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_phone}">{attendee4_phone}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Event hosts and volunteers.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Event Contacts', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_host}">{event_host}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_volunteer}">{event_volunteer}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{host_notes}">{host_notes}</button></div>';
-
-            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Message submitted via the assistance form.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Assistance Request', 'tta' ) . '</strong><br>';
-            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the refunded ticket.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Refund Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_first_name}">{refund_first_name}</button> ';
@@ -266,10 +264,11 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_date}">{refund_event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_time}">{refund_event_time}</button></div>';
 
-            echo '<div class="tta-token-section"><strong>' . esc_html__( 'Formatting & Styling', 'tta' ) . '</strong><br>';
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Insert formatting helpers.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Formatting & Styling', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-link-text">' . esc_html__( 'Link This Text', 'tta' ) . '</button> ';
             echo '<button type="button" class="button tta-insert-br">' . esc_html__( 'Line Break', 'tta' ) . '</button> ';
-            echo '<button type="button" class="button tta-bold-text">' . esc_html__( 'Bold', 'tta' ) . '</button></div>';
+            echo '<button type="button" class="button tta-bold-text">' . esc_html__( 'Bold', 'tta' ) . '</button> ';
+            echo '<button type="button" class="button tta-italic-text">' . esc_html__( 'Italic', 'tta' ) . '</button></div>';
 
             echo '</td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'Email Preview', 'tta' ) . '</th><td><div class="tta-email-preview"><strong class="tta-email-preview-subject"></strong><p class="tta-email-preview-body"></p></div></td></tr>';
