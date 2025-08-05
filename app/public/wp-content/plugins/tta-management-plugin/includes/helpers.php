@@ -199,6 +199,34 @@ function tta_convert_links( $text ) {
 }
 
 /**
+ * Convert Markdown-style bold markers to HTML strong tags.
+ *
+ * Wraps any `**text**` sequences in `<strong>` tags with escaped text.
+ *
+ * @param string $text Raw message content.
+ * @return string Text with `<strong>` tags.
+ */
+function tta_convert_bold( $text ) {
+    return preg_replace_callback(
+        '/\*\*(.*?)\*\*/',
+        static function ( $m ) {
+            return '<strong>' . esc_html( $m[1] ) . '</strong>';
+        },
+        $text
+    );
+}
+
+/**
+ * Strip Markdown-style bold markers, returning plain text.
+ *
+ * @param string $text Raw message content.
+ * @return string Text without `**` markers.
+ */
+function tta_strip_bold( $text ) {
+    return preg_replace( '/\*\*(.*?)\*\*/', '$1', $text );
+}
+
+/**
  * Expand dashboard URL tokens with optional anchor text.
  *
  * Replaces patterns like `{dashboard_upcoming_url anchor="View"}` with either
@@ -967,6 +995,77 @@ function tta_get_event_host_volunteer_emails( $event_id ) {
     $ttl = empty( $emails ) ? 60 : 300;
     TTA_Cache::set( $cache_key, $emails, $ttl );
     return $emails;
+}
+
+/**
+ * Retrieve host and volunteer names for an event.
+ *
+ * Supports numeric user IDs and legacy name-based values.
+ *
+ * @param int $event_id Event ID.
+ * @return array {
+ *     @type string[] $hosts      Host names.
+ *     @type string[] $volunteers Volunteer names.
+ * }
+ */
+function tta_get_event_host_volunteer_names( $event_id ) {
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return [ 'hosts' => [], 'volunteers' => [] ];
+    }
+
+    $cache_key = 'event_host_vol_names_' . $event_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare( "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d", $event_id ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        $row = $wpdb->get_row(
+            $wpdb->prepare( "SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d", $event_id ),
+            ARRAY_A
+        );
+    }
+    if ( ! $row ) {
+        TTA_Cache::set( $cache_key, [ 'hosts' => [], 'volunteers' => [] ], 60 );
+        return [ 'hosts' => [], 'volunteers' => [] ];
+    }
+
+    $parse = static function( $list ) {
+        $ids = [];
+        $names = [];
+        foreach ( array_filter( array_map( 'trim', explode( ',', (string) $list ) ) ) as $val ) {
+            if ( ctype_digit( $val ) ) {
+                $ids[] = intval( $val );
+            } else {
+                $names[] = sanitize_text_field( $val );
+            }
+        }
+        return [ $ids, $names ];
+    };
+
+    list( $host_ids, $host_names ) = $parse( $row['hosts'] ?? '' );
+    list( $vol_ids,  $vol_names  ) = $parse( $row['volunteers'] ?? '' );
+
+    $host_list = array_merge( tta_get_member_names_by_ids( $host_ids ), $host_names );
+    $vol_list  = array_merge( tta_get_member_names_by_ids( $vol_ids ), $vol_names );
+
+    $data = [
+        'hosts'      => array_values( array_unique( array_filter( $host_list ) ) ),
+        'volunteers' => array_values( array_unique( array_filter( $vol_list ) ) ),
+    ];
+
+    $ttl = ( empty( $data['hosts'] ) && empty( $data['volunteers'] ) ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $data, $ttl );
+    return $data;
 }
 
 /**
@@ -3286,7 +3385,7 @@ function tta_get_next_event() {
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
+            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, hosts, volunteers, host_notes FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
             current_time( 'Y-m-d' )
         ),
         ARRAY_A
@@ -3313,6 +3412,11 @@ function tta_get_next_event() {
         'date_formatted'     => tta_format_event_date( $row['date'] ),
         'time_formatted'     => tta_format_event_time( $row['time'] ),
     ];
+
+    $names = tta_get_event_host_volunteer_names( $event['id'] );
+    $event['host_names']       = implode( ', ', $names['hosts'] );
+    $event['volunteer_names']  = implode( ', ', $names['volunteers'] );
+    $event['host_notes']       = sanitize_textarea_field( $row['host_notes'] ?? '' );
 
     TTA_Cache::set( $cache_key, $event, 300 );
     return $event;

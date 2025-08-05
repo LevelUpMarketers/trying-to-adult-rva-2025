@@ -70,10 +70,10 @@ class TTA_Email_Handler {
             // Send email to purchasing member using default attendee order.
             $base_tokens = $this->build_tokens( $event, $context, $attendees );
             $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $base_tokens );
-            $subject  = strtr( $subject_raw, $base_tokens );
-            $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $base_tokens );
-            $body_txt = tta_convert_links( strtr( $body_raw, $base_tokens ) );
-            $body     = nl2br( $body_txt );
+            $subject     = tta_strip_bold( strtr( $subject_raw, $base_tokens ) );
+            $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $base_tokens );
+            $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $base_tokens ) ) );
+            $body        = nl2br( $body_txt );
             $to          = sanitize_email( $context['user_email'] );
             if ( $to && ! in_array( $to, $sent, true ) ) {
                 wp_mail( $to, $subject, $body, $headers );
@@ -94,12 +94,12 @@ class TTA_Email_Handler {
                     $ordered[0]       = $att;
                 }
 
-                $tokens  = $this->build_tokens( $event, $context, $ordered );
+                $tokens      = $this->build_tokens( $event, $context, $ordered );
                 $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
-                $subject  = strtr( $subject_raw, $tokens );
-                $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
-                $body_txt = tta_convert_links( strtr( $body_raw, $tokens ) );
-                $body     = nl2br( $body_txt );
+                $subject     = tta_strip_bold( strtr( $subject_raw, $tokens ) );
+                $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+                $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+                $body        = nl2br( $body_txt );
                 wp_mail( $recipient, $subject, $body, $headers );
                 $sent[] = $recipient;
             }
@@ -142,6 +142,13 @@ class TTA_Email_Handler {
             '{membership_level}'     => $member['membership_level'] ?? '',
             '{member_type}'          => $member['member']['member_type'] ?? '',
         ];
+
+        $names = tta_get_event_host_volunteer_names( $event['id'] ?? 0 );
+        $tokens['{event_host}']       = $names['hosts'] ? implode( ', ', $names['hosts'] ) : 'TBD';
+        $tokens['{event_hosts}']      = $tokens['{event_host}'];
+        $tokens['{event_volunteer}']  = $names['volunteers'] ? implode( ', ', $names['volunteers'] ) : 'TBD';
+        $tokens['{event_volunteers}'] = $tokens['{event_volunteer}'];
+        $tokens['{host_notes}']       = $event['host_notes'] ?? '';
 
         for ( $i = 0; $i < 4; $i++ ) {
             $a = $attendees[ $i ] ?? [];
@@ -191,12 +198,12 @@ class TTA_Email_Handler {
         $context   = tta_get_user_context_by_id( intval( $transaction['wpuserid'] ) );
         $attendees = tta_get_transaction_event_attendees( $transaction['transaction_id'], $refund['event_id'] );
 
-        $tokens   = $this->build_tokens( $event, $context, $attendees, $refund );
+        $tokens      = $this->build_tokens( $event, $context, $attendees, $refund );
         $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
-        $subject  = strtr( $subject_raw, $tokens );
-        $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
-        $body_txt = tta_convert_links( strtr( $body_raw, $tokens ) );
-        $body     = nl2br( $body_txt );
+        $subject     = tta_strip_bold( strtr( $subject_raw, $tokens ) );
+        $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+        $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+        $body        = nl2br( $body_txt );
 
         $recipients = array_unique( array_merge( [ $context['user_email'] ], array_column( $attendees, 'email' ) ) );
         $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
