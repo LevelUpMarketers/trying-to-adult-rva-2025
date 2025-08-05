@@ -200,6 +200,7 @@ class TTA_Comms_Admin {
             echo '<span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the event.', 'tta' ) . '"></span><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_name}">{event_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_address}">{event_address}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{event_address_link}">{event_address_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_link}">{event_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_date}">{event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_time}">{event_time}</button> ';
@@ -251,7 +252,8 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_date}">{refund_event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_time}">{refund_event_time}</button></div>';
 
-            echo '<button type="button" class="button tta-insert-br">Line Break</button>';
+            echo '<button type="button" class="button tta-link-text">' . esc_html__( 'Link This Text', 'tta' ) . '</button>';
+            echo '<button type="button" class="button tta-insert-br">' . esc_html__( 'Line Break', 'tta' ) . '</button>';
             echo '</td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'Email Preview', 'tta' ) . '</th><td><div class="tta-email-preview"><strong class="tta-email-preview-subject"></strong><p class="tta-email-preview-body"></p></div></td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'SMS Preview', 'tta' ) . '</th><td><div class="tta-sms-preview"></div></td></tr>';

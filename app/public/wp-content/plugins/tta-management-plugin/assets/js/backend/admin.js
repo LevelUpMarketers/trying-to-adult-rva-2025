@@ -1172,6 +1172,32 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     if (activeField) { $(activeField).trigger('blur'); }
   });
 
+  $(document).on('click', '.tta-link-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    // If user selected inside a token, expand to include braces.
+    if (start > 0 && val[start - 1] === '{' && val[end] === '}') {
+      start--;
+      end++;
+    }
+    var sel = val.substring(start, end);
+    var url = prompt('Enter URL or token');
+    if (!url) { return; }
+    url = url.trim();
+    if (url && url[0] !== '{' && !/^[a-z]+:\/\//i.test(url) && url[0] !== '/' && url[0] !== '#') {
+      url = '{' + url.replace(/^\{?|\}?$/g, '') + '}';
+    }
+    var md = '[' + sel + '](' + url + ')';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = field.selectionEnd = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   }
@@ -1193,6 +1219,7 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var map  = {
         '{event_name}': ev.name || 'Sample Event',
         '{event_address}': ev.address || '123 Main St',
+        '{event_address_link}': ev.address_link || '#',
         '{event_link}': ev.page_url || '#',
         '{dashboard_profile_url}': ev.dashboard_profile_url || '#',
         '{dashboard_upcoming_url}': ev.dashboard_upcoming_url || '#',
