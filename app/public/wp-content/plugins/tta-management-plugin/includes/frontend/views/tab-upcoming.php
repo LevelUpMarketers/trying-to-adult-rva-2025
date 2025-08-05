@@ -67,6 +67,30 @@
                   }
                   ?>
                 </p>
+              <?php elseif ( ! empty( $it['refund_keep'] ) ) : ?>
+                <p class="tta-refund-keep">
+                  <?php
+                  $ra     = $it['refund_attendee'] ?? [];
+                  $name   = trim( ( $ra['first_name'] ?? '' ) . ' ' . ( $ra['last_name'] ?? '' ) );
+                  $email  = $ra['email'] ?? '';
+                  $amt    = $it['refund_amount'] ?? 0;
+                  $amount = sprintf( '$%s', number_format_i18n( floatval( $amt ), 2 ) );
+                  $full   = isset( $it['final_price'] ) && abs( floatval( $it['final_price'] ) - floatval( $amt ) ) < 0.01;
+                  if ( $name || $email ) {
+                      if ( $full ) {
+                          printf( esc_html__( '%1$s (%2$s) - %3$s refund processed and attendance kept', 'tta' ), esc_html( $name ), esc_html( $email ), esc_html( $amount ) );
+                      } else {
+                          printf( esc_html__( '%1$s (%2$s) - %3$s partial refund processed and attendance kept', 'tta' ), esc_html( $name ), esc_html( $email ), esc_html( $amount ) );
+                      }
+                  } else {
+                      if ( $full ) {
+                          printf( esc_html__( '%s refund processed and attendance kept', 'tta' ), esc_html( $amount ) );
+                      } else {
+                          printf( esc_html__( '%s partial refund processed and attendance kept', 'tta' ), esc_html( $amount ) );
+                      }
+                  }
+                  ?>
+                </p>
               <?php else : ?>
                 <ul class="tta-attendees">
               <?php foreach ( (array) ( $it['attendees'] ?? [] ) as $att ) : ?>
@@ -74,7 +98,7 @@
               <?php endforeach; ?>
               </ul>
               <?php endif; ?>
-              <?php if ( empty( $it['refund_pending'] ) && empty( $it['refund_approved'] ) && intval( $it['purchaser_id'] ?? 0 ) === get_current_user_id() ) : ?>
+              <?php if ( empty( $it['refund_pending'] ) && empty( $it['refund_approved'] ) && empty( $it['refund_keep'] ) && intval( $it['purchaser_id'] ?? 0 ) === get_current_user_id() ) : ?>
               <div class="tta-refund-wrapper">
                 <?php if ( $ev['amount'] > 0 ) : ?>
                   <a href="#" class="tta-refund-link" data-tx="<?php echo esc_attr( $ev['transaction_id'] ); ?>" data-event="<?php echo esc_attr( $ev['event_id'] ); ?>" data-ticket="<?php echo esc_attr( $it['ticket_id'] ); ?>" data-attendee="<?php echo esc_attr( $first_att['id'] ?? '' ); ?>">

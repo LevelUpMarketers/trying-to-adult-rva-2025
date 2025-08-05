@@ -1616,6 +1616,7 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
     $txn_map = [];
     $refunds = [];
     $approved = [];
+    $kept     = [];
     foreach ( $rows as $row ) {
         $data = json_decode( $row['action_data'], true );
         if ( ! is_array( $data ) ) {
@@ -1664,24 +1665,29 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
             );
             foreach ( $refund_rows as $r ) {
                 $data = json_decode( $r['action_data'], true );
-                if ( empty( $data['cancel'] ) || floatval( $data['amount'] ?? 0 ) <= 0 ) {
+                if ( floatval( $data['amount'] ?? 0 ) <= 0 ) {
                     continue;
                 }
-                $tx  = $data['transaction_id'] ?? '';
-                $tid = intval( $data['ticket_id'] ?? 0 );
+                $tx    = $data['transaction_id'] ?? '';
+                $tid   = intval( $data['ticket_id'] ?? 0 );
                 $email = sanitize_email( $data['attendee']['email'] ?? '' );
                 if ( ! $tx || ! $tid || ! $email ) {
                     continue;
                 }
-                if ( ! isset( $approved[ $tx ][ $tid ][ $email ] ) ) {
-                    $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
-                }
-                $approved[ $tx ][ $tid ][ $email ] = [
+                $entry = [
                     'first_name' => $data['attendee']['first_name'] ?? '',
                     'last_name'  => $data['attendee']['last_name'] ?? '',
                     'email'      => $email,
                     'amount'     => floatval( $data['amount'] ?? 0 ),
                 ];
+                if ( ! empty( $data['cancel'] ) ) {
+                    if ( ! isset( $approved[ $tx ][ $tid ][ $email ] ) ) {
+                        $txn_map[ $tx ] = isset( $txn_map[ $tx ] ) ? $txn_map[ $tx ] + 1 : 1;
+                    }
+                    $approved[ $tx ][ $tid ][ $email ] = $entry;
+                } else {
+                    $kept[ $tx ][ $tid ][ $email ] = $entry;
+                }
             }
             // Flatten arrays for easier consumption later
             foreach ( $approved as $tx_key => &$tids ) {
@@ -1689,6 +1695,13 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                     $ap = array_values( $ap );
                 }
                 unset( $ap );
+            }
+            unset( $tids );
+            foreach ( $kept as $tx_key => &$tids ) {
+                foreach ( $tids as $tid_key => &$kp ) {
+                    $kp = array_values( $kp );
+                }
+                unset( $kp );
             }
             unset( $tids );
         }
@@ -1759,10 +1772,33 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                             return intval( $a['transaction_id'] ) === $internal_tx;
                         }
                     );
-                    $item['attendees'] = array_values( $attendees );
-                    $item['quantity']  = count( $item['attendees'] );
+                    $item['attendees']    = array_values( $attendees );
+                    $item['quantity']     = count( $item['attendees'] );
                     $item['purchaser_id'] = $purchaser;
                     $item['refund_pending'] = false;
+                    if ( isset( $kept[ $gateway_tx ][ $tid ] ) ) {
+                        foreach ( $kept[ $gateway_tx ][ $tid ] as $kp ) {
+                            $clone = $item;
+                            $clone['refund_keep']   = true;
+                            $clone['refund_amount'] = $kp['amount'];
+                            $clone['refund_attendee'] = [
+                                'first_name' => $kp['first_name'],
+                                'last_name'  => $kp['last_name'],
+                                'email'      => $kp['email'],
+                            ];
+                            $clone['quantity']  = 1;
+                            $clone['attendees'] = [];
+                            $new_items[]        = $clone;
+                            $attendees = array_filter(
+                                $attendees,
+                                static function ( $a ) use ( $kp ) {
+                                    return strtolower( $a['email'] ) !== strtolower( $kp['email'] );
+                                }
+                            );
+                        }
+                        $item['attendees'] = array_values( $attendees );
+                        $item['quantity']  = count( $item['attendees'] );
+                    }
                     if ( isset( $approved[ $gateway_tx ][ $tid ] ) ) {
                         foreach ( $approved[ $gateway_tx ][ $tid ] as $ap ) {
                             $clone = $item;
@@ -1790,7 +1826,17 @@ function tta_get_member_upcoming_events( $wp_user_id ) {
                             $clone['quantity'] = 1;
                             $clone['attendees'] = [];
                             $new_items[] = $clone;
+                            if ( 'keep' === ( $req['mode'] ?? '' ) ) {
+                                $attendees = array_filter(
+                                    $attendees,
+                                    static function ( $a ) use ( $req ) {
+                                        return strtolower( $a['email'] ) !== strtolower( $req['email'] );
+                                    }
+                                );
+                            }
                         }
+                        $item['attendees'] = array_values( $attendees );
+                        $item['quantity']  = count( $item['attendees'] );
                     }
                     if ( $item['quantity'] > 0 ) {
                         $new_items[] = $item;
