@@ -257,6 +257,13 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_date}">{refund_event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_time}">{refund_event_time}</button></div>';
 
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details from an assistance request.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Assistance Message', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_first_name}">{assistance_first_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_last_name}">{assistance_last_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_email}">{assistance_email}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_phone}">{assistance_phone}</button></div>';
+
             echo '<div class="tta-token-section"><strong>' . esc_html__( 'Formatting & Styling', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-link-text">' . esc_html__( 'Link This Text', 'tta' ) . '</button> ';
             echo '<button type="button" class="button tta-insert-br">' . esc_html__( 'Line Break', 'tta' ) . '</button> ';

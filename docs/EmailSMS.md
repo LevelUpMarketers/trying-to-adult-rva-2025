@@ -143,6 +143,18 @@ If no hosts or volunteers are assigned to an event, `{event_host}` and
 {refund_event_time}
 ```
 
+### Assistance Message
+
+These tokens insert details from a member's assistance request. Missing values default to `N/A`.
+
+```
+{assistance_message}
+{assistance_first_name}
+{assistance_last_name}
+{assistance_email}
+{assistance_phone}
+```
+
 ### Formatting & Styling
 
 The editor provides helper buttons beneath the token sections:
