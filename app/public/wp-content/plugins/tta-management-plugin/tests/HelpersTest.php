@@ -974,6 +974,17 @@ class HelpersTest extends TestCase {
         $this->assertSame( $out, tta_convert_links( $in ) );
     }
 
+    public function test_convert_links_handles_tokens() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $tokens = [
+            '{event_name}' => 'Roller Skating #2',
+            '{event_link}' => 'https://example.com/roller-skating-2/',
+        ];
+        $in  = '[{event_name}]({event_link})';
+        $out = '<a href="https://example.com/roller-skating-2/">Roller Skating #2</a>';
+        $this->assertSame( $out, tta_convert_links( strtr( $in, $tokens ) ) );
+    }
+
     public function test_expand_anchor_tokens_handles_anchor() {
         require_once __DIR__ . '/../includes/helpers.php';
         $tokens = [ '{dashboard_upcoming_url}' => 'http://example.com/member-dashboard/?tab=upcoming' ];

@@ -1177,13 +1177,23 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var field = activeField;
     if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
     if (field.selectionStart === field.selectionEnd) { return; }
-    var url = prompt('Enter URL');
-    if (!url) { return; }
     var start = field.selectionStart;
     var end   = field.selectionEnd;
-    var sel   = field.value.substring(start, end);
-    var md    = '[' + sel + '](' + url + ')';
-    field.value = field.value.substring(0, start) + md + field.value.substring(end);
+    var val   = field.value;
+    // If user selected inside a token, expand to include braces.
+    if (start > 0 && val[start - 1] === '{' && val[end] === '}') {
+      start--;
+      end++;
+    }
+    var sel = val.substring(start, end);
+    var url = prompt('Enter URL or token');
+    if (!url) { return; }
+    url = url.trim();
+    if (url && url[0] !== '{' && !/^[a-z]+:\/\//i.test(url) && url[0] !== '/' && url[0] !== '#') {
+      url = '{' + url.replace(/^\{?|\}?$/g, '') + '}';
+    }
+    var md = '[' + sel + '](' + url + ')';
+    field.value = val.substring(0, start) + md + val.substring(end);
     field.selectionStart = field.selectionEnd = start + md.length;
     $(field).trigger('blur');
   });

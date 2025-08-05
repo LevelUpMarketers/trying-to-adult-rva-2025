@@ -133,9 +133,9 @@ Use the **Line Break** button to insert a newline. Email previews render these b
 
 ### Hyperlinks
 
-Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. This works for any URL, including tokens like `{dashboard_upcoming_url}`.
+Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. Both the link text and the URL can be tokens, so `[{event_name}]({event_link})` resolves to a link with the event name and URL.
 
-Use the **Link This Text** button below the template fields to create these links without typing the Markdown. Highlight any text in the email body, click the button, and paste a URL or token. The selected text becomes the anchor for the provided link.
+Use the **Link This Text** button below the template fields to create these links without typing the Markdown. Highlight any text or token in the email body, click the button, and paste a URL or token. The selected text becomes the anchor for the provided link, and tokens are substituted when the email is sent.
 
 ### Formatting Helpers
 
