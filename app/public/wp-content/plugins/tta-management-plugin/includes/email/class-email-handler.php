@@ -148,7 +148,7 @@ class TTA_Email_Handler {
         $tokens['{event_hosts}']      = $tokens['{event_host}'];
         $tokens['{event_volunteer}']  = $names['volunteers'] ? implode( ', ', $names['volunteers'] ) : 'TBD';
         $tokens['{event_volunteers}'] = $tokens['{event_volunteer}'];
-        $tokens['{host_notes}']       = $event['host_notes'] ?? '';
+        $tokens['{host_notes}']       = tta_unslash( $event['host_notes'] ?? '' );
 
         for ( $i = 0; $i < 4; $i++ ) {
             $a = $attendees[ $i ] ?? [];
