@@ -92,4 +92,34 @@ class EmailTokensTest extends TestCase {
             $tokens['{event_address_link}']
         );
     }
+
+    public function test_build_tokens_include_host_and_volunteer_tokens() {
+        $handler = TTA_Email_Handler::get_instance();
+        $ref = new \ReflectionClass($handler);
+        $method = $ref->getMethod('build_tokens');
+        $method->setAccessible(true);
+
+        $event = [
+            'id'         => 0,
+            'name'       => 'Event',
+            'date'       => '2025-06-30',
+            'time'       => '18:00|20:00',
+            'host_notes' => 'Bring snacks',
+        ];
+        $member = [
+            'first_name' => 'Bob',
+            'last_name'  => 'Smith',
+            'user_email' => 'bob@example.com',
+            'member'     => [],
+            'membership_level' => '',
+        ];
+        $attendees = [];
+
+        $tokens = $method->invoke($handler, $event, $member, $attendees);
+
+        $this->assertArrayHasKey('{event_host}', $tokens);
+        $this->assertArrayHasKey('{event_volunteer}', $tokens);
+        $this->assertArrayHasKey('{host_notes}', $tokens);
+        $this->assertSame('Bring snacks', $tokens['{host_notes}']);
+    }
 }

@@ -119,6 +119,14 @@ empty or omitted the full URL is printed.
 
 Each attendee receives a personalized email where these tokens reflect their own details.
 
+### Host & Volunteer Information
+
+```
+{event_host}
+{event_volunteer}
+{host_notes}
+```
+
 ### Refund Information
 
 ```

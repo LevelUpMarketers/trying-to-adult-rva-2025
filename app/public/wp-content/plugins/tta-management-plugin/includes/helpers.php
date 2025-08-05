@@ -970,6 +970,77 @@ function tta_get_event_host_volunteer_emails( $event_id ) {
 }
 
 /**
+ * Retrieve host and volunteer names for an event.
+ *
+ * Supports numeric user IDs and legacy name-based values.
+ *
+ * @param int $event_id Event ID.
+ * @return array {
+ *     @type string[] $hosts      Host names.
+ *     @type string[] $volunteers Volunteer names.
+ * }
+ */
+function tta_get_event_host_volunteer_names( $event_id ) {
+    $event_id = intval( $event_id );
+    if ( ! $event_id ) {
+        return [ 'hosts' => [], 'volunteers' => [] ];
+    }
+
+    $cache_key = 'event_host_vol_names_' . $event_id;
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $events_table  = $wpdb->prefix . 'tta_events';
+    $archive_table = $wpdb->prefix . 'tta_events_archive';
+
+    $row = $wpdb->get_row(
+        $wpdb->prepare( "SELECT hosts, volunteers FROM {$events_table} WHERE id = %d", $event_id ),
+        ARRAY_A
+    );
+    if ( ! $row ) {
+        $row = $wpdb->get_row(
+            $wpdb->prepare( "SELECT hosts, volunteers FROM {$archive_table} WHERE id = %d", $event_id ),
+            ARRAY_A
+        );
+    }
+    if ( ! $row ) {
+        TTA_Cache::set( $cache_key, [ 'hosts' => [], 'volunteers' => [] ], 60 );
+        return [ 'hosts' => [], 'volunteers' => [] ];
+    }
+
+    $parse = static function( $list ) {
+        $ids = [];
+        $names = [];
+        foreach ( array_filter( array_map( 'trim', explode( ',', (string) $list ) ) ) as $val ) {
+            if ( ctype_digit( $val ) ) {
+                $ids[] = intval( $val );
+            } else {
+                $names[] = sanitize_text_field( $val );
+            }
+        }
+        return [ $ids, $names ];
+    };
+
+    list( $host_ids, $host_names ) = $parse( $row['hosts'] ?? '' );
+    list( $vol_ids,  $vol_names  ) = $parse( $row['volunteers'] ?? '' );
+
+    $host_list = array_merge( tta_get_member_names_by_ids( $host_ids ), $host_names );
+    $vol_list  = array_merge( tta_get_member_names_by_ids( $vol_ids ), $vol_names );
+
+    $data = [
+        'hosts'      => array_values( array_unique( array_filter( $host_list ) ) ),
+        'volunteers' => array_values( array_unique( array_filter( $vol_list ) ) ),
+    ];
+
+    $ttl = ( empty( $data['hosts'] ) && empty( $data['volunteers'] ) ) ? 60 : 300;
+    TTA_Cache::set( $cache_key, $data, $ttl );
+    return $data;
+}
+
+/**
  * Convert an array of member names to WordPress user IDs.
  *
  * Matching is case-insensitive on the concatenated first and last name.

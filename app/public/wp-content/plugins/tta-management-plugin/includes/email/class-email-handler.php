@@ -143,6 +143,13 @@ class TTA_Email_Handler {
             '{member_type}'          => $member['member']['member_type'] ?? '',
         ];
 
+        $names = tta_get_event_host_volunteer_names( $event['id'] ?? 0 );
+        $tokens['{event_host}']       = implode( ', ', $names['hosts'] );
+        $tokens['{event_hosts}']      = $tokens['{event_host}'];
+        $tokens['{event_volunteer}']  = implode( ', ', $names['volunteers'] );
+        $tokens['{event_volunteers}'] = $tokens['{event_volunteer}'];
+        $tokens['{host_notes}']       = $event['host_notes'] ?? '';
+
         for ( $i = 0; $i < 4; $i++ ) {
             $a = $attendees[ $i ] ?? [];
             $index = $i === 0 ? '' : ( $i + 1 );
