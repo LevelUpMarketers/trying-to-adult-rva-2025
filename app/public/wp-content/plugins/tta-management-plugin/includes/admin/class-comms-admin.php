@@ -137,6 +137,21 @@ class TTA_Comms_Admin {
             return $defaults;
         }
 
+        if ( isset( $saved['refund_requested'] ) ) {
+            $needs_update = false;
+            if ( 'External' !== ( $saved['refund_requested']['type'] ?? '' ) ) {
+                $saved['refund_requested']['type'] = 'External';
+                $needs_update = true;
+            }
+            if ( 'Refund' !== ( $saved['refund_requested']['category'] ?? '' ) ) {
+                $saved['refund_requested']['category'] = 'Refund';
+                $needs_update = true;
+            }
+            if ( $needs_update ) {
+                update_option( 'tta_comms_templates', $saved, false );
+            }
+        }
+
         foreach ( $saved as $key => $vals ) {
             if ( isset( $defaults[ $key ] ) && is_array( $vals ) ) {
                 $defaults[ $key ] = array_merge( $defaults[ $key ], $vals );
@@ -237,6 +252,9 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{event_host}">{event_host}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_volunteer}">{event_volunteer}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{host_notes}">{host_notes}</button></div>';
+
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Message submitted via the assistance form.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Assistance Request', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the refunded ticket.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Refund Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_first_name}">{refund_first_name}</button> ';

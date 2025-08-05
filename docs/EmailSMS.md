@@ -129,6 +129,15 @@ Each attendee receives a personalized email where these tokens reflect their own
 If no hosts or volunteers are assigned to an event, `{event_host}` and
 `{event_volunteer}` default to `TBD`.
 
+### Assistance Request
+
+```
+{assistance_message}
+```
+
+Used in the `assistance_request` template to show the note a member sends from
+the assistance form on their dashboard.
+
 ### Refund Information
 
 ```

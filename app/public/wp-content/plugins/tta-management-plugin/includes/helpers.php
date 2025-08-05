@@ -4912,6 +4912,7 @@ function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
         '{membership_level}'     => $context['membership_level'] ?? '',
         '{member_type}'          => $context['member']['member_type'] ?? '',
         '{assistance_note}'      => sanitize_textarea_field( $note ),
+        '{assistance_message}'   => sanitize_textarea_field( $note ),
     ];
 
     $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );

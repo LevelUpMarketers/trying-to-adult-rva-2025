@@ -1287,7 +1287,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{attendee4_first_name}': mem.first_name || 'First',
         '{attendee4_last_name}': mem.last_name || 'Last',
         '{attendee4_email}': mem.email || 'attendee4@example.com',
-        '{attendee4_phone}': mem.phone || '555-555-5558'
+        '{attendee4_phone}': mem.phone || '555-555-5558',
+        '{assistance_message}': mem.assistance_message || '',
+        '{assistance_note}': mem.assistance_message || ''
       };
     subj = expandAnchors(subj, map);
     body = expandAnchors(body, map);
