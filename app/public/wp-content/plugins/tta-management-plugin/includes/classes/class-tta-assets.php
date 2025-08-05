@@ -135,6 +135,7 @@ class TTA_Assets {
                         $e['dashboard_waitlist_url'] = home_url( '/member-dashboard/?tab=waitlist' );
                         $e['dashboard_past_url']    = home_url( '/member-dashboard/?tab=past' );
                         $e['dashboard_billing_url'] = home_url( '/member-dashboard/?tab=billing' );
+                        $e['address_link']          = $e['address'] ? esc_url( 'https://maps.google.com/?q=' . rawurlencode( $e['address'] ) ) : '';
                         $e['date']                  = $e['date_formatted'];
                         $e['time']                  = $e['time_formatted'];
                         return $e;
