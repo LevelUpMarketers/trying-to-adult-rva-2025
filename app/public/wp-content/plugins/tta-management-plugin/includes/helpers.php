@@ -199,31 +199,55 @@ function tta_convert_links( $text ) {
 }
 
 /**
- * Convert Markdown-style bold markers to HTML strong tags.
+ * Convert basic Markdown-style formatting to HTML tags.
  *
- * Wraps any `**text**` sequences in `<strong>` tags with escaped text.
+ * Supports the following sequences and escapes the enclosed text:
+ *
+ * - `***text***` → `<strong><em>text</em></strong>`
+ * - `**text**`   → `<strong>text</strong>`
+ * - `*text*`     → `<em>text</em>`
  *
  * @param string $text Raw message content.
- * @return string Text with `<strong>` tags.
+ * @return string Text with `<strong>`/`<em>` tags.
  */
 function tta_convert_bold( $text ) {
-    return preg_replace_callback(
+    $text = preg_replace_callback(
+        '/\*\*\*(.*?)\*\*\*/',
+        static function ( $m ) {
+            return '<strong><em>' . esc_html( $m[1] ) . '</em></strong>';
+        },
+        $text
+    );
+
+    $text = preg_replace_callback(
         '/\*\*(.*?)\*\*/',
         static function ( $m ) {
             return '<strong>' . esc_html( $m[1] ) . '</strong>';
         },
         $text
     );
+
+    $text = preg_replace_callback(
+        '/\*(.*?)\*/',
+        static function ( $m ) {
+            return '<em>' . esc_html( $m[1] ) . '</em>';
+        },
+        $text
+    );
+
+    return $text;
 }
 
 /**
- * Strip Markdown-style bold markers, returning plain text.
+ * Strip Markdown-style bold and italic markers, returning plain text.
  *
  * @param string $text Raw message content.
- * @return string Text without `**` markers.
+ * @return string Text without formatting markers.
  */
 function tta_strip_bold( $text ) {
-    return preg_replace( '/\*\*(.*?)\*\*/', '$1', $text );
+    $text = preg_replace( '/\*\*\*(.*?)\*\*\*/', '$1', $text );
+    $text = preg_replace( '/\*\*(.*?)\*\*/', '$1', $text );
+    return preg_replace( '/\*(.*?)\*/', '$1', $text );
 }
 
 /**
@@ -4920,9 +4944,9 @@ function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
     ];
 
     $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
-    $subject     = strtr( $subject_raw, $tokens );
+    $subject     = tta_strip_bold( strtr( $subject_raw, $tokens ) );
     $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
-    $body_txt    = tta_convert_links( strtr( $body_raw, $tokens ) );
+    $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
     $body        = nl2br( $body_txt );
 
     $emails = tta_get_event_host_volunteer_emails( $event['id'] );

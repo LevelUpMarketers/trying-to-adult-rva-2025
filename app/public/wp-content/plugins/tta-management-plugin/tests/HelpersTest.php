@@ -1020,8 +1020,9 @@ class HelpersTest extends TestCase {
 
     public function test_convert_bold_and_strip_bold() {
         require_once __DIR__ . '/../includes/helpers.php';
-        $in = 'Hello **World**';
-        $this->assertSame( 'Hello <strong>World</strong>', tta_convert_bold( $in ) );
-        $this->assertSame( 'Hello World', tta_strip_bold( $in ) );
+        $in = 'Hello **World** *there* ***friend***';
+        $exp = 'Hello <strong>World</strong> <em>there</em> <strong><em>friend</em></strong>';
+        $this->assertSame( $exp, tta_convert_bold( $in ) );
+        $this->assertSame( 'Hello World there friend', tta_strip_bold( $in ) );
     }
 }
