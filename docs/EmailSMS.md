@@ -9,8 +9,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `purchase` | Sent after a successful event purchase. Includes event details automatically. |
 | `reminder_24hr` | Sent 24 hours before an event starts. |
 | `reminder_2hr` | Sent two hours before an event starts. |
-| `new_event` | Internal notice when a new event is created. |
-| `refund_requested` | Internal notice when a member requests a refund. |
+| `refund_requested` | Sent to a member when they request a refund. |
 | `refund_processed` | Sent to attendees when a refund request is approved and issued. |
 | `event_sold_out` | Internal alert when an event reaches capacity. |
 | `waitlist_available` | Sent when a ticket becomes available for someone on the waitlist. |
@@ -37,7 +36,7 @@ Default values are provided on initial install:
 - **Purchase SMS**: "Thanks for registering! View your upcoming events at "
 - **24-Hour Reminder Email Body**: "Heads-up! Your event is just 1 day away! Below are the details."
 - **2-Hour Reminder Email Body**: "Your event is only 2 hours away! Below are the details."
-- **Admin Notifications**: emails are sent when new events are created, refunds are requested or events sell out.
+- **Admin Notifications**: internal alerts are sent when events sell out.
 - **Host and Volunteer Reminders**: internal messages mirror attendee reminders at 24 and 2 hours before the event.
 
 Links to the member dashboard now output the full site URL and include direct links to each dashboard tab, including the waitlist view.
@@ -115,9 +114,10 @@ empty or omitted the full URL is printed.
 {attendee4_last_name}
 {attendee4_email}
 {attendee4_phone}
+{assistance_message}
 ```
 
-Each attendee receives a personalized email where these tokens reflect their own details.
+Each attendee receives a personalized email where these tokens reflect their own details. `{assistance_message}` contains any note submitted through the assistance form on the member dashboard.
 
 ### Host & Volunteer Information
 
@@ -164,8 +164,11 @@ The editor provides helper buttons beneath the token sections:
   the email is sent.
 - **Line Break** – inserts a newline. Email previews render these as HTML
   `<br>` tags so the saved text remains plain.
-- **bold** – wraps the highlighted text with `**` markers. The enclosed text
+- **Bold** – wraps the highlighted text with `**` markers. The enclosed text
   appears in bold in the final email.
+ - **Italic** – wraps the highlighted text with `*` markers. Text appears in italics in the final email.
+
+Styling markers can be combined, so `***bold & italic***` renders as bold and italic.
 
 Template text can include Markdown-style links directly, so
 `[{event_name}]({event_link})` resolves to a link with the event name and URL.

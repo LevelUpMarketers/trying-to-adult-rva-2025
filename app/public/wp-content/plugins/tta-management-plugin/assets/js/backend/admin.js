@@ -1214,16 +1214,43 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     $(field).trigger('blur');
   });
 
+  $(document).on('click', '.tta-italic-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    var sel   = val.substring(start, end);
+    var md    = '*' + sel + '*';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = start;
+    field.selectionEnd   = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  function convertBoldItalic(text){
+    return text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
   }
 
   function convertBold(text){
     return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   }
 
-  function stripBold(text){
-    return text.replace(/\*\*([^*]+)\*\*/g, '$1');
+  function convertItalic(text){
+    return text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+
+  function stripFormatting(text){
+    return text
+      .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1');
   }
 
   function expandAnchors(text,map){
@@ -1238,6 +1265,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var subj = $form.find('input[name=email_subject]').val() || '';
     var body = $form.find('textarea[name=email_body]').val() || '';
     var sms  = $form.find('textarea[name=sms_text]').val() || '';
+    subj = subj.replace(/\\'/g, "'");
+    body = body.replace(/\\'/g, "'");
+    sms  = sms.replace(/\\'/g, "'");
     var ev   = TTA_Ajax.sample_event || {};
     var mem  = TTA_Ajax.sample_member || {};
     var map  = {
@@ -1284,19 +1314,24 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{attendee4_first_name}': mem.first_name || 'First',
         '{attendee4_last_name}': mem.last_name || 'Last',
         '{attendee4_email}': mem.email || 'attendee4@example.com',
-        '{attendee4_phone}': mem.phone || '555-555-5558'
+        '{attendee4_phone}': mem.phone || '555-555-5558',
+        '{assistance_message}': mem.assistance_message || '',
+        '{assistance_note}': mem.assistance_message || ''
       };
     subj = expandAnchors(subj, map);
     body = expandAnchors(body, map);
     Object.keys(map).forEach(function(tok){
       var val = map[tok];
+      if (typeof val === 'string') {
+        val = val.replace(/\\'/g, "'");
+      }
       subj = subj.split(tok).join(val);
       body = body.split(tok).join(val);
       sms  = sms.split(tok).join(val);
     });
-    subj = stripBold(subj);
-    body = convertBold(convertLinks(body));
-    sms  = stripBold(sms);
+    subj = stripFormatting(subj);
+    body = convertItalic(convertBold(convertBoldItalic(convertLinks(body))));
+    sms  = stripFormatting(sms);
     var bodyHtml = body.replace(/\n/g, '<br>');
     $form.find('.tta-email-preview-subject').text(subj);
     $form.find('.tta-email-preview-body').html(bodyHtml);

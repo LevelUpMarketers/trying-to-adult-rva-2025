@@ -104,7 +104,7 @@ class EmailTokensTest extends TestCase {
             'name'       => 'Event',
             'date'       => '2025-06-30',
             'time'       => '18:00|20:00',
-            'host_notes' => 'Bring snacks',
+            'host_notes' => 'Don\'t forget snacks',
         ];
         $member = [
             'first_name' => 'Bob',
@@ -122,6 +122,6 @@ class EmailTokensTest extends TestCase {
         $this->assertArrayHasKey('{host_notes}', $tokens);
         $this->assertSame('TBD', $tokens['{event_host}']);
         $this->assertSame('TBD', $tokens['{event_volunteer}']);
-        $this->assertSame('Bring snacks', $tokens['{host_notes}']);
+        $this->assertSame("Don't forget snacks", $tokens['{host_notes}']);
     }
 }
