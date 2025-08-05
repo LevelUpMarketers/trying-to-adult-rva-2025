@@ -291,16 +291,6 @@ li.tta-event-list-item > div > a > span:hover{
   flex: 1 1 auto;
 }
 
-@media (max-width: 768px) {
-  .tta-events-columns {
-    flex-direction: column;
-  }
-  .tta-events-left,
-  .tta-events-right {
-    flex: 1 1 auto;
-  }
-}
-
 .next.page-numbers, .prev.page-numbers{
   color:#fff;
 }
@@ -613,7 +603,6 @@ li.tta-event-list-item > div > a > span:hover{
   #loginform > p.login-username > label, #loginform > p.login-password > label{
     display:block;
   }
-
 
   .tta-events-columns {
     flex-direction: column;
