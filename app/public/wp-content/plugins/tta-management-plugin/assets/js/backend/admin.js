@@ -1238,6 +1238,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var subj = $form.find('input[name=email_subject]').val() || '';
     var body = $form.find('textarea[name=email_body]').val() || '';
     var sms  = $form.find('textarea[name=sms_text]').val() || '';
+    subj = subj.replace(/\\'/g, "'");
+    body = body.replace(/\\'/g, "'");
+    sms  = sms.replace(/\\'/g, "'");
     var ev   = TTA_Ajax.sample_event || {};
     var mem  = TTA_Ajax.sample_member || {};
     var map  = {
@@ -1290,6 +1293,9 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     body = expandAnchors(body, map);
     Object.keys(map).forEach(function(tok){
       var val = map[tok];
+      if (typeof val === 'string') {
+        val = val.replace(/\\'/g, "'");
+      }
       subj = subj.split(tok).join(val);
       body = body.split(tok).join(val);
       sms  = sms.split(tok).join(val);

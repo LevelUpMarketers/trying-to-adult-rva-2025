@@ -46,22 +46,13 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your event is only 2 hours away! Below are the details.', 'tta'),
                 'sms_text'    => __('Only 2 hours to go! View your upcoming events at ', 'tta'),
             ],
-            'new_event' => [
-                'label'       => __('New Event Created', 'tta'),
-                'type'        => 'Internal',
-                'category'    => 'Admin Notice',
-                'description' => __('Notifies administrators when a new event is created.', 'tta'),
-                'email_subject' => __('New event created', 'tta'),
-                'email_body'  => __('A new event has been added to the calendar. Details are below.', 'tta'),
-                'sms_text'    => '',
-            ],
             'refund_requested' => [
                 'label'       => __('Refund Requested', 'tta'),
-                'type'        => 'Internal',
-                'category'    => 'Admin Notice',
-                'description' => __('Alert when a member requests a refund.', 'tta'),
+                'type'        => 'External',
+                'category'    => 'Refund',
+                'description' => __('Sent to a member when they request a refund.', 'tta'),
                 'email_subject' => __('Refund request received', 'tta'),
-                'email_body'  => __('A member has requested a refund for the event below.', 'tta'),
+                'email_body'  => __('We received your refund request for the event below. Our team will review and follow up soon.', 'tta'),
                 'sms_text'    => '',
             ],
             'refund_processed' => [
@@ -260,7 +251,7 @@ class TTA_Comms_Admin {
             echo '<div class="tta-token-section"><strong>' . esc_html__( 'Formatting & Styling', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-link-text">' . esc_html__( 'Link This Text', 'tta' ) . '</button> ';
             echo '<button type="button" class="button tta-insert-br">' . esc_html__( 'Line Break', 'tta' ) . '</button> ';
-            echo '<button type="button" class="button tta-bold-text">' . esc_html__( 'bold', 'tta' ) . '</button></div>';
+            echo '<button type="button" class="button tta-bold-text">' . esc_html__( 'Bold', 'tta' ) . '</button></div>';
 
             echo '</td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'Email Preview', 'tta' ) . '</th><td><div class="tta-email-preview"><strong class="tta-email-preview-subject"></strong><p class="tta-email-preview-body"></p></div></td></tr>';

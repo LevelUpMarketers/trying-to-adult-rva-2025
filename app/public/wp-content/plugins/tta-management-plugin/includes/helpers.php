@@ -3416,7 +3416,7 @@ function tta_get_next_event() {
     $names = tta_get_event_host_volunteer_names( $event['id'] );
     $event['host_names']       = implode( ', ', $names['hosts'] );
     $event['volunteer_names']  = implode( ', ', $names['volunteers'] );
-    $event['host_notes']       = sanitize_textarea_field( $row['host_notes'] ?? '' );
+    $event['host_notes']       = tta_sanitize_textarea_field( $row['host_notes'] ?? '' );
 
     TTA_Cache::set( $cache_key, $event, 300 );
     return $event;
@@ -3481,7 +3481,7 @@ function tta_get_event_for_email( $event_ute_id ) {
         'base_cost'    => floatval( $row['baseeventcost'] ),
         'member_cost'  => floatval( $row['discountedmembercost'] ),
         'premium_cost' => floatval( $row['premiummembercost'] ),
-        'host_notes'   => sanitize_textarea_field( $row['host_notes'] ),
+        'host_notes'   => tta_sanitize_textarea_field( $row['host_notes'] ),
     ];
 
     TTA_Cache::set( $cache_key, $event, 300 );

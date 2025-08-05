@@ -65,7 +65,7 @@ class TTA_Ajax_Events {
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
             'hosts'                => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
             'volunteers'           => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
-            'host_notes'           => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
+            'host_notes'           => tta_sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
 
         $required = [
@@ -247,7 +247,7 @@ class TTA_Ajax_Events {
             'otherimageids'        => tta_sanitize_text_field( $_POST['otherimageids']       ?? '' ),
             'hosts'                => implode( ',', tta_get_member_ids_by_names( $_POST['hosts'] ?? [] ) ),
             'volunteers'           => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
-            'host_notes'           => sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
+            'host_notes'           => tta_sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
 
         $updated = $wpdb->update( $events_table, $event_data, [ 'id' => $id ] );
