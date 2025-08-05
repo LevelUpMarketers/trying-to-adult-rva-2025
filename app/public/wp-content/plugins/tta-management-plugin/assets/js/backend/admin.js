@@ -1172,6 +1172,22 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     if (activeField) { $(activeField).trigger('blur'); }
   });
 
+  $(document).on('click', '.tta-link-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var url = prompt('Enter URL');
+    if (!url) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var sel   = field.value.substring(start, end);
+    var md    = '[' + sel + '](' + url + ')';
+    field.value = field.value.substring(0, start) + md + field.value.substring(end);
+    field.selectionStart = field.selectionEnd = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
   }
