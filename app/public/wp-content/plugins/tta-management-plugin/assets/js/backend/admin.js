@@ -286,6 +286,37 @@ jQuery(function($){
     },'json');
   });
 
+  // Inline edit for Ads
+  $(document).on('click', '#tta-ads-manage .widefat tbody tr[data-ad-id]', function(e){
+    if($(e.target).is('a,button,input,textarea,select,img')) return;
+    var $row=$(this), $arrow=$row.find('.tta-toggle-arrow');
+    var id=$row.data('ad-id'), colspan=$row.find('td').length;
+    var $existing=$row.next('.tta-inline-row');
+    if($existing.length){ $arrow.removeClass('open'); $existing.remove(); return; }
+    $('.tta-inline-row').remove(); $('.tta-toggle-arrow').removeClass('open');
+    $arrow.addClass('open');
+    $.post(TTA_Ajax.ajax_url,{action:'tta_get_ad_form',ad_id:id,get_ad_nonce:TTA_Ajax.get_ad_nonce},function(res){
+      if(!res.success) return;
+      var $new=$('<tr class="tta-inline-row"><td colspan="'+colspan+'"><div class="tta-inline-container" style="display:none;"></div></td></tr>');
+      $row.after($new);
+      var $c=$new.find('.tta-inline-container');
+      $c.html(res.data.html).fadeIn(200);
+    },'json');
+  });
+
+  $(document).on('submit', '#tta-ad-edit-form', function(e){
+    e.preventDefault();
+    var $form=$(this);
+    $('.tta-admin-progress-spinner-svg').css({opacity:1,display:'inline-block'});
+    $('.tta-admin-progress-response-p').text('');
+    var data=$form.serialize()+'&action=tta_update_ad'+'&tta_ad_save_nonce='+TTA_Ajax.save_ad_nonce;
+    $.post(TTA_Ajax.ajax_url,data,function(res){
+      $('.tta-admin-progress-spinner-svg').fadeOut(200);
+      var $resp=$('.tta-admin-progress-response-p').removeClass('updated error').addClass(res.success?'updated':'error');
+      $resp.text(res.data.message||'Error');
+    },'json');
+  });
+
   //
   // Also open inline edit when clicking the Edit link
   //
@@ -738,6 +769,27 @@ jQuery(function($){
 
   // Basic phone-number formatting mask
   $('#phone').on('input', function(){
+      var val = $(this).val().replace(/\D/g, '');
+      if (val.length > 3 && val.length <= 6) {
+          val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+      } else if (val.length > 6) {
+          val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+      }
+      $(this).val(val);
+  });
+
+  // Phone mask for Ads
+  $(document).on('input', '#business_phone_edit', function(){
+    var val = $(this).val().replace(/\D/g, '');
+    if ( val.length > 3 && val.length <= 6 ) {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+    } else if ( val.length > 6 ) {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+    }
+    $(this).val( val );
+  });
+
+  $('#business_phone').on('input', function(){
       var val = $(this).val().replace(/\D/g, '');
       if (val.length > 3 && val.length <= 6) {
           val = '(' + val.slice(0,3) + ') ' + val.slice(3);
