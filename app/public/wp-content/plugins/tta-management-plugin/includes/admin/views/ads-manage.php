@@ -6,14 +6,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 $ads = get_option( 'tta_ads', [] );
 
 if ( isset( $_GET['action'], $_GET['ad_id'] ) && 'delete' === $_GET['action'] && check_admin_referer( 'tta_ads_delete' ) ) {
-    $idx = intval( $_GET['ad_id'] );
+    $idx = absint( $_GET['ad_id'] );
     if ( isset( $ads[ $idx ] ) ) {
         unset( $ads[ $idx ] );
         $ads = array_values( $ads );
         update_option( 'tta_ads', $ads, false );
         TTA_Cache::delete( 'tta_ads_all' );
-        echo '<div class="updated"><p>' . esc_html__( 'Ad deleted.', 'tta' ) . '</p></div>';
     }
+    wp_safe_redirect( add_query_arg( [ 'page' => 'tta-ads', 'tab' => 'manage', 'deleted' => 1 ], admin_url( 'admin.php' ) ) );
+    exit;
+}
+
+if ( isset( $_GET['deleted'] ) ) {
+    echo '<div class="updated"><p>' . esc_html__( 'Ad deleted.', 'tta' ) . '</p></div>';
 }
 ?>
 <div id="tta-ads-manage">

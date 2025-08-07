@@ -11,7 +11,7 @@ class TTA_Ajax_Ads {
 
     public static function get_ad_form() {
         check_ajax_referer( 'tta_ad_get_action', 'get_ad_nonce' );
-        if ( empty( $_POST['ad_id'] ) ) {
+        if ( ! isset( $_POST['ad_id'] ) || '' === $_POST['ad_id'] ) {
             wp_send_json_error( [ 'message' => 'Missing ID' ] );
         }
         $_GET['ad_id'] = intval( $_POST['ad_id'] );
@@ -23,7 +23,7 @@ class TTA_Ajax_Ads {
 
     public static function update_ad() {
         check_ajax_referer( 'tta_ad_save_action', 'tta_ad_save_nonce' );
-        if ( empty( $_POST['ad_id'] ) ) {
+        if ( ! isset( $_POST['ad_id'] ) || '' === $_POST['ad_id'] ) {
             wp_send_json_error( [ 'message' => 'Missing ID' ] );
         }
 
