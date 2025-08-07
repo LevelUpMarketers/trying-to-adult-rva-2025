@@ -1,9 +1,8 @@
 # TTA Ads Admin Page
 
-The **TTA Ads** screen allows administrators to manage sidebar advertisements displayed on the Events List Page.
+The **TTA Ads** screen is split into two tabs:
 
-- Upload any number of ad images and provide an optional link URL for each.
-- On each page load, the Events List Page picks one ad at random to display in the right‑hand column.
-- Images are stored as WordPress attachments; only the attachment ID and URL are saved.
+1. **Create Ad** – Upload an image, enter the target URL and optional business details, then click **Create Ad**. Existing ads can be edited by choosing **Edit** from the **Manage Ads** tab. Images are stored as WordPress attachments; only the attachment ID and details are saved.
+2. **Manage Ads** – Lists all saved ads with their image preview, business name and URL. From here you can **Edit** or **Delete** ads. Deleting an ad immediately removes it from rotation.
 
-Use the **Add Ad** button to insert additional rows. Each row can be removed using the **×** button. Remember to click **Save Ads** when finished. Saved ads immediately clear the plugin cache so the random rotation reflects your changes right away.
+On each page load, the Events List Page picks one ad at random to display in the right‑hand column. Any changes automatically clear the plugin cache so the rotation reflects updates right away.

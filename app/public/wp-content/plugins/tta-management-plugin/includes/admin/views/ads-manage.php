@@ -2,79 +2,46 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-?>
-<div class="wrap">
-<h1><?php esc_html_e( 'Manage Ads', 'tta' ); ?></h1>
-<form method="post">
-<table class="form-table" id="tta-ads-table">
-<tbody>
-<?php
-if ( ! empty( $ads ) ) {
-    foreach ( $ads as $index => $ad ) {
-        $img_id = intval( $ad['image_id'] );
-        $url    = esc_url( $ad['url'] );
-        $name   = sanitize_text_field( $ad['business_name'] ?? '' );
-        $phone  = sanitize_text_field( $ad['business_phone'] ?? '' );
-        $address= sanitize_text_field( $ad['business_address'] ?? '' );
-        $preview = $img_id ? wp_get_attachment_image( $img_id, 'thumbnail' ) : '';
-        ?>
-        <tr class="tta-ad-row" data-index="<?php echo esc_attr( $index ); ?>">
-            <th scope="row"><?php esc_html_e( 'Ad Image', 'tta' ); ?></th>
-            <td>
-                <button class="button tta-upload-single" data-target="#ad_image_<?php echo esc_attr( $index ); ?>"><?php esc_html_e( 'Select Image', 'tta' ); ?></button>
-                <input type="hidden" id="ad_image_<?php echo esc_attr( $index ); ?>" name="ads[<?php echo esc_attr( $index ); ?>][image_id]" value="<?php echo esc_attr( $img_id ); ?>">
-                <div id="ad_image_preview_<?php echo esc_attr( $index ); ?>"><?php echo $preview; ?></div>
-            </td>
-        </tr>
-        <tr class="tta-ad-row" data-index="<?php echo esc_attr( $index ); ?>">
-            <th scope="row"><?php esc_html_e( 'Link URL', 'tta' ); ?></th>
-            <td>
-                <input type="text" name="ads[<?php echo esc_attr( $index ); ?>][url]" value="<?php echo esc_attr( $url ); ?>" class="regular-text" />
-                <button class="button tta-remove-ad">&times;</button>
-            </td>
-        </tr>
-        <tr class="tta-ad-row" data-index="<?php echo esc_attr( $index ); ?>">
-            <th scope="row"><?php esc_html_e( 'Business Name', 'tta' ); ?></th>
-            <td><input type="text" name="ads[<?php echo esc_attr( $index ); ?>][business_name]" value="<?php echo esc_attr( $name ); ?>" class="regular-text" /></td>
-        </tr>
-        <tr class="tta-ad-row" data-index="<?php echo esc_attr( $index ); ?>">
-            <th scope="row"><?php esc_html_e( 'Business Telephone', 'tta' ); ?></th>
-            <td><input type="text" name="ads[<?php echo esc_attr( $index ); ?>][business_phone]" value="<?php echo esc_attr( $phone ); ?>" class="regular-text" /></td>
-        </tr>
-        <tr class="tta-ad-row" data-index="<?php echo esc_attr( $index ); ?>">
-            <th scope="row"><?php esc_html_e( 'Business Address', 'tta' ); ?></th>
-            <td><input type="text" name="ads[<?php echo esc_attr( $index ); ?>][business_address]" value="<?php echo esc_attr( $address ); ?>" class="regular-text" /></td>
-        </tr>
-        <?php
+
+$ads = get_option( 'tta_ads', [] );
+
+if ( isset( $_GET['action'], $_GET['ad_id'] ) && 'delete' === $_GET['action'] && check_admin_referer( 'tta_ads_delete' ) ) {
+    $idx = intval( $_GET['ad_id'] );
+    if ( isset( $ads[ $idx ] ) ) {
+        unset( $ads[ $idx ] );
+        $ads = array_values( $ads );
+        update_option( 'tta_ads', $ads, false );
+        TTA_Cache::delete( 'tta_ads_all' );
+        echo '<div class="updated"><p>' . esc_html__( 'Ad deleted.', 'tta' ) . '</p></div>';
     }
 }
 ?>
-</tbody>
+<div class="wrap">
+<table class="widefat striped">
+    <thead>
+        <tr>
+            <th><?php esc_html_e( 'Image', 'tta' ); ?></th>
+            <th><?php esc_html_e( 'Business Name', 'tta' ); ?></th>
+            <th><?php esc_html_e( 'URL', 'tta' ); ?></th>
+            <th><?php esc_html_e( 'Actions', 'tta' ); ?></th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php if ( ! empty( $ads ) ) : ?>
+        <?php foreach ( $ads as $i => $ad ) : ?>
+            <tr>
+                <td><?php echo ! empty( $ad['image_id'] ) ? wp_get_attachment_image( intval( $ad['image_id'] ), 'thumbnail' ) : ''; ?></td>
+                <td><?php echo esc_html( $ad['business_name'] ?? '' ); ?></td>
+                <td><?php echo esc_html( $ad['url'] ?? '' ); ?></td>
+                <td>
+                    <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'tta-ads', 'tab' => 'create', 'ad_id' => $i ], admin_url( 'admin.php' ) ) ); ?>"><?php esc_html_e( 'Edit', 'tta' ); ?></a> |
+                    <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'page' => 'tta-ads', 'tab' => 'manage', 'action' => 'delete', 'ad_id' => $i ], admin_url( 'admin.php' ) ), 'tta_ads_delete' ) ); ?>" onclick="return confirm('<?php esc_attr_e( 'Delete this ad?', 'tta' ); ?>');"><?php esc_html_e( 'Delete', 'tta' ); ?></a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <tr><td colspan="4"><?php esc_html_e( 'No ads found.', 'tta' ); ?></td></tr>
+    <?php endif; ?>
+    </tbody>
 </table>
-<p>
-    <button type="button" class="button" id="tta-add-ad"><?php esc_html_e( 'Add Ad', 'tta' ); ?></button>
-</p>
-<?php wp_nonce_field( 'tta_ads_save', 'tta_ads_nonce' ); ?>
-<p class="submit"><input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save Ads', 'tta' ); ?>"></p>
-</form>
 </div>
-<script>
-jQuery(function($){
-    var index = <?php echo isset( $index ) ? intval( $index + 1 ) : 0; ?>;
-    $('#tta-add-ad').on('click', function(e){
-        e.preventDefault();
-        var rowImg = '<tr class="tta-ad-row" data-index="'+index+'"><th scope="row"><?php esc_html_e( 'Ad Image', 'tta' ); ?></th><td><button class="button tta-upload-single" data-target="#ad_image_'+index+'">Select Image</button><input type="hidden" id="ad_image_'+index+'" name="ads['+index+'][image_id]" value=""><div id="ad_image_preview_'+index+'"></div></td></tr>';
-        var rowUrl = '<tr class="tta-ad-row" data-index="'+index+'"><th scope="row"><?php esc_html_e( 'Link URL', 'tta' ); ?></th><td><input type="text" name="ads['+index+'][url]" value="" class="regular-text" /> <button class="button tta-remove-ad">&times;</button></td></tr>';
-        var rowName = '<tr class="tta-ad-row" data-index="'+index+'"><th scope="row"><?php esc_html_e( 'Business Name', 'tta' ); ?></th><td><input type="text" name="ads['+index+'][business_name]" value="" class="regular-text" /></td></tr>';
-        var rowPhone = '<tr class="tta-ad-row" data-index="'+index+'"><th scope="row"><?php esc_html_e( 'Business Telephone', 'tta' ); ?></th><td><input type="text" name="ads['+index+'][business_phone]" value="" class="regular-text" /></td></tr>';
-        var rowAddress = '<tr class="tta-ad-row" data-index="'+index+'"><th scope="row"><?php esc_html_e( 'Business Address', 'tta' ); ?></th><td><input type="text" name="ads['+index+'][business_address]" value="" class="regular-text" /></td></tr>';
-        $('#tta-ads-table tbody').append(rowImg + rowUrl + rowName + rowPhone + rowAddress);
-        index++;
-    });
-    $('#tta-ads-table').on('click','.tta-remove-ad',function(e){
-        e.preventDefault();
-        var idx = $(this).closest('tr').data('index');
-        $('#tta-ads-table').find('tr[data-index="'+idx+'"]').remove();
-    });
-});
-</script>

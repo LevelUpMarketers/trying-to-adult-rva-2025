@@ -26,30 +26,23 @@ class TTA_Ads_Admin {
     }
 
     public function render_page() {
-        $ads = get_option( 'tta_ads', [] );
-        if ( isset( $_POST['tta_ads_nonce'] ) && wp_verify_nonce( $_POST['tta_ads_nonce'], 'tta_ads_save' ) ) {
-            $new_ads = [];
-            if ( isset( $_POST['ads'] ) && is_array( $_POST['ads'] ) ) {
-                foreach ( $_POST['ads'] as $ad ) {
-                    $id  = intval( $ad['image_id'] ?? 0 );
-                    $url = esc_url_raw( $ad['url'] ?? '' );
-                    if ( $id ) {
-                        $new_ads[] = [
-                            'image_id'        => $id,
-                            'url'             => $url,
-                            'business_name'   => sanitize_text_field( $ad['business_name'] ?? '' ),
-                            'business_phone'  => sanitize_text_field( $ad['business_phone'] ?? '' ),
-                            'business_address'=> sanitize_text_field( $ad['business_address'] ?? '' ),
-                        ];
-                    }
-                }
-            }
-            update_option( 'tta_ads', $new_ads, false );
-            TTA_Cache::delete( 'tta_ads_all' );
-            $ads = $new_ads;
-            echo '<div class="updated"><p>' . esc_html__( 'Ads saved.', 'tta' ) . '</p></div>';
+        $tabs    = [ 'create' => 'Create Ad', 'manage' => 'Manage Ads' ];
+        $current = isset( $_GET['tab'] ) && isset( $tabs[ $_GET['tab'] ] ) ? $_GET['tab'] : 'create';
+
+        echo '<h1>TTA Ads</h1><h2 class="nav-tab-wrapper">';
+        foreach ( $tabs as $slug => $label ) {
+            $class = $current === $slug ? ' nav-tab-active' : '';
+            $url   = esc_url( add_query_arg( [ 'page' => 'tta-ads', 'tab' => $slug ], admin_url( 'admin.php' ) ) );
+            printf( '<a href="%s" class="nav-tab%s">%s</a>', $url, $class, esc_html( $label ) );
         }
-        include TTA_PLUGIN_DIR . 'includes/admin/views/ads-manage.php';
+        echo '</h2>';
+
+        $view = TTA_PLUGIN_DIR . "includes/admin/views/ads-{$current}.php";
+        if ( file_exists( $view ) ) {
+            include $view;
+        } else {
+            echo '<div class="wrap"><p>' . esc_html__( 'View not found.', 'tta' ) . '</p></div>';
+        }
     }
 }
 
