@@ -314,6 +314,7 @@
 #main > div > div > div > main > section.tta-event-section.tta-event-image-gallery-accordion.tta-event-attendees-section > div > div > div > div{
   display:inline-block;
   margin:10px;
+  min-width:85px;
 }
 
 
@@ -701,6 +702,7 @@ input[disabled]::before {
   position: absolute;
   bottom: -5px;
   left: 0;
+  right:0;
   background: #0073aa;
   color: #fff;
   font-size: 12px;
@@ -747,11 +749,15 @@ input[disabled]::before {
   }
 }
 
-
+.tta-popup-wrap{
+  text-align: center;
+}
 
 
 /* Responsive */
 @media (max-width: 800px) {
+
+
 
 
   .tta-event-sidebar{
@@ -789,6 +795,7 @@ input[disabled]::before {
   .tta-event-hero-text {
     flex: 1 1 100%;
     text-align: center;
+    padding-right:0px;
   }
   .tta-related-events-grid {
     flex-direction: column;
