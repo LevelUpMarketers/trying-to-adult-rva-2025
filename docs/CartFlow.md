@@ -17,6 +17,7 @@ This document summarizes the current logic around the cart and checkout process 
 
 2. **Viewing the Cart**
    - The **Cart Page** template renders the current cart contents using `tta_render_cart_contents()`.
+   - The cart table is wrapped in a `.tta-cart-table-wrapper` element so it can scroll horizontally on narrower screens, and CSS now stacks table cells for easier reading on phones.
    - A WPBakery hero banner appears above the cart using `do_shortcode()`.
    - If a visitor selected a membership on the Become a Member page, that membership appears as its own line item in the cart.
    - Premium members cannot add another membership at all. Attempts to add Basic or Premium memberships are rejected.
