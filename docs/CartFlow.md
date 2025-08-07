@@ -42,7 +42,8 @@ This document summarizes the current logic around the cart and checkout process 
    - The **Checkout Page** template performs checkout via an AJAX request (`tta_do_checkout`). The page fades while a spinner shows and always waits at least five seconds before displaying the result under the **Place Order** button.
    - A matching WPBakery hero banner is displayed at the top of the page.
   - Inventory is reserved when items are added to the cart. Checkout no longer revalidates stock so users can complete a purchase with their held tickets as long as the reservation has not expired.
-   - Checkout displays a read-only summary table that mirrors the cart layout with tooltips, countdown timers, and a list of active discount codes below the total.
+  - Checkout displays a read-only summary table that mirrors the cart layout with tooltips, countdown timers, and a list of active discount codes below the total.
+  - The checkout summary table now uses the same responsive styling as the cart so it scrolls horizontally and stacks cells with labels on small screens. Attendee and billing inputs also stack vertically on phones for easier entry when many tickets are present.
   - Attendee fields collect a first name, last name, email, and phone for each ticket. A "text me" and "email me" checkbox is included and checked by default. The first ticket for every event autofills with the logged‑in member's details. Those first name, last name, and email fields are displayed but locked from editing. Phone numbers are automatically formatted as the user types.
    - Countdown timers run just like on the cart page. If a timer reaches zero the item is removed and totals update automatically.
    - The `tta_update_cart` AJAX endpoint returns updated markup for both the cart table and checkout summary so timers can refresh either view.
