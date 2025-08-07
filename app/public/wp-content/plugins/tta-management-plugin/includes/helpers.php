@@ -3992,6 +3992,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
     }
     if ( $items || $has_membership ) {
         ?>
+        <div class="tta-cart-table-wrapper">
         <table class="tta-cart-table">
             <thead>
                 <tr>
@@ -4133,6 +4134,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                 <?php endif; ?>
             </tfoot>
         </table>
+        </div>
         <p class="tta-cart-discount">
             <label><?php esc_html_e( 'Discount Code', 'tta' ); ?>
                 <input type="text" id="tta-discount-code" name="discount_code">
