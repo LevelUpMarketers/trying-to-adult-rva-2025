@@ -34,7 +34,13 @@ class TTA_Ads_Admin {
                     $id  = intval( $ad['image_id'] ?? 0 );
                     $url = esc_url_raw( $ad['url'] ?? '' );
                     if ( $id ) {
-                        $new_ads[] = [ 'image_id' => $id, 'url' => $url ];
+                        $new_ads[] = [
+                            'image_id'        => $id,
+                            'url'             => $url,
+                            'business_name'   => sanitize_text_field( $ad['business_name'] ?? '' ),
+                            'business_phone'  => sanitize_text_field( $ad['business_phone'] ?? '' ),
+                            'business_address'=> sanitize_text_field( $ad['business_address'] ?? '' ),
+                        ];
                     }
                 }
             }

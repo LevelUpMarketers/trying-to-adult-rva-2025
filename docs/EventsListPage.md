@@ -34,8 +34,12 @@ The layout consists of three columns:
   discounted price range when applicable to their membership level.
    When an event sells out the remaining ticket count is replaced with **Sold Out!** in red text.
    The “Get Your Tickets” button changes to **Join The Waitlist** when a waitlist is available or **Sold Out** when not. This only happens when all ticket types for the event are sold out. The underlying event data includes a `waitlistavailable` flag used to determine availability.
-3. **Right column** – an advertising slot that displays one random ad image from
-   the Ads admin page.
+3. **Right column** – an advertising slot that begins with a **Meet Our Local
+   Partners** heading and a short note thanking the businesses that support the
+   project. It then displays one random ad image from the Ads admin page. When
+   available, the business name, phone number, and address appear beneath the
+   image with matching icons. Each detail links out: the name links to the ad's
+   URL, the phone launches a call, and the address opens a Google Maps search.
 
 Profile thumbnails within the “Join Your Friends” section open a larger version in a simple popup when clicked. Duplicate attendees are filtered out so each member only appears once. The first twelve profiles are shown initially with a **View All Attendees** button to reveal the rest. The popup is disabled on very small screens.
 When twelve or fewer profiles are available the box auto-expands so all thumbnails are fully visible without needing the button.

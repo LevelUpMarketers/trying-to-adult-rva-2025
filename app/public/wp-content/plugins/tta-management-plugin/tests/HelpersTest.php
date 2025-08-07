@@ -587,8 +587,20 @@ class HelpersTest extends TestCase {
 
     public function test_get_ads_functions() {
         update_option('tta_ads', [
-            ['image_id' => 1, 'url' => 'https://example.com/a'],
-            ['image_id' => 2, 'url' => 'https://example.com/b'],
+            [
+                'image_id'        => 1,
+                'url'             => 'https://example.com/a',
+                'business_name'   => 'Biz A',
+                'business_phone'  => '111-222-3333',
+                'business_address'=> '1 Main St',
+            ],
+            [
+                'image_id'        => 2,
+                'url'             => 'https://example.com/b',
+                'business_name'   => 'Biz B',
+                'business_phone'  => '444-555-6666',
+                'business_address'=> '2 Main St',
+            ],
         ], false);
 
         require_once __DIR__ . '/../includes/helpers.php';
@@ -596,9 +608,10 @@ class HelpersTest extends TestCase {
 
         $ads = tta_get_ads();
         $this->assertCount(2, $ads);
+        $this->assertSame('Biz A', $ads[0]['business_name']);
 
         $ad = tta_get_random_ad();
-        $this->assertArrayHasKey('image_id', $ad);
+        $this->assertArrayHasKey('business_phone', $ad);
     }
 
     public function test_global_discount_code_helpers() {

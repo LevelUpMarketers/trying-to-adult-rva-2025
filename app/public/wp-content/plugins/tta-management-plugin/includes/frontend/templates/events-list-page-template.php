@@ -407,12 +407,42 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
     </main>
     <aside class="tta-events-right">
         <div class="tta-events-ad">
+            <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
+            <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
             <?php $ad = tta_get_random_ad(); ?>
             <?php if ( $ad ) : ?>
                 <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
-                <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>"><?php endif; ?>
+                <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php endif; ?>
                 <?php echo $img ? $img : '<img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ) . '" alt="">'; ?>
                 <?php if ( $ad['url'] ) : ?></a><?php endif; ?>
+                <div class="tta-events-ad__info">
+                    <?php if ( ! empty( $ad['business_name'] ) ) : ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/store.svg' ); ?>" alt="<?php esc_attr_e( 'Business', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after">
+                                <?php if ( ! empty( $ad['url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_name'] ); ?></a>
+                                <?php else : ?>
+                                    <?php echo esc_html( $ad['business_name'] ); ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
+                        <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $ad['business_address'] ) ) : ?>
+                        <?php $map = 'https://www.google.com/maps/search/?api=1&query=' . urlencode( $ad['business_address'] ); ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt="<?php esc_attr_e( 'Address', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after"><a href="<?php echo esc_url( $map ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_address'] ); ?></a></div>
+                        </div>
+                    <?php endif; ?>
+                </div>
             <?php else : ?>
                 <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="Ad" />
             <?php endif; ?>
