@@ -27,6 +27,17 @@
   font-size: 1em;
 }
 
+.tta-events-ad__info{
+  margin-top:1em;
+}
+
+.tta-events-ad__info-item{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:0.5em;
+}
+
 .tta-event-hero-inner {
   display: flex;
   flex-wrap: wrap;

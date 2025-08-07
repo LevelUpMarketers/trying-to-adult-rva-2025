@@ -4967,7 +4967,7 @@ function tta_send_assistance_note_email( $event_ute_id, $wp_user_id, $note ) {
 /**
  * Retrieve all saved ads.
  *
- * @return array[] List of ads with image_id and url.
+ * @return array[] List of ads with image_id, url, business_name, business_phone, and business_address.
  */
 function tta_get_ads() {
     $cache_key = 'tta_ads_all';
@@ -4986,7 +4986,7 @@ function tta_get_ads() {
 /**
  * Retrieve one random ad record.
  *
- * @return array|null
+ * @return array|null Ad array with image_id, url, business_name, business_phone, and business_address or null if none exist.
  */
 function tta_get_random_ad() {
     $ads = tta_get_ads();
