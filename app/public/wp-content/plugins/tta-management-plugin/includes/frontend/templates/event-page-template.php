@@ -1300,6 +1300,8 @@ echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
 
     <aside class="tta-event-right">
       <div class="tta-events-ad">
+        <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
+        <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
         <?php $ad = tta_get_random_ad(); ?>
         <?php if ( $ad ) : ?>
           <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
