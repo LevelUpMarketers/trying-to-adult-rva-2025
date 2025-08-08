@@ -41,6 +41,11 @@ class TTA_Tooltips {
     const DESCRIPTION     = 'description';
     const MAIN_IMAGE      = 'main_image';
     const GALLERY         = 'gallery';
+    const AD_IMAGE        = 'ad_image';
+    const AD_URL          = 'ad_url';
+    const AD_BUSINESS_NAME = 'ad_business_name';
+    const AD_BUSINESS_PHONE = 'ad_business_phone';
+    const AD_BUSINESS_ADDRESS = 'ad_business_address';
 
     /**
      * Return associative array of tooltip texts keyed by identifier.
@@ -77,6 +82,11 @@ class TTA_Tooltips {
             self::DESCRIPTION     => __( 'Describe the event details shown on the public page.', 'tta' ),
             self::MAIN_IMAGE      => __( 'Select a primary image for this event.', 'tta' ),
             self::GALLERY         => __( 'Choose multiple images for the event gallery.', 'tta' ),
+            self::AD_IMAGE        => __( 'Select the image displayed for this advertisement.', 'tta' ),
+            self::AD_URL          => __( 'Destination URL when clicking the advertisement.', 'tta' ),
+            self::AD_BUSINESS_NAME => __( 'Name of the business being promoted.', 'tta' ),
+            self::AD_BUSINESS_PHONE => __( 'Contact phone number for the business.', 'tta' ),
+            self::AD_BUSINESS_ADDRESS => __( 'Street or mailing address of the business.', 'tta' ),
         ];
     }
 
