@@ -201,6 +201,7 @@
   flex: 0 0 220px;
   align-self: stretch;
   order: 3;
+  position: relative;
 }
 .tta-event-main {
   flex: 1 1 auto;

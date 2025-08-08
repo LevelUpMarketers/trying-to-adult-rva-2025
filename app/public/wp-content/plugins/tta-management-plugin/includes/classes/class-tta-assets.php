@@ -209,6 +209,20 @@ class TTA_Assets {
                 TTA_PLUGIN_VERSION,
                 true
             );
+            wp_enqueue_script(
+                'sticky-sidebar',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-sidebar.min.js',
+                [],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'tta-sticky-ad',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-events-ad.js',
+                [ 'jquery', 'sticky-sidebar' ],
+                TTA_PLUGIN_VERSION,
+                true
+            );
             wp_localize_script(
                 'tta-cart-js',
                 'tta_ajax',
@@ -265,6 +279,20 @@ class TTA_Assets {
                 'tta-eventslist-js',
                 TTA_PLUGIN_URL . 'assets/js/frontend/events-list-page.js',
                 [ 'jquery' ],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'sticky-sidebar',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-sidebar.min.js',
+                [],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'tta-sticky-ad',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-events-ad.js',
+                [ 'jquery', 'sticky-sidebar' ],
                 TTA_PLUGIN_VERSION,
                 true
             );
