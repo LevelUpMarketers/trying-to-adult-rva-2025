@@ -2,7 +2,9 @@
 .tta-home {
     display: grid;
     grid-template-columns: 300px 1fr;
-    gap: 2rem;
+    gap: 3rem;
+    padding: 2rem;
+    margin: 2rem auto;
 }
 @media (max-width: 768px) {
     .tta-home {
@@ -18,7 +20,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    align-items: center;
+    align-items: flex-start;
 }
 @media (max-width: 768px) {
     .tta-intro-inner {
@@ -66,10 +68,11 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.25rem;
+    gap: 0.25rem;
 }
 .tta-counter {
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: inherit;
+    font-weight: normal;
 }
 .tta-events-grid,
 .tta-past-grid {
@@ -125,6 +128,17 @@
 }
 .tta-home-main .tta-section h2 {
     margin-bottom: 1rem;
+    font-size: 2rem;
+}
+.tta-upcoming h2,
+.tta-past h2 {
+    text-align: center;
+}
+.tta-intro h1 {
+    font-size: 2.5rem;
+}
+.tta-intro p {
+    font-size: 1.125rem;
 }
 .tta-section-button {
     text-align: center;
@@ -177,7 +191,6 @@
     gap: 0.25rem;
     margin-top: 0;
     margin-bottom: 0.5em;
-    font-size: 1.25em;
 }
 .tta-events-ad__subtitle {
     margin-bottom: 1em;

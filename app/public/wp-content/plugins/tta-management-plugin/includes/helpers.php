@@ -3436,6 +3436,12 @@ function tta_get_next_event() {
         'date_formatted'     => tta_format_event_date( $row['date'] ),
         'time_formatted'     => tta_format_event_time( $row['time'] ),
         'mainimageid'        => intval( $row['mainimageid'] ),
+        'timestamp'          => ( function() use ( $row ) {
+            $tz  = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+            $time = explode( '|', $row['time'] )[0];
+            $dt   = new DateTime( $row['date'] . ' ' . $time, $tz );
+            return $dt->getTimestamp();
+        } )(),
     ];
 
     $names = tta_get_event_host_volunteer_names( $event['id'] );

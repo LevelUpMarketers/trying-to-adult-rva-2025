@@ -39,5 +39,22 @@
             }
             setTimeout(cycle, 5000);
         }
+
+        var $cd = $('.tta-countdown');
+        if ($cd.length) {
+            var target = parseInt($cd.data('time'), 10) * 1000;
+            function plural(v, s, p){ return v + ' ' + (v === 1 ? s : p); }
+            function update(){
+                var now = Date.now();
+                var diff = Math.max(0, target - now);
+                var days = Math.floor(diff / 86400000);
+                var hours = Math.floor((diff % 86400000) / 3600000);
+                var mins = Math.floor((diff % 3600000) / 60000);
+                var secs = Math.floor((diff % 60000) / 1000);
+                $cd.text(plural(days,'day','days') + ', ' + plural(hours,'hour','hours') + ', ' + plural(mins,'minute','minutes') + ', ' + plural(secs,'second','seconds'));
+            }
+            update();
+            setInterval(update, 1000);
+        }
     });
 })(jQuery);

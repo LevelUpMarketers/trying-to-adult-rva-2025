@@ -68,7 +68,7 @@ class TTA_Homepage_Shortcode {
                 <div class="tta-stats">
                     <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/memberlevel.svg' ); ?>" alt=""><?php esc_html_e( 'TTA Stats', 'tta' ); ?></h2>
                     <ul class="tta-stats-list">
-                        <li><?php esc_html_e( 'Founded in 2020', 'tta' ); ?></li>
+                        <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/clock.svg' ); ?>" alt=""><span><?php esc_html_e( 'Founded in 2020', 'tta' ); ?></span></li>
                         <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt="<?php esc_attr_e( 'Members', 'tta' ); ?>"><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $member_count ); ?>">0</span> <?php esc_html_e( 'Members', 'tta' ); ?></li>
                         <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/calendar.svg' ); ?>" alt="<?php esc_attr_e( 'Events', 'tta' ); ?>"><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $event_count ); ?>">0</span> <?php esc_html_e( 'Events', 'tta' ); ?></li>
                     </ul>
@@ -79,6 +79,7 @@ class TTA_Homepage_Shortcode {
                         <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/upcoming.svg' ); ?>" alt=""><?php esc_html_e( 'Our Next Event', 'tta' ); ?></h2>
                         <a class="tta-next-event__link" href="<?php echo esc_url( get_permalink( $next_event['page_id'] ) ); ?>">
                             <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $next_event['name'] ); ?>"><?php endif; ?>
+                            <p class="tta-next-event__countdown"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/clock.svg' ); ?>" alt=""><span class="tta-countdown" data-time="<?php echo esc_attr( $next_event['timestamp'] ); ?>"></span></p>
                             <p class="tta-next-event__name"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt=""><?php echo esc_html( $next_event['name'] ); ?></p>
                             <p class="tta-next-event__date"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/calendar.svg' ); ?>" alt=""><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
                             <p class="tta-next-event__time"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/clock.svg' ); ?>" alt=""><?php echo esc_html( $next_event['time_formatted'] ); ?></p>
@@ -164,7 +165,8 @@ class TTA_Homepage_Shortcode {
                         <div>
                             <h1><?php esc_html_e( 'What is Trying to Adult RVA?', 'tta' ); ?></h1>
                             <p><?php esc_html_e( 'Trying to Adult RVA is a Richmond community for adults looking to connect, grow and explore the city together.', 'tta' ); ?></p>
-                            <p><?php esc_html_e( 'Through game nights, workshops, service projects and casual meetups we create welcoming spaces to learn new skills, give back and build lasting friendships.', 'tta' ); ?></p>
+                            <p><?php esc_html_e( 'From potluck dinners and trivia nights to hikes and volunteer projects, we host a mix of events that make it easy to meet people and try something new.', 'tta' ); ?></p>
+                            <p><?php esc_html_e( 'Our mission is to create welcoming spaces to build life skills, give back and discover the best of RVA with friends who are figuring it out too. Whether you\'re new in town or a lifelong local, there\'s a seat for you at the table.', 'tta' ); ?></p>
                             <p><a class="button" href="<?php echo esc_url( home_url( '/events' ) ); ?>"><?php esc_html_e( 'Browse Events', 'tta' ); ?></a></p>
                         </div>
                         <div class="tta-intro-img">
