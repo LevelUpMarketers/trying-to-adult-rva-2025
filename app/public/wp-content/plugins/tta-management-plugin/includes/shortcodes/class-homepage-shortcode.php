@@ -66,7 +66,7 @@ class TTA_Homepage_Shortcode {
         <div class="tta-home">
             <aside class="tta-home-sidebar">
                 <div class="tta-stats">
-                    <h2><?php esc_html_e( 'TTA Stats', 'tta' ); ?></h2>
+                    <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/memberlevel.svg' ); ?>" alt=""><?php esc_html_e( 'TTA Stats', 'tta' ); ?></h2>
                     <ul class="tta-stats-list">
                         <li><?php esc_html_e( 'Founded in 2020', 'tta' ); ?></li>
                         <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt="<?php esc_attr_e( 'Members', 'tta' ); ?>"><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $member_count ); ?>">0</span> <?php esc_html_e( 'Members', 'tta' ); ?></li>
@@ -74,27 +74,29 @@ class TTA_Homepage_Shortcode {
                     </ul>
                 </div>
                 <?php if ( $next_event ) : ?>
+                    <?php $img = $next_event['mainimageid'] ? wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'large' ) : TTA_PLUGIN_URL . 'assets/images/admin/default-event.png'; ?>
                     <div class="tta-next-event">
                         <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/upcoming.svg' ); ?>" alt=""><?php esc_html_e( 'Our Next Event', 'tta' ); ?></h2>
-                        <?php $img = $next_event['mainimageid'] ? wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'large' ) : TTA_PLUGIN_URL . 'assets/images/admin/default-event.png'; ?>
-                        <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $next_event['name'] ); ?>"><?php endif; ?>
-                        <p class="tta-next-event__name"><?php echo esc_html( $next_event['name'] ); ?></p>
-                        <p class="tta-next-event__date"><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
-                        <p><a class="button" href="<?php echo esc_url( get_permalink( $next_event['page_id'] ) ); ?>"><?php esc_html_e( 'Learn More', 'tta' ); ?></a></p>
+                        <a class="tta-next-event__link" href="<?php echo esc_url( get_permalink( $next_event['page_id'] ) ); ?>">
+                            <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $next_event['name'] ); ?>"><?php endif; ?>
+                            <p class="tta-next-event__name"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt=""><?php echo esc_html( $next_event['name'] ); ?></p>
+                            <p class="tta-next-event__date"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/calendar.svg' ); ?>" alt=""><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
+                            <p class="tta-next-event__time"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/clock.svg' ); ?>" alt=""><?php echo esc_html( $next_event['time_formatted'] ); ?></p>
+                            <p class="tta-next-event__address"><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt=""><?php echo esc_html( $next_event['address'] ); ?></p>
+                        </a>
                     </div>
                 <?php endif; ?>
                 <?php if ( $newest_member ) : ?>
                     <div class="tta-newest-member">
                         <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt=""><?php esc_html_e( 'Our Newest Member', 'tta' ); ?></h2>
                         <?php
-                        $img_id  = intval( $newest_member['profileimgid'] );
-                        $img_url = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/placeholder-profile.svg';
+                        $img_id   = intval( $newest_member['profileimgid'] );
+                        $img_thumb = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/placeholder-profile.svg';
+                        $img_full  = $img_id ? wp_get_attachment_image_url( $img_id, 'full' ) : $img_thumb;
                         ?>
-                        <a href="#" class="tta-profile-popup" data-member="<?php echo esc_attr( $newest_member['id'] ); ?>">
-                            <img class="tta-newest-member__img" src="<?php echo esc_url( $img_url ); ?>" alt="">
-                        </a>
-                        <p><?php echo esc_html( $newest_member['first_name'] . ' ' . $newest_member['last_name'] ); ?></p>
-                        <p><?php echo esc_html( ucfirst( $newest_member['membership_level'] ) ); ?></p>
+                        <img class="tta-newest-member__img tta-popup-img" src="<?php echo esc_url( $img_thumb ); ?>" data-full="<?php echo esc_url( $img_full ); ?>" alt="<?php echo esc_attr( $newest_member['first_name'] . ' ' . $newest_member['last_name'] ); ?>">
+                        <p class="tta-newest-member__name"><?php echo esc_html( $newest_member['first_name'] . ' ' . $newest_member['last_name'] ); ?></p>
+                        <p class="tta-newest-member__level"><?php echo esc_html( ucfirst( $newest_member['membership_level'] ) ); ?></p>
                     </div>
                 <?php endif; ?>
                 <?php if ( ! empty( $birthdays ) ) : ?>
@@ -103,9 +105,10 @@ class TTA_Homepage_Shortcode {
                         <div class="tta-birthday-grid">
                             <?php foreach ( $birthdays as $b ) :
                                 $img_id  = intval( $b['profileimgid'] );
-                                $img_url = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/placeholder-profile.svg';
+                                $thumb   = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/placeholder-profile.svg';
+                                $full    = $img_id ? wp_get_attachment_image_url( $img_id, 'full' ) : $thumb;
                                 ?>
-                                <a href="#" class="tta-profile-popup" data-member="<?php echo esc_attr( $b['id'] ); ?>"><img src="<?php echo esc_url( $img_url ); ?>" alt=""></a>
+                                <img class="tta-popup-img" src="<?php echo esc_url( $thumb ); ?>" data-full="<?php echo esc_url( $full ); ?>" alt="">
                             <?php endforeach; ?>
                         </div>
                         <div class="tta-section-button"><button type="button" class="tta-birthday-toggle button"><?php esc_html_e( 'All Birthdays', 'tta' ); ?></button></div>
@@ -113,9 +116,8 @@ class TTA_Homepage_Shortcode {
                 <?php endif; ?>
                 <div class="tta-partners">
                     <div class="tta-events-ad">
-                        <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
-        <img class="tta-event-details-icon tta-event-details-icon-special-size" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt="<?php esc_attr_e( 'Local Trying To Adult Partners', 'tta' ); ?>">
-        <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
+                        <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt=""><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h2>
+        <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re grateful for local partners & businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
         <?php $ad = tta_get_random_ad(); ?>
         <?php if ( $ad ) : ?>
             <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
@@ -161,10 +163,26 @@ class TTA_Homepage_Shortcode {
                     <div class="tta-intro-inner">
                         <div>
                             <h1><?php esc_html_e( 'What is Trying to Adult RVA?', 'tta' ); ?></h1>
-                            <p><?php esc_html_e( 'Trying to Adult RVA is a community focused on connection and growth.', 'tta' ); ?></p>
+                            <p><?php esc_html_e( 'Trying to Adult RVA is a Richmond community for adults looking to connect, grow and explore the city together.', 'tta' ); ?></p>
+                            <p><?php esc_html_e( 'Through game nights, workshops, service projects and casual meetups we create welcoming spaces to learn new skills, give back and build lasting friendships.', 'tta' ); ?></p>
                             <p><a class="button" href="<?php echo esc_url( home_url( '/events' ) ); ?>"><?php esc_html_e( 'Browse Events', 'tta' ); ?></a></p>
                         </div>
-                        <div class="tta-intro-img"></div>
+                        <div class="tta-intro-img">
+                            <?php
+                            $carousel_images = [
+                                '/wp-content/uploads/2022/12/IMG-1351.jpg',
+                                '/wp-content/uploads/2022/12/IMG-4850.jpg',
+                                '/wp-content/uploads/2022/12/IMG-1153.jpg',
+                                '/wp-content/uploads/2025/06/unnamed-6.webp',
+                                '/wp-content/uploads/2022/12/41657B74-F47D-451A-A99A-0B95C793FFD4-1.jpg',
+                                '/wp-content/uploads/2022/12/IMG-7075-1.jpg',
+                            ];
+                            foreach ( $carousel_images as $i => $src ) :
+                                $class = 0 === $i ? ' class="active"' : '';
+                                echo '<img src="' . esc_url( $src ) . '" alt=""' . $class . '>';
+                            endforeach;
+                            ?>
+                        </div>
                     </div>
                 </section>
                 <?php if ( ! empty( $upcoming['events'] ) ) : ?>

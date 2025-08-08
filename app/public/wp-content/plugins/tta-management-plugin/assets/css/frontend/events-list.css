@@ -17,20 +17,13 @@
   border-radius:4px;
 }
 
-.tta-events-ad__title{
-  margin-bottom: 0.5em;
-  font-size: 1.25em;
-  display: inline-block;
-  vertical-align: super;
-  border: solid 1px #eee;
-  border-left: 0;
-  border-right: 0;
-  border-top: 0;
+.tta-events-ad h2{
+  display:flex;
+  align-items:center;
+  gap:0.25rem;
   margin-top:0;
-}
-
-.tta-event-details-icon-special-size{
-  width:30px!important;
+  margin-bottom:0.5em;
+  font-size:1.25em;
 }
 
 #main > div.wrap.tta-events-list-page > div > aside.tta-events-right > div > a{

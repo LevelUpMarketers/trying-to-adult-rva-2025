@@ -21,5 +21,23 @@
         $('.tta-counter').each(function(){
             animateCounter($(this));
         });
+
+        var $carousel = $('.tta-intro-img');
+        var $imgs = $carousel.find('img');
+        if ($imgs.length > 1) {
+            var idx = 0;
+            function cycle(){
+                var $current = $imgs.eq(idx);
+                idx = (idx + 1) % $imgs.length;
+                var $next = $imgs.eq(idx);
+                $current.removeClass('active').addClass('exit');
+                $next.addClass('active');
+                setTimeout(function(){
+                    $current.removeClass('exit');
+                }, 1000);
+                setTimeout(cycle, 5000);
+            }
+            setTimeout(cycle, 5000);
+        }
     });
 })(jQuery);

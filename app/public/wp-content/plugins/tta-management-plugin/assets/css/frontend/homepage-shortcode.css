@@ -14,6 +14,39 @@
     flex-direction: column;
     gap: 2rem;
 }
+.tta-intro-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+@media (max-width: 768px) {
+    .tta-intro-inner {
+        grid-template-columns: 1fr;
+    }
+}
+.tta-intro-img {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+}
+.tta-intro-img img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease, transform 1s ease;
+}
+.tta-intro-img img.active {
+    opacity: 1;
+}
+.tta-intro-img img.exit {
+    transform: translateX(100%);
+    opacity: 0;
+}
 .tta-home-main h2 {
     margin-top: 0;
 }
@@ -47,8 +80,8 @@
 }
 .tta-event-card {
     position: relative;
-    width: 75%;
-    aspect-ratio: 1/1;
+    width: 100%;
+    aspect-ratio: 16/9;
     background-size: cover;
     background-position: center;
     border-radius: 8px;
@@ -81,6 +114,9 @@
     border-radius: 50%;
     object-fit: cover;
 }
+.tta-popup-img {
+    cursor: pointer;
+}
 .tta-partners {
     margin-top: 2rem;
 }
@@ -103,6 +139,31 @@
     top: 2px;
     margin-right: 4px;
 }
+.tta-next-event__link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+.tta-next-event__link p {
+    display: flex;
+    align-items: center;
+    margin: 0.25rem 0;
+}
+.tta-newest-member {
+    text-align: center;
+}
+.tta-newest-member__img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto 0.5rem;
+}
+.tta-newest-member__name,
+.tta-newest-member__level {
+    margin: 0;
+}
 
 .tta-events-ad {
     text-align: left;
@@ -110,19 +171,13 @@
 .tta-events-ad a img {
     border-radius: 4px;
 }
-.tta-events-ad__title {
+.tta-events-ad h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0;
     margin-bottom: 0.5em;
     font-size: 1.25em;
-    display: inline-block;
-    vertical-align: super;
-    border: solid 1px #eee;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-    margin-top: 0;
-}
-.tta-event-details-icon-special-size {
-    width: 30px !important;
 }
 .tta-events-ad__subtitle {
     margin-bottom: 1em;
