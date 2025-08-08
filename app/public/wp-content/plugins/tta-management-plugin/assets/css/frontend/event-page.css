@@ -8,9 +8,8 @@
   padding: 40px 0;
 }
 .tta-events-ad{
-  padding-top: 50px;
   padding-bottom: 100px;
-  text-align: center;
+  text-align: left;
 }
 
 .tta-events-ad img{
@@ -20,11 +19,28 @@
 .tta-events-ad__title{
   margin-bottom: 0.5em;
   font-size: 1.25em;
+  display: inline-block;
+  vertical-align: super;
+  border: solid 1px #eee;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  margin-top:0;
+}
+
+.tta-event-details-icon-special-size{
+  width:30px!important;
+}
+
+#main > div > div > div > aside.tta-event-right > div > a{
+  position: relative;
+  display: block;
 }
 
 .tta-events-ad__subtitle{
   margin-bottom: 1em;
   font-size: 1em;
+  text-align:left;
 }
 
 .tta-events-ad__info{
@@ -33,7 +49,7 @@
 
 .tta-events-ad__info-item{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   margin-bottom:0.5em;
 }
@@ -348,7 +364,6 @@
   border-radius: 4px;
   background: #fff;
   padding: 20px;
-  margin: 40px 0;
   position: relative;
 }
 .tta-event-buy h2 {
@@ -672,6 +687,7 @@ input[disabled]::before {
 
 .tta-event-details-icon-after{
     flex: 1 1 auto;
+    text-align:left;
 }
 
 /* Gallery grid */
@@ -797,7 +813,7 @@ input[disabled]::before {
   }
 
   .tta-events-ad{
-    text-align:center;
+    text-align:left;
   }
 
   .tta-event-columns {

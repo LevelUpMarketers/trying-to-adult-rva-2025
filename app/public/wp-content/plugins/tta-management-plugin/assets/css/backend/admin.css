@@ -586,3 +586,11 @@ form p.submit{
 #tta-members-history > table > tbody > tr.tta-inline-row > td > div > div > div.tta-subscription-info > p > strong{
         font-weight:normal;
 }
+
+#ad_image-preview, #ad_image-preview_edit > img{
+    margin-top:20px;
+}
+
+#tta-ad-edit-form > table > tbody > tr > td{
+    display:block;
+}

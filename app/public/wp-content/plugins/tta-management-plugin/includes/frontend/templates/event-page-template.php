@@ -1301,6 +1301,7 @@ echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
     <aside class="tta-event-right">
       <div class="tta-events-ad">
         <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
+        <img class="tta-event-details-icon tta-event-details-icon-special-size" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt="<?php esc_attr_e( 'Local Trying To Adult Partners', 'tta' ); ?>">
         <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
         <?php $ad = tta_get_random_ad(); ?>
         <?php if ( $ad ) : ?>
@@ -1324,7 +1325,7 @@ echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
             <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
               <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
               <div class="tta-events-ad__info-item">
-                <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
+                <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone-outline.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
                 <div class="tta-event-details-icon-after"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
               </div>
             <?php endif; ?>

@@ -1,18 +1,16 @@
 /* assets/css/frontend/events-list.css */
 
 .tta-events-list-page {
-  max-width: 1000px;
+  max-width: 1300px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 60px;
   padding-bottom:200px;
   padding-top:100px;
 }
 
 .tta-events-ad{
-
-  padding-top: 50px;
   padding-bottom: 100px;
-  text-align: center;
+  text-align: left;
 }
 
 .tta-events-ad a img{
@@ -22,11 +20,28 @@
 .tta-events-ad__title{
   margin-bottom: 0.5em;
   font-size: 1.25em;
+  display: inline-block;
+  vertical-align: super;
+  border: solid 1px #eee;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  margin-top:0;
+}
+
+.tta-event-details-icon-special-size{
+  width:30px!important;
+}
+
+#main > div.wrap.tta-events-list-page > div > aside.tta-events-right > div > a{
+  position: relative;
+  display: block;
 }
 
 .tta-events-ad__subtitle{
   margin-bottom: 1em;
-  font-size: 0.9em;
+  font-size: 1em;
+  text-align:left;
 }
 
 .tta-events-ad__info{
@@ -35,7 +50,7 @@
 
 .tta-events-ad__info-item{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   margin-bottom:0.5em;
 }
@@ -83,6 +98,8 @@ li.tta-event-list-item > div > a > span:hover{
 .tta-events-right {
   flex: 0 0 220px;
   align-self: stretch;
+  position: relative;
+  bottom: 6px;
 }
 
 
@@ -311,6 +328,7 @@ li.tta-event-list-item > div > a > span:hover{
 }
 .tta-event-details-icon-after {
   flex: 1 1 auto;
+  text-align:left;
 }
 
 .next.page-numbers, .prev.page-numbers{
@@ -321,29 +339,10 @@ li.tta-event-list-item > div > a > span:hover{
   font-family:inherit!important;
 }/* assets/css/frontend/events-list.css */
 
-.tta-events-list-page {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
-  padding-bottom:200px;
-  padding-top:100px;
-}
-
-.tta-events-ad{
-
-  padding-top: 50px;
-  padding-bottom: 100px;
-  text-align: center;
-}
-
 .tta-events-ad a img{
   border-radius:4px;
 }
 
-.tta-events-columns {
-  display: flex;
-  gap: 20px;
-}
 li.tta-event-list-item > div > ul > a:hover, li.tta-event-list-item > div > a:hover, li.tta-event-list-item > div > ul > li > div > a:hover{
   text-decoration:none;
 }
@@ -492,6 +491,7 @@ li.tta-event-list-item > div > a > span:hover{
   margin-bottom: 40px;
   border-bottom: 1px solid #e5e5e5;
   padding-bottom: 20px;
+  max-width:600px;
 }
 
 .tta-event-list-item:last-child {
@@ -621,10 +621,46 @@ li.tta-event-list-item > div > a > span:hover{
   margin-bottom:10px;
 }
 
+.tta-pagination-next, .tta-pagination-prev{
+    display: inline-block;
+    margin-top: 0.5em;
+    padding: 4px 10px;
+    background: #0073aa;
+    border-radius: 4px;
+}
+
 @media (max-width: 768px) {
+
+  .tta-events-list-page{
+    padding:20px;
+  }
+
+  .tta-events-right{
+    margin-top: 6px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+  }
 
   #loginform > p.login-username > label, #loginform > p.login-password > label{
     display:block;
+  }
+
+  #main > div.wrap.tta-events-list-page > div > aside.tta-events-right > div > div > div > div{
+    text-align: center;
+  }
+
+  .tta-events-ad__subtitle{
+    text-align:center;
+  }
+
+  .tta-events-ad__info-item{
+    display:block;
+  }
+
+  .tta-events-ad {
+    text-align: center;
+    padding-bottom:0;
   }
 
   .tta-events-columns {
@@ -705,14 +741,6 @@ li.tta-event-list-item > div > a > span:hover{
   padding: .615em .769em;
 }
 
-.tta-pagination-next, .tta-pagination-prev{
-    display: inline-block;
-    margin-top: 0.5em;
-    padding: 4px 10px;
-    background: #0073aa;
-    border-radius: 4px;
-}
-
 #main > div > div > main > div > div.tta-pagination-next > a, #main > div > div > main > div > div.tta-pagination-prev > a{
   padding: 4px 10px;
 }
@@ -723,14 +751,6 @@ li.tta-event-list-item > div > a > span:hover{
 
 .tta-events-pagination a.page-numbers{
   padding: .615em .769em;
-}
-
-.tta-pagination-next, .tta-pagination-prev{
-    display: inline-block;
-    margin-top: 0.5em;
-    padding: 4px 10px;
-    background: #0073aa;
-    border-radius: 4px;
 }
 
 #main > div > div > main > div > div.tta-pagination-next > a, #main > div > div > main > div > div.tta-pagination-prev > a{
