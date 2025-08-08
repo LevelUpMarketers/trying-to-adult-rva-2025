@@ -134,6 +134,7 @@ require_once TTA_PLUGIN_DIR . 'includes/admin/class-bi-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/admin/class-refund-requests-admin.php';
 require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-events-shortcode.php';
 require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-members-shortcode.php';
+require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-homepage-shortcode.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-member-dashboard.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-checkin-page-manager.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-become-member-page.php';

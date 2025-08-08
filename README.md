@@ -38,6 +38,7 @@ messages will not be sent.
 - [Authorize.Net Error Codes](docs/AuthorizeNetErrors.md)
 - [Address Helper Functions](docs/AddressHelpers.md)
 - [Event Page Context](docs/EventPage.md)
+- [Homepage Shortcode](docs/HomepageShortcode.md)
 - [Event Hosts & Volunteers](docs/EventPage.md#event-hosts-and-volunteers)
 - [Event Creation Admin](docs/EventCreationAdmin.md)
 - [Event Type Options](docs/EventTypes.md)

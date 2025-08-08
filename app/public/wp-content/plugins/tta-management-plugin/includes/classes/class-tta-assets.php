@@ -160,6 +160,34 @@ class TTA_Assets {
             TTA_PLUGIN_VERSION
         );
 
+        // Register assets used by shortcodes.
+        wp_register_style(
+            'tta-homepage-shortcode',
+            TTA_PLUGIN_URL . 'assets/css/frontend/homepage-shortcode.css',
+            [ 'tta-frontend-css' ],
+            TTA_PLUGIN_VERSION
+        );
+        wp_register_script(
+            'tta-homepage-shortcode',
+            TTA_PLUGIN_URL . 'assets/js/frontend/homepage-shortcode.js',
+            [ 'jquery' ],
+            TTA_PLUGIN_VERSION,
+            true
+        );
+        wp_register_style(
+            'tta-popup-css',
+            TTA_PLUGIN_URL . 'assets/css/frontend/profile-popup.css',
+            [ 'tta-frontend-css' ],
+            TTA_PLUGIN_VERSION
+        );
+        wp_register_script(
+            'tta-popup-js',
+            TTA_PLUGIN_URL . 'assets/js/frontend/profile-popup.js',
+            [ 'jquery' ],
+            TTA_PLUGIN_VERSION,
+            true
+        );
+
 
         // 2) Only on our “Event Page” template, enqueue event-page.css and cart + event JS
         if ( function_exists( 'is_page_template' ) && is_page_template( 'event-page-template.php' ) ) {

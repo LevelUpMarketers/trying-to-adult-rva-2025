@@ -1,0 +1,78 @@
+/* Styles for the TTA homepage shortcode layout */
+.tta-home {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+}
+@media (max-width: 768px) {
+    .tta-home {
+        grid-template-columns: 1fr;
+    }
+}
+.tta-home-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.tta-home-main h2 {
+    margin-top: 0;
+}
+.tta-stats-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.tta-stats-list li {
+    margin-bottom: 0.25rem;
+}
+.tta-counter {
+    font-size: 2rem;
+    font-weight: bold;
+}
+.tta-events-grid,
+.tta-past-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+    gap: 1rem;
+}
+.tta-event-card {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 */
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+}
+.tta-event-card__caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+.tta-birthday-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 60px);
+    gap: 0.5rem;
+}
+.tta-birthday-grid img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.tta-partners {
+    margin-top: 2rem;
+}
+.tta-home-main .tta-section {
+    margin-bottom: 3rem;
+}
+.tta-home-main .tta-section h2 {
+    margin-bottom: 1rem;
+}
+.tta-section-button {
+    text-align: center;
+    margin-top: 1rem;
+}
