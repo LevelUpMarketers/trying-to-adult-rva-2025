@@ -407,9 +407,8 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
     </main>
     <aside class="tta-events-right">
         <div class="tta-events-ad">
-            <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
-            <img class="tta-event-details-icon tta-event-details-icon-special-size" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt="<?php esc_attr_e( 'Local Trying To Adult Partners', 'tta' ); ?>">
-            <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
+            <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt=""><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h2>
+            <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re grateful for local partners & businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
             <?php $ad = tta_get_random_ad(); ?>
             <?php if ( $ad ) : ?>
                 <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>

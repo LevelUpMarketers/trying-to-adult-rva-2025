@@ -3409,7 +3409,7 @@ function tta_get_next_event() {
 
     $row = $wpdb->get_row(
         $wpdb->prepare(
-            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, hosts, volunteers, host_notes FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
+            "SELECT id, name, date, time, address, page_id, type, venuename, venueurl, baseeventcost, discountedmembercost, premiummembercost, hosts, volunteers, host_notes, mainimageid FROM {$events_table} WHERE date >= %s ORDER BY date ASC, time ASC LIMIT 1",
             current_time( 'Y-m-d' )
         ),
         ARRAY_A
@@ -3435,6 +3435,13 @@ function tta_get_next_event() {
         'premium_cost'       => floatval( $row['premiummembercost'] ),
         'date_formatted'     => tta_format_event_date( $row['date'] ),
         'time_formatted'     => tta_format_event_time( $row['time'] ),
+        'mainimageid'        => intval( $row['mainimageid'] ),
+        'timestamp'          => ( function() use ( $row ) {
+            $tz  = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+            $time = explode( '|', $row['time'] )[0];
+            $dt   = new DateTime( $row['date'] . ' ' . $time, $tz );
+            return $dt->getTimestamp();
+        } )(),
     ];
 
     $names = tta_get_event_host_volunteer_names( $event['id'] );
