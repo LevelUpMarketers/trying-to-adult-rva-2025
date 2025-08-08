@@ -54,7 +54,7 @@ class TTA_Homepage_Shortcode {
 
         $next_event    = tta_get_next_event();
         $upcoming      = tta_get_upcoming_events( 1, 4 );
-        $past_events   = $this->get_recent_past_events( 2 );
+        $past_events   = $this->get_recent_past_events( 4 );
         $newest_member = $this->get_newest_member();
         $birthdays     = $this->get_birthdays_this_month();
         $member_count  = $this->get_member_count();
@@ -77,10 +77,11 @@ class TTA_Homepage_Shortcode {
                     <div class="tta-next-event">
                         <h2><?php esc_html_e( 'Our Next Event', 'tta' ); ?></h2>
                         <?php if ( ! empty( $next_event['mainimageid'] ) ) : ?>
-                            <?php $img = wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'medium' ); ?>
-                            <?php if ( $img ) : ?><div class="tta-next-event__img" style="background-image:url('<?php echo esc_url( $img ); ?>');"></div><?php endif; ?>
+                            <?php $img = wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'large' ); ?>
+                            <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt=""><?php endif; ?>
                         <?php endif; ?>
-                        <p><?php echo esc_html( $next_event['name'] ); ?><br><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
+                        <p class="tta-next-event__name"><?php echo esc_html( $next_event['name'] ); ?></p>
+                        <p class="tta-next-event__date"><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
                         <p><a class="button" href="<?php echo esc_url( get_permalink( $next_event['page_id'] ) ); ?>"><?php esc_html_e( 'Learn More', 'tta' ); ?></a></p>
                     </div>
                 <?php endif; ?>
@@ -263,11 +264,7 @@ class TTA_Homepage_Shortcode {
      * @return int
      */
     private function get_member_count() {
-        return TTA_Cache::remember( 'tta_member_count', function() {
-            global $wpdb;
-            $table = $wpdb->prefix . 'tta_members';
-            return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
-        }, 600 );
+        return 5382;
     }
 
     /**
@@ -276,14 +273,7 @@ class TTA_Homepage_Shortcode {
      * @return int
      */
     private function get_event_count() {
-        return TTA_Cache::remember( 'tta_event_count', function() {
-            global $wpdb;
-            $current = $wpdb->prefix . 'tta_events';
-            $archive = $wpdb->prefix . 'tta_events_archive';
-            $count1  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$current}" );
-            $count2  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$archive}" );
-            return $count1 + $count2;
-        }, 600 );
+        return 1032;
     }
 }
 
