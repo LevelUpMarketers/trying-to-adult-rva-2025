@@ -15,9 +15,10 @@
       if(!inst){
         var headerHeight = $('.site-header, .tta-header').first().outerHeight() || 0;
         var adminBarHeight = $('body').hasClass('admin-bar') ? $('#wpadminbar').outerHeight() || 0 : 0;
+        var extraOffset = 148;
         inst = new StickySidebar(this, {
           innerWrapperSelector: '.tta-events-ad',
-          topSpacing: headerHeight + adminBarHeight,
+          topSpacing: headerHeight + adminBarHeight + extraOffset,
           bottomSpacing: 0,
           minWidth: 769,
           resizeSensor: true
