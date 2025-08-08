@@ -69,17 +69,15 @@ class TTA_Homepage_Shortcode {
                     <h2><?php esc_html_e( 'TTA Stats', 'tta' ); ?></h2>
                     <ul class="tta-stats-list">
                         <li><?php esc_html_e( 'Founded in 2020', 'tta' ); ?></li>
-                        <li><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $member_count ); ?>">0</span> <?php esc_html_e( 'Members', 'tta' ); ?></li>
-                        <li><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $event_count ); ?>">0</span> <?php esc_html_e( 'Events', 'tta' ); ?></li>
+                        <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt="<?php esc_attr_e( 'Members', 'tta' ); ?>"><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $member_count ); ?>">0</span> <?php esc_html_e( 'Members', 'tta' ); ?></li>
+                        <li><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/calendar.svg' ); ?>" alt="<?php esc_attr_e( 'Events', 'tta' ); ?>"><span class="tta-counter" aria-live="polite" data-target="<?php echo esc_attr( $event_count ); ?>">0</span> <?php esc_html_e( 'Events', 'tta' ); ?></li>
                     </ul>
                 </div>
                 <?php if ( $next_event ) : ?>
                     <div class="tta-next-event">
-                        <h2><?php esc_html_e( 'Our Next Event', 'tta' ); ?></h2>
-                        <?php if ( ! empty( $next_event['mainimageid'] ) ) : ?>
-                            <?php $img = wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'large' ); ?>
-                            <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt=""><?php endif; ?>
-                        <?php endif; ?>
+                        <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/upcoming.svg' ); ?>" alt=""><?php esc_html_e( 'Our Next Event', 'tta' ); ?></h2>
+                        <?php $img = $next_event['mainimageid'] ? wp_get_attachment_image_url( intval( $next_event['mainimageid'] ), 'large' ) : TTA_PLUGIN_URL . 'assets/images/admin/default-event.png'; ?>
+                        <?php if ( $img ) : ?><img class="tta-next-event__img" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $next_event['name'] ); ?>"><?php endif; ?>
                         <p class="tta-next-event__name"><?php echo esc_html( $next_event['name'] ); ?></p>
                         <p class="tta-next-event__date"><?php echo esc_html( $next_event['date_formatted'] ); ?></p>
                         <p><a class="button" href="<?php echo esc_url( get_permalink( $next_event['page_id'] ) ); ?>"><?php esc_html_e( 'Learn More', 'tta' ); ?></a></p>
@@ -87,7 +85,7 @@ class TTA_Homepage_Shortcode {
                 <?php endif; ?>
                 <?php if ( $newest_member ) : ?>
                     <div class="tta-newest-member">
-                        <h2><?php esc_html_e( 'Our Newest Member', 'tta' ); ?></h2>
+                        <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/profile.svg' ); ?>" alt=""><?php esc_html_e( 'Our Newest Member', 'tta' ); ?></h2>
                         <?php
                         $img_id  = intval( $newest_member['profileimgid'] );
                         $img_url = $img_id ? wp_get_attachment_image_url( $img_id, 'thumbnail' ) : TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/placeholder-profile.svg';
@@ -101,7 +99,7 @@ class TTA_Homepage_Shortcode {
                 <?php endif; ?>
                 <?php if ( ! empty( $birthdays ) ) : ?>
                     <div class="tta-birthdays">
-                        <h2><?php echo esc_html( $current_month . ' ' . __( 'Birthdays', 'tta' ) ); ?></h2>
+                        <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/calendar.svg' ); ?>" alt=""><?php echo esc_html( $current_month . ' ' . __( 'Birthdays', 'tta' ) ); ?></h2>
                         <div class="tta-birthday-grid">
                             <?php foreach ( $birthdays as $b ) :
                                 $img_id  = intval( $b['profileimgid'] );
@@ -114,29 +112,48 @@ class TTA_Homepage_Shortcode {
                     </div>
                 <?php endif; ?>
                 <div class="tta-partners">
-                    <h2><?php esc_html_e( 'Our Partners', 'tta' ); ?></h2>
-                    <?php $ad = tta_get_random_ad(); ?>
-                    <?php if ( $ad ) : ?>
-                        <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
-                        <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php endif; ?>
-                        <?php echo $img ? $img : '<img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ) . '" alt="">'; ?>
-                        <?php if ( $ad['url'] ) : ?></a><?php endif; ?>
-                        <div class="tta-events-ad__info">
-                            <?php if ( ! empty( $ad['business_name'] ) ) : ?>
-                                <div class="tta-events-ad__info-item"><?php echo esc_html( $ad['business_name'] ); ?></div>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
-                                <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
-                                <div class="tta-events-ad__info-item"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $ad['business_address'] ) ) : ?>
-                                <?php $map = 'https://www.google.com/maps/search/?api=1&query=' . urlencode( $ad['business_address'] ); ?>
-                                <div class="tta-events-ad__info-item"><a href="<?php echo esc_url( $map ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_address'] ); ?></a></div>
+                    <div class="tta-events-ad">
+                        <h3 class="tta-events-ad__title"><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h3>
+        <img class="tta-event-details-icon tta-event-details-icon-special-size" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt="<?php esc_attr_e( 'Local Trying To Adult Partners', 'tta' ); ?>">
+        <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re so grateful for local businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
+        <?php $ad = tta_get_random_ad(); ?>
+        <?php if ( $ad ) : ?>
+            <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
+            <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php endif; ?>
+            <?php echo $img ? $img : '<img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ) . '" alt="">'; ?>
+            <?php if ( $ad['url'] ) : ?></a><?php endif; ?>
+            <div class="tta-events-ad__info">
+                <?php if ( ! empty( $ad['business_name'] ) ) : ?>
+                    <div class="tta-events-ad__info-item">
+                        <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/store.svg' ); ?>" alt="<?php esc_attr_e( 'Business', 'tta' ); ?>">
+                        <div class="tta-event-details-icon-after">
+                            <?php if ( ! empty( $ad['url'] ) ) : ?>
+                                <a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_name'] ); ?></a>
+                            <?php else : ?>
+                                <?php echo esc_html( $ad['business_name'] ); ?>
                             <?php endif; ?>
                         </div>
-                    <?php else : ?>
-                        <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="">
-                    <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
+                    <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
+                    <div class="tta-events-ad__info-item">
+                        <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone-outline.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
+                        <div class="tta-event-details-icon-after"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
+                    </div>
+                <?php endif; ?>
+                <?php if ( ! empty( $ad['business_address'] ) ) : ?>
+                    <?php $map = 'https://www.google.com/maps/search/?api=1&query=' . urlencode( $ad['business_address'] ); ?>
+                    <div class="tta-events-ad__info-item">
+                        <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt="<?php esc_attr_e( 'Address', 'tta' ); ?>">
+                        <div class="tta-event-details-icon-after"><a href="<?php echo esc_url( $map ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_address'] ); ?></a></div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php else : ?>
+            <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="">
+        <?php endif; ?>
+                    </div>
                 </div>
             </aside>
             <div class="tta-home-main">

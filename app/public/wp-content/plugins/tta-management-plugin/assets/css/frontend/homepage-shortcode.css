@@ -17,12 +17,21 @@
 .tta-home-main h2 {
     margin-top: 0;
 }
+.tta-home-sidebar h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0;
+}
+
 .tta-stats-list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
 .tta-stats-list li {
+    display: flex;
+    align-items: center;
     margin-bottom: 0.25rem;
 }
 .tta-counter {
@@ -33,11 +42,12 @@
 .tta-past-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 1fr;
-    gap: 0.5rem;
+    justify-items: center;
+    gap: 1rem;
 }
 .tta-event-card {
     position: relative;
+    width: 75%;
     aspect-ratio: 1/1;
     background-size: cover;
     background-position: center;
@@ -50,8 +60,8 @@
     right: 0;
     background: rgba(0,0,0,0.6);
     color: #fff;
-    padding: 0.75rem;
-    font-size: 1.1rem;
+    padding: 1rem;
+    font-size: 1.3rem;
     text-align: center;
 }
 .tta-next-event__img {
@@ -83,4 +93,52 @@
 .tta-section-button {
     text-align: center;
     margin-top: 1rem;
+}
+
+.tta-event-details-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    position: relative;
+    top: 2px;
+    margin-right: 4px;
+}
+
+.tta-events-ad {
+    text-align: left;
+}
+.tta-events-ad a img {
+    border-radius: 4px;
+}
+.tta-events-ad__title {
+    margin-bottom: 0.5em;
+    font-size: 1.25em;
+    display: inline-block;
+    vertical-align: super;
+    border: solid 1px #eee;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    margin-top: 0;
+}
+.tta-event-details-icon-special-size {
+    width: 30px !important;
+}
+.tta-events-ad__subtitle {
+    margin-bottom: 1em;
+    font-size: 1em;
+    text-align: left;
+}
+.tta-events-ad__info {
+    margin-top: 1em;
+}
+.tta-events-ad__info-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    margin-bottom: 0.5em;
+}
+.tta-event-details-icon-after {
+    flex: 1 1 auto;
+    text-align: left;
 }

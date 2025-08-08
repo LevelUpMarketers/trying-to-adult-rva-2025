@@ -19,4 +19,5 @@ Required assets are enqueued automatically.
 
 - The members and events counters animate from 0 to **5,382** members and **1,032** events.
 - "Our Next Event" displays the event’s featured image followed by its name and date.
-- Event grids use large square cards arranged in two columns by two rows.
+- Event grids use square cards arranged in two columns by two rows.
+- The partner section mirrors the ad component used on event pages, including icons and contact details.
