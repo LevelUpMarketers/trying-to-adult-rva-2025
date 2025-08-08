@@ -11,6 +11,7 @@ message thanking supporting businesses before showing a random ad image.
 When provided in the admin, the business name, phone, and address appear below
 the image with icons. The name links to the ad URL, the phone triggers a call,
 and the address opens a Google Maps search.
+On screens wider than 768px this ad column sticks in view while scrolling but stays within its parent container. The StickySidebar library keeps the panel anchored until the bottom of its parent is reached. An extra 148px top offset keeps the ad clear of the site menu.
 The event details sidebar remains on the left and the main content occupies the
 center.
 
