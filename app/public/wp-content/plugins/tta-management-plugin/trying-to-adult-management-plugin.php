@@ -28,7 +28,11 @@ define( 'TTA_BASIC_SUBSCRIPTION_DESCRIPTION', 'Monthly Basic Membership subscrip
 define( 'TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION', 'Monthly Premium Membership subscription for Trying to Adult.' );
 
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
+require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-email-logger.php';
+require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-sendgrid-mailer.php';
 TTA_Debug_Logger::init();
+TTA_Email_Logger::init();
+TTA_SendGrid_Mailer::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
 
 // Load Authorize.Net credentials from a config file if present

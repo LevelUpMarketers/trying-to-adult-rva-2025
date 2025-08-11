@@ -21,6 +21,19 @@ define('TTA_TWILIO_FROM', '+15555555555');
 If any of these constants are missing the plugin will warn administrators and SMS
 messages will not be sent.
 
+Email delivery is handled by SendGrid. Define your API key in `wp-config.php`
+as:
+
+```
+define('TTA_SENDGRID_API_KEY', 'your_sendgrid_key');
+```
+
+Copy `app/public/wp-config-sample.php` to `app/public/wp-config.php` and fill
+in your database and API credentials. The `wp-config.php` file is ignored by
+Git so credentials remain private.
+When the key is present, all `wp_mail()` calls are routed through SendGrid's
+API and each attempt is recorded on **TTA Settings → Email Log**.
+
 ## Development Quick Start
 
 1. Install PHP and Composer.

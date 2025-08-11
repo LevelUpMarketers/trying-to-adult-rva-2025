@@ -184,6 +184,8 @@ returns both values combined in a single string.
 
 All outgoing messages are dispatched by the `TTA_Email_Handler` class. The handler is loaded on plugin init and is responsible for reading the templates saved on the **Email & SMS** page. After a transaction is recorded, `send_purchase_emails()` groups the purchased items by event and emails the **Successful Event Purchase** template. The purchasing member receives one email and each attendee gets a personalized copy where tokens like `{attendee_first_name}` reflect their own information. Duplicate addresses are skipped so each email address only receives one message.
 
+When the `TTA_SENDGRID_API_KEY` constant is defined in `wp-config.php`, messages are delivered via SendGrid's API instead of the default WordPress mailer. Each API response (success or failure) is recorded and visible on **TTA Settings → Email Log** for easy troubleshooting.
+
 ## SMS Delivery
 
 SMS notifications are sent through Twilio. The `TTA_SMS_Handler` class mirrors

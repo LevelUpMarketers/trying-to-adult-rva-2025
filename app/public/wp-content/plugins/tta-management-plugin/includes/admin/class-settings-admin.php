@@ -87,6 +87,23 @@ class TTA_Settings_Admin {
             echo '<p>' . esc_html__( 'No debug messages logged yet.', 'tta' ) . '</p>';
         }
 
+        if ( isset( $_POST['tta_clear_email_log'] ) && check_admin_referer( 'tta_clear_email_log_action', 'tta_clear_email_log_nonce' ) ) {
+            TTA_Email_Logger::clear();
+            echo '<div class="updated"><p>Email log cleared.</p></div>';
+        }
+
+        echo '<h2>' . esc_html__( 'Email Log', 'tta' ) . '</h2>';
+        $elog = TTA_Email_Logger::get_messages();
+        if ( $elog ) {
+            echo '<pre class="tta-email-log" style="max-height:400px;overflow:auto;background:#fff;border:1px solid #ccc;padding:10px;">' . esc_html( implode( "\n", $elog ) ) . '</pre>';
+            echo '<form method="post">';
+            wp_nonce_field( 'tta_clear_email_log_action', 'tta_clear_email_log_nonce' );
+            echo '<p><input type="submit" name="tta_clear_email_log" class="button" value="Clear Email Log"></p>';
+            echo '</form>';
+        } else {
+            echo '<p>' . esc_html__( 'No email activity logged yet.', 'tta' ) . '</p>';
+        }
+
         echo '</div>';
     }
 }
