@@ -1,4 +1,25 @@
 /* Styles for the TTA homepage shortcode layout */
+.tta-home-main{
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.tta-home-main .tta-intro-inner h1{
+    font-size: 4VW;
+    color: #3a7096;
+    margin-top: 0;
+    position: relative;
+    bottom: 0px;
+    font-family: "Teko", sans-serif;
+    FONT-WEIGHT: BOLD;
+    line-height: 1;
+}
+
+.tta-stats, .tta-next-event, .tta-newest-member, .tta-birthdays, .tta-partners{
+    background: #fafafa;
+    padding: 20px;
+}
+
 .tta-home {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -41,6 +62,7 @@
     object-fit: cover;
     opacity: 0;
     transition: opacity 1s ease, transform 1s ease;
+    border-radius: 4px;
 }
 .tta-intro-img img.active {
     opacity: 1;
@@ -83,12 +105,20 @@
 }
 .tta-event-card {
     position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
+    width: 93%;
+    aspect-ratio: 16 / 9;
     background-size: cover;
     background-position: center;
-    border-radius: 8px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* smooth transform & shadow */
 }
+
+.tta-event-card:hover {
+    transform: scale(1.02); /* slightly more noticeable */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* subtle depth on hover */
+}
+
 .tta-event-card__caption {
     position: absolute;
     bottom: 0;
@@ -103,7 +133,7 @@
 .tta-next-event__img {
     width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: 4px;
     display: block;
 }
 .tta-birthday-grid {
@@ -128,7 +158,14 @@
 }
 .tta-home-main .tta-section h2 {
     margin-bottom: 1rem;
-    font-size: 2rem;
+    font-size: 4VW;
+    color: #3a7096;
+    margin-top: 0;
+    position: relative;
+    bottom: 0px;
+    font-family: "Teko", sans-serif;
+    FONT-WEIGHT: BOLD;
+    line-height: 1;
 }
 .tta-upcoming h2,
 .tta-past h2 {
@@ -138,7 +175,7 @@
     font-size: 2.5rem;
 }
 .tta-intro p {
-    font-size: 1.125rem;
+    font-size: 18px;
 }
 .tta-section-button {
     text-align: center;
