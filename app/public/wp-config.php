@@ -20,10 +20,6 @@
  */
 
 
-define('TTA_AUTHNET_LOGIN_ID', '27gj2N8BBr');
-define('TTA_AUTHNET_TRANSACTION_KEY', '286zv6624KNw4QM7');
-# Optional: set to 'false' for production
-define('TTA_AUTHNET_SANDBOX', true);
 
 // ** Database settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */

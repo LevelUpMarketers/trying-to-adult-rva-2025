@@ -31,34 +31,47 @@ require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
 
-// Load Authorize.Net credentials from a config file if present
-$config_file = TTA_PLUGIN_DIR . 'authnet-config.php';
-if ( file_exists( $config_file ) ) {
-    include_once $config_file;
+// Load Authorize.Net and SendGrid credentials from the database or environment variables.
+$tta_authnet_login       = get_option( 'tta_authnet_login_id' );
+$tta_authnet_transaction = get_option( 'tta_authnet_transaction_key' );
+$tta_sendgrid_key        = get_option( 'tta_sendgrid_api_key' );
+
+if ( ! $tta_authnet_login && getenv( 'TTA_AUTHNET_LOGIN_ID' ) ) {
+    $tta_authnet_login = getenv( 'TTA_AUTHNET_LOGIN_ID' );
+}
+if ( ! $tta_authnet_transaction && getenv( 'TTA_AUTHNET_TRANSACTION_KEY' ) ) {
+    $tta_authnet_transaction = getenv( 'TTA_AUTHNET_TRANSACTION_KEY' );
+}
+if ( ! $tta_sendgrid_key && getenv( 'TTA_SENDGRID_API_KEY' ) ) {
+    $tta_sendgrid_key = getenv( 'TTA_SENDGRID_API_KEY' );
 }
 
-
-// Attempt to load Authorize.Net credentials from environment variables
-if ( getenv( 'TTA_AUTHNET_LOGIN_ID' ) && ! defined( 'TTA_AUTHNET_LOGIN_ID' ) ) {
-    define( 'TTA_AUTHNET_LOGIN_ID', getenv( 'TTA_AUTHNET_LOGIN_ID' ) );
+if ( $tta_authnet_login ) {
+    define( 'TTA_AUTHNET_LOGIN_ID', $tta_authnet_login );
 }
-if ( getenv( 'TTA_AUTHNET_TRANSACTION_KEY' ) && ! defined( 'TTA_AUTHNET_TRANSACTION_KEY' ) ) {
-    define( 'TTA_AUTHNET_TRANSACTION_KEY', getenv( 'TTA_AUTHNET_TRANSACTION_KEY' ) );
+if ( $tta_authnet_transaction ) {
+    define( 'TTA_AUTHNET_TRANSACTION_KEY', $tta_authnet_transaction );
+}
+if ( $tta_sendgrid_key && ! defined( 'TTA_SENDGRID_API_KEY' ) ) {
+    define( 'TTA_SENDGRID_API_KEY', $tta_sendgrid_key );
 }
 if ( ! defined( 'TTA_AUTHNET_SANDBOX' ) ) {
     $sandbox = getenv( 'TTA_AUTHNET_SANDBOX' );
     define( 'TTA_AUTHNET_SANDBOX', $sandbox ? ( 'true' === strtolower( $sandbox ) ) : true );
 }
 
-// Warn administrators if Authorize.Net credentials are missing
+// Warn administrators if Authorize.Net credentials are missing.
 if ( is_admin() ) {
-    add_action( 'admin_notices', function () {
-        if ( current_user_can( 'manage_options' ) && ( ! defined( 'TTA_AUTHNET_LOGIN_ID' ) || ! defined( 'TTA_AUTHNET_TRANSACTION_KEY' ) ) ) {
-            echo '<div class="notice notice-error"><p>' .
-                esc_html__( 'Authorize.Net credentials are not configured. Define TTA_AUTHNET_LOGIN_ID and TTA_AUTHNET_TRANSACTION_KEY in authnet-config.php or your server environment.', 'tta' ) .
-                '</p></div>';
+    add_action(
+        'admin_notices',
+        function () {
+            if ( current_user_can( 'manage_options' ) && ( ! get_option( 'tta_authnet_login_id' ) || ! get_option( 'tta_authnet_transaction_key' ) ) ) {
+                echo '<div class="notice notice-error"><p>' .
+                    esc_html__( 'Authorize.Net credentials are not configured. Enter them under TTA Settings → API Settings.', 'tta' ) .
+                    '</p></div>';
+            }
         }
-    } );
+    );
 }
 
 // -----------------------------------------------------------------------------
