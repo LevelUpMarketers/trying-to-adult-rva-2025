@@ -624,10 +624,29 @@ li.tta-event-list-item > div > a > span:hover{
 
 @media (max-width: 768px) {
 
-  .tta-events-list-page{
-    padding:20px;
+  .tta-event-list-item{
+    display: block;
+    text-align: center;
+    max-width:initial;
   }
 
+  .tta-event-thumb{
+    margin-right:0px;
+    width: 80%;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .tta-events-list-page{
+    padding:20px;
+    padding-top:100px;
+  }
+  .tta-cal-day.has-event {
+      width: 25px;
+      height: 25px;
+      margin-left: auto;
+      margin-right: auto;
+  }
   .tta-events-right{
     margin-top: 6px;
     border: 1px solid #ccc;
