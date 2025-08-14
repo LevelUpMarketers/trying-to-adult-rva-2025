@@ -19,6 +19,9 @@ appears inside the toggle cell itself and shows labels such as **Name**,
 **Email**, and **Status** before each value. These labels are hidden on wider
 screens because the table headers remain visible.
 
+Attendees are ordered alphabetically by first name, and expanding a row on
+desktop slides the attendee list into view for a smoother experience.
+
 ### Table details
 
 - Attendees who cancelled or requested a refund no longer appear in the list so

@@ -35,20 +35,22 @@ jQuery(function($){
     if ($ex.length){
       $arrow.removeClass('open');
       $row.removeClass('open');
-      $ex.remove();
+      $ex.find('.tta-inline-wrapper').slideUp(200, function(){ $ex.remove(); });
       return;
     }
 
-    $('.tta-inline-row').remove();
-    $('.tta-toggle-arrow').removeClass('open');
-    $('.tta-event-row').removeClass('open');
-    $('.tta-toggle-cell.open').removeClass('open').find('.tta-inline-container').empty().hide();
+    var $open = $('.tta-inline-row');
+    if ($open.length){
+      $open.prev('.tta-event-row').removeClass('open').find('.tta-toggle-arrow').removeClass('open');
+      $open.find('.tta-inline-wrapper').slideUp(200, function(){ $open.remove(); });
+    }
 
     $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
       if(!res.success) return;
       var colspan = $row.find('td').length;
-      var $new = $('<tr class="tta-inline-row"><td colspan="'+colspan+'">'+res.data.html+'</td></tr>');
+      var $new = $('<tr class="tta-inline-row"><td colspan="'+colspan+'"><div class="tta-inline-wrapper" style="display:none">'+res.data.html+'</div></td></tr>');
       $row.after($new);
+      $new.find('.tta-inline-wrapper').slideDown(200);
       $arrow.addClass('open');
       $row.addClass('open');
     }, 'json');
