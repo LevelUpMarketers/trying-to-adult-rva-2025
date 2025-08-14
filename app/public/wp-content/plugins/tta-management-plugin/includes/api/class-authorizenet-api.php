@@ -20,8 +20,27 @@ class TTA_AuthorizeNet_API {
      * @return void
      */
     protected function log_response( $context, $response ) {
-        $msg = $context . ': ' . print_r( $response, true );
-        TTA_Debug_Logger::log( $msg );
+        if ( ! $response ) {
+            TTA_Debug_Logger::log( $context . ': [no response]' );
+            return;
+        }
+
+        $result   = '';
+        $msg_code = '';
+        $msg_text = '';
+
+        if ( method_exists( $response, 'getMessages' ) && $response->getMessages() ) {
+            $result = $response->getMessages()->getResultCode();
+            $msgs   = $response->getMessages()->getMessage();
+            if ( $msgs ) {
+                $first    = $msgs[0];
+                $msg_code = method_exists( $first, 'getCode' ) ? $first->getCode() : '';
+                $msg_text = method_exists( $first, 'getText' ) ? $first->getText() : '';
+            }
+        }
+
+        $summary = trim( $result . ' ' . $msg_code . ' ' . $msg_text );
+        TTA_Debug_Logger::log( $context . ': ' . ( $summary ?: '[no details]' ) );
     }
 
     /**
@@ -830,6 +849,34 @@ class TTA_AuthorizeNet_API {
                         }
                         if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
                             $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
+                        }
+
+                        TTA_Debug_Logger::log( 'find_transactions_by_email email=' . ( $bill_email ?: '[none]' ) );
+
+                        if ( '' === $bill_email ) {
+                            $ship_to    = method_exists( $txn, 'getShipTo' ) ? $txn->getShipTo() : null;
+                            $customer   = $txn->getCustomer();
+                            $profile_id = $customer && method_exists( $customer, 'getCustomerProfileId' ) ? $customer->getCustomerProfileId() : '';
+                            $pay_prof   = $customer && method_exists( $customer, 'getCustomerPaymentProfileId' ) ? $customer->getCustomerPaymentProfileId() : '';
+                            $ship_email = '';
+
+                            if ( $ship_to && method_exists( $ship_to, 'getEmail' ) ) {
+                                $ship_email = strtolower( trim( $ship_to->getEmail() ) );
+                                if ( $ship_email ) {
+                                    $bill_email = $ship_email;
+                                }
+                            }
+
+                            if ( '' === $bill_email ) {
+                                TTA_Debug_Logger::log(
+                                    sprintf(
+                                        'find_transactions_by_email alt fields: ship_email=%s profile_id=%s payment_profile_id=%s',
+                                        $ship_email ?: '[none]',
+                                        $profile_id ?: '[none]',
+                                        $pay_prof ?: '[none]'
+                                    )
+                                );
+                            }
                         }
 
                         if ( $bill_email === strtolower( trim( $email ) ) ) {
