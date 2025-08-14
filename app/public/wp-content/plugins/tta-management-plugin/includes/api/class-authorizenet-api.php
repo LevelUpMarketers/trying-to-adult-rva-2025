@@ -744,6 +744,108 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
+     * Find the most recent settled transaction matching a billing email and order description.
+     *
+     * @param string $email        Billing email address.
+     * @param string $description  Description substring to search for.
+     * @param int    $days_back    How many days back to search.
+     * @return array|null { id:string, amount:float, date:string, details:string }
+     */
+    public function find_transaction_by_email_and_description( $email, $description, $days_back = 365 ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return null;
+        }
+
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication->setName( $this->login_id );
+        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+
+        $now  = new \DateTime();
+        $from = ( clone $now )->modify( '-' . intval( $days_back ) . ' days' );
+
+        $batch_request = new AnetAPI\GetSettledBatchListRequest();
+        $batch_request->setMerchantAuthentication( $merchantAuthentication );
+        $batch_request->setFirstSettlementDate( $from );
+        $batch_request->setLastSettlementDate( $now );
+
+        $batch_controller = new AnetController\GetSettledBatchListController( $batch_request );
+        $batch_response   = $batch_controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'get_settled_batch_list', $batch_response );
+
+        if ( ! $batch_response || 'Ok' !== $batch_response->getMessages()->getResultCode() ) {
+            return null;
+        }
+
+        $batches = $batch_response->getBatchList();
+        if ( ! $batches ) {
+            return null;
+        }
+
+        usort( $batches, function ( $a, $b ) {
+            return $b->getSettlementTimeUTC()->getTimestamp() - $a->getSettlementTimeUTC()->getTimestamp();
+        } );
+
+        foreach ( $batches as $batch ) {
+            $list_request = new AnetAPI\GetTransactionListRequest();
+            $list_request->setMerchantAuthentication( $merchantAuthentication );
+            $list_request->setBatchId( $batch->getBatchId() );
+
+            $list_controller = new AnetController\GetTransactionListController( $list_request );
+            $list_response   = $list_controller->executeWithApiResponse( $this->environment );
+            $this->log_response( 'get_transaction_list', $list_response );
+
+            if ( ! $list_response || 'Ok' !== $list_response->getMessages()->getResultCode() || ! $list_response->getTransactions() ) {
+                continue;
+            }
+
+            $transactions = $list_response->getTransactions();
+            usort( $transactions, function ( $a, $b ) {
+                return $b->getSubmitTimeUTC()->getTimestamp() - $a->getSubmitTimeUTC()->getTimestamp();
+            } );
+
+            foreach ( $transactions as $summary ) {
+                $detail_request = new AnetAPI\GetTransactionDetailsRequest();
+                $detail_request->setMerchantAuthentication( $merchantAuthentication );
+                $detail_request->setTransId( $summary->getTransId() );
+                $detail_controller = new AnetController\GetTransactionDetailsController( $detail_request );
+                $detail_response   = $detail_controller->executeWithApiResponse( $this->environment );
+                $this->log_response( 'get_transaction_details', $detail_response );
+
+                if ( ! $detail_response || 'Ok' !== $detail_response->getMessages()->getResultCode() ) {
+                    continue;
+                }
+
+                $txn   = $detail_response->getTransaction();
+                $bill  = $txn->getBillTo();
+                $order = $txn->getOrder();
+
+                $bill_email = '';
+                if ( $bill && method_exists( $bill, 'getEmail' ) ) {
+                    $bill_email = strtolower( trim( $bill->getEmail() ) );
+                }
+                if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
+                    $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
+                }
+
+                $email = strtolower( trim( $email ) );
+                if ( $bill_email === $email ) {
+                    $desc = $order ? (string) $order->getDescription() : '';
+                    if ( false !== stripos( $desc, $description ) ) {
+                        return [
+                            'id'      => $summary->getTransId(),
+                            'amount'  => $txn->getSettleAmount(),
+                            'date'    => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                            'details' => $desc,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Create a subscription based on a previous transaction.
      *
      * @param string $transaction_id Original transaction ID.
