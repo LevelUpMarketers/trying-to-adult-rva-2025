@@ -66,11 +66,11 @@ class TTA_Settings_Admin {
                 echo '<div class="updated"><p>' . esc_html__( 'API settings saved.', 'tta' ) . '</p></div>';
             }
 
+            $lookup_results = [];
             if ( isset( $_POST['tta_process_csv'] ) && check_admin_referer( 'tta_process_csv_action', 'tta_process_csv_nonce' ) ) {
                 if ( ! empty( $_FILES['tta_arb_csv']['tmp_name'] ) ) {
-                    $dry            = ! empty( $_POST['tta_dry_run'] );
-                    $api            = new TTA_AuthorizeNet_API();
-                    $import_results = TTA_Subscription_Importer::process_csv( $_FILES['tta_arb_csv']['tmp_name'], $dry, $api );
+                    $api           = new TTA_AuthorizeNet_API();
+                    $lookup_results = TTA_CSV_Transaction_Lookup::process_csv( $_FILES['tta_arb_csv']['tmp_name'], $api );
                     echo '<div class="updated"><p>' . esc_html__( 'CSV processed.', 'tta' ) . '</p></div>';
                 } else {
                     echo '<div class="error"><p>' . esc_html__( 'No CSV file uploaded.', 'tta' ) . '</p></div>';
@@ -99,40 +99,9 @@ class TTA_Settings_Admin {
             echo '<p><input type="submit" name="tta_process_csv" class="button button-secondary" value="' . esc_attr__( 'Process CSV', 'tta' ) . '"></p>';
             echo '</form>';
 
-            if ( $import_results ) {
+            if ( ! empty( $lookup_results ) ) {
                 echo '<h3>' . esc_html__( 'Results', 'tta' ) . '</h3>';
-                $lines = [];
-                foreach ( $import_results as $row ) {
-                    $line = sprintf(
-                        '%s (%s) - ',
-                        $row['email'],
-                        $row['membership']
-                    );
-                    switch ( $row['status'] ) {
-                        case 'found':
-                            $line .= sprintf(
-                                'found transaction %s for %s on %s status %s invoice %s - %s',
-                                $row['transaction_id'] ?? '',
-                                $row['amount'] ?? '',
-                                $row['date'] ?? '',
-                                $row['transaction_status'] ?? '',
-                                $row['invoice'] ?? '',
-                                $row['details'] ?? ''
-                            );
-                            break;
-                        case 'error':
-                            $line .= sprintf(
-                                'error: %s',
-                                $row['error'] ?? ''
-                            );
-                            break;
-                        default:
-                            $line .= esc_html__( 'no matching transaction found', 'tta' );
-                            break;
-                    }
-                    $lines[] = $line;
-                }
-                echo '<textarea readonly style="width:100%;height:200px;">' . esc_html( implode( "\n", $lines ) ) . '</textarea>';
+                echo '<textarea readonly style="width:100%;height:200px;">' . esc_html( implode( "\n", $lookup_results ) ) . '</textarea>';
             }
 
             echo '<script>document.querySelectorAll(".tta-reveal").forEach(function(btn){btn.addEventListener("click",function(){var t=document.getElementById(btn.dataset.target);if(t.type==="password"){t.type="text";btn.textContent="' . esc_js( __( 'Hide', 'tta' ) ) . '";}else{t.type="password";btn.textContent="' . esc_js( __( 'Reveal', 'tta' ) ) . '";}});});</script>';

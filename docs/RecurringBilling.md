@@ -27,18 +27,12 @@ is resolved.
 ## Importing Existing Transactions
 
 For migrations or testing scenarios you can bulk inspect past transactions.
-Under **TTA Settings → API Settings** upload a CSV containing two columns:
-`email` and `membership`. For each row the plugin searches Authorize.Net for
-settled transactions whose billing email matches the CSV address. All matching
-transactions are listed in the **Results** area with their ID, amount, date,
-status, invoice number, and order description. The importer caps results at the
-most recent twenty matches and limits the search to two hundred transaction
-detail requests to avoid timeouts. These limits can be adjusted via
-`TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS` and `TTA_AUTHNET_IMPORT_MAX_REQUESTS`.
-The lookup is a read‑only operation; the optional **Dry run** checkbox simply
-performs the search without affecting any data. Authorize.Net limits each
-settled-batch lookup to a 31‑day range; the importer automatically iterates
-through multiple windows to cover the requested period. By default it only
-searches the most recent three months (configured via
-`TTA_AUTHNET_IMPORT_LOOKBACK_DAYS`).
+Under **TTA Settings → API Settings** upload a CSV containing a single
+`email` column. For each address the plugin searches Authorize.Net for all
+transactions in the last sixty‑five days and lists any matches in the
+**Results** area with their ID, amount, date, status, invoice number and
+order description. Each line is also written to the plugin's debug log. The
+optional **Dry run** checkbox is ignored; the lookup is always read‑only.
+Authorize.Net limits each settled‑batch lookup to a 31‑day range, so the utility
+automatically iterates through multiple windows to cover the full period.
 
