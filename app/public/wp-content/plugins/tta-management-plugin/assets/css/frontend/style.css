@@ -11,6 +11,16 @@
   transform: rotate(180deg);
 }
 
+.tta-toggle-cell{
+  text-align:center;
+  cursor:pointer;
+}
+
+.tta-toggle-text{
+  display:none;
+  font-weight:700;
+}
+
 /* Become a Member page */
 .tta-become-member-wrap {
   max-width: 800px;
@@ -76,6 +86,19 @@
   margin-bottom:0px;
 }
 
+.tta-event-row.open{
+  border-bottom:0;
+}
+
+.tta-event-row.open + .tta-inline-row td{
+  border-top:0;
+}
+
+.tta-info-title{
+  font-weight:600;
+  margin-right:4px;
+}
+
 @media (max-width: 1199px){
   .tta-checkin-wrap table,
   .tta-checkin-wrap thead,
@@ -102,9 +125,11 @@
     margin-bottom:4px;
   }
   .tta-checkin-wrap td.tta-toggle-cell{
-    text-align:right;
+    text-align:center;
   }
   .tta-checkin-wrap td.tta-toggle-cell::before{content:'';}
+  .tta-toggle-text{display:block;}
+  .tta-toggle-arrow{display:block;margin:4px auto 0;}
   .tta-checkin-wrap tr.tta-inline-row{border:none;padding:0;}
   .tta-checkin-wrap tr.tta-inline-row td{padding:0;}
 }

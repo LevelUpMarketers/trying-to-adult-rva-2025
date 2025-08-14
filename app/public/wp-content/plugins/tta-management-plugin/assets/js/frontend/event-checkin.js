@@ -9,12 +9,14 @@ jQuery(function($){
 
     if ($ex.length){
       $arrow.removeClass('open');
+      $row.removeClass('open');
       $ex.remove();
       return;
     }
 
     $('.tta-inline-row').remove();
     $('.tta-toggle-arrow').removeClass('open');
+    $('.tta-event-row').removeClass('open');
 
     $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
       if(!res.success) return;
@@ -22,6 +24,7 @@ jQuery(function($){
       var $new = $('<tr class="tta-inline-row"><td colspan="'+colspan+'">'+res.data.html+'</td></tr>');
       $row.after($new);
       $arrow.addClass('open');
+      $row.addClass('open');
     }, 'json');
   });
 
