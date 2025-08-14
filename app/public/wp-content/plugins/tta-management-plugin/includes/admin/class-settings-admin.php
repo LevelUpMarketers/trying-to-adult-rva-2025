@@ -66,14 +66,51 @@ class TTA_Settings_Admin {
                 echo '<div class="updated"><p>' . esc_html__( 'API settings saved.', 'tta' ) . '</p></div>';
             }
 
-            $lookup_results = [];
-            if ( isset( $_POST['tta_process_csv'] ) && check_admin_referer( 'tta_process_csv_action', 'tta_process_csv_nonce' ) ) {
-                if ( ! empty( $_FILES['tta_arb_csv']['tmp_name'] ) ) {
-                    $api           = new TTA_AuthorizeNet_API();
-                    $lookup_results = TTA_CSV_Transaction_Lookup::process_csv( $_FILES['tta_arb_csv']['tmp_name'], $api );
-                    echo '<div class="updated"><p>' . esc_html__( 'CSV processed.', 'tta' ) . '</p></div>';
+            $convert_results = [];
+            if ( isset( $_POST['tta_convert_subscription'] ) && check_admin_referer( 'tta_convert_subscription_action', 'tta_convert_subscription_nonce' ) ) {
+                $transaction_id = isset( $_POST['tta_transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_transaction_id'] ) ) : '';
+
+                if ( '' === $transaction_id ) {
+                    echo '<div class="error"><p>' . esc_html__( 'No transaction ID provided.', 'tta' ) . '</p></div>';
                 } else {
-                    echo '<div class="error"><p>' . esc_html__( 'No CSV file uploaded.', 'tta' ) . '</p></div>';
+                    $api      = new TTA_AuthorizeNet_API();
+                    $details  = $api->get_transaction_details( $transaction_id );
+
+                    if ( empty( $details['success'] ) ) {
+                        $error = isset( $details['error'] ) ? $details['error'] : __( 'Transaction lookup failed', 'tta' );
+                        echo '<div class="error"><p>' . esc_html( $error ) . '</p></div>';
+                    } else {
+                        $amount = (float) $details['amount'];
+                        $email  = sanitize_email( $details['email'] );
+
+                        $tag = '';
+                        if ( abs( $amount - 5.0 ) < 0.01 ) {
+                            $tag = 'Trying to Adult Basic Membership';
+                        } elseif ( abs( $amount - 10.0 ) < 0.01 ) {
+                            $tag = 'Trying to Adult Premium Membership';
+                        }
+
+                        $result = $api->create_subscription_from_transaction( $transaction_id, $amount, $tag ?: 'Membership Subscription', $tag );
+
+                        if ( empty( $result['success'] ) ) {
+                            $error = isset( $result['error'] ) ? $result['error'] : __( 'Subscription creation failed', 'tta' );
+                            echo '<div class="error"><p>' . esc_html( $error ) . '</p></div>';
+                        } else {
+                            $subscription_id = $result['subscription_id'];
+
+                            if ( $email ) {
+                                global $wpdb;
+                                $members_table = $wpdb->prefix . 'tta_members';
+                                $member_id     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$members_table} WHERE email = %s", $email ) );
+                                if ( $member_id ) {
+                                    $wpdb->update( $members_table, [ 'subscription_id' => $subscription_id ], [ 'id' => $member_id ] );
+                                }
+                            }
+
+                            $convert_results[] = sprintf( 'Email: %s | Transaction: %s | Subscription: %s', $email ?: '[none]', $transaction_id, $subscription_id );
+                            echo '<div class="updated"><p>' . esc_html__( 'Subscription created.', 'tta' ) . '</p></div>';
+                        }
+                    }
                 }
             }
 
@@ -91,17 +128,16 @@ class TTA_Settings_Admin {
             echo '<p><input type="submit" name="tta_save_api_settings" class="button button-primary" value="' . esc_attr__( 'Save API Settings', 'tta' ) . '"></p>';
             echo '</form>';
 
-            echo '<hr><h2>' . esc_html__( 'Import Subscriptions from CSV', 'tta' ) . '</h2>';
-            echo '<form method="post" enctype="multipart/form-data" action="?page=tta-settings&tab=api">';
-            wp_nonce_field( 'tta_process_csv_action', 'tta_process_csv_nonce' );
-            echo '<p><input type="file" name="tta_arb_csv" accept=".csv" /></p>';
-            echo '<p><label><input type="checkbox" name="tta_dry_run" value="1" checked> ' . esc_html__( 'Dry run (no subscriptions created)', 'tta' ) . '</label></p>';
-            echo '<p><input type="submit" name="tta_process_csv" class="button button-secondary" value="' . esc_attr__( 'Process CSV', 'tta' ) . '"></p>';
+            echo '<hr><h2>' . esc_html__( 'Convert Transaction to Subscription', 'tta' ) . '</h2>';
+            echo '<form method="post" action="?page=tta-settings&tab=api">';
+            wp_nonce_field( 'tta_convert_subscription_action', 'tta_convert_subscription_nonce' );
+            echo '<p><label for="tta_transaction_id">' . esc_html__( 'Transaction ID', 'tta' ) . '</label> <input type="text" id="tta_transaction_id" name="tta_transaction_id" /></p>';
+            echo '<p><input type="submit" name="tta_convert_subscription" class="button button-secondary" value="' . esc_attr__( 'Convert to Subscription', 'tta' ) . '"></p>';
             echo '</form>';
 
-            if ( ! empty( $lookup_results ) ) {
+            if ( ! empty( $convert_results ) ) {
                 echo '<h3>' . esc_html__( 'Results', 'tta' ) . '</h3>';
-                echo '<textarea readonly style="width:100%;height:200px;">' . esc_html( implode( "\n", $lookup_results ) ) . '</textarea>';
+                echo '<textarea readonly style="width:100%;height:200px;">' . esc_html( implode( "\n", $convert_results ) ) . '</textarea>';
             }
 
             echo '<script>document.querySelectorAll(".tta-reveal").forEach(function(btn){btn.addEventListener("click",function(){var t=document.getElementById(btn.dataset.target);if(t.type==="password"){t.type="text";btn.textContent="' . esc_js( __( 'Hide', 'tta' ) ) . '";}else{t.type="password";btn.textContent="' . esc_js( __( 'Reveal', 'tta' ) ) . '";}});});</script>';

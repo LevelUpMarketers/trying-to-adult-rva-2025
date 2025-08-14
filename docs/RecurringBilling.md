@@ -24,15 +24,16 @@ If the gateway reports a problem, the member's `membership_level` is temporarily
 set to `free` and `subscription_status` becomes `paymentproblem` until the issue
 is resolved.
 
-## Importing Existing Transactions
+## Converting Past Transactions
 
-For migrations or testing scenarios you can bulk inspect past transactions.
-Under **TTA Settings → API Settings** upload a CSV containing a single
-`email` column. For each address the plugin searches Authorize.Net for all
-transactions in the last sixty‑five days and lists any matches in the
-**Results** area with their ID, amount, date, status, invoice number and
-order description. Each line is also written to the plugin's debug log. The
-optional **Dry run** checkbox is ignored; the lookup is always read‑only.
-Authorize.Net limits each settled‑batch lookup to a 31‑day range, so the utility
-automatically iterates through multiple windows to cover the full period.
+Existing one‑time transactions can be turned into recurring subscriptions
+directly from the admin area. Under **TTA Settings → API Settings** enter an
+Authorize.Net transaction ID and click **Convert to Subscription**. The plugin
+retrieves the transaction details, creates an Automated Recurring Billing
+subscription for the same amount and stores the returned subscription ID in the
+matching `tta_members` record based on the billing email. Transactions for $5
+are tagged as **Trying to Adult Basic Membership** while $10 charges become
+**Trying to Adult Premium Membership** so the subscription is clearly labeled in
+Authorize.Net. The results of each conversion are displayed on the settings page
+and written to the debug log.
 
