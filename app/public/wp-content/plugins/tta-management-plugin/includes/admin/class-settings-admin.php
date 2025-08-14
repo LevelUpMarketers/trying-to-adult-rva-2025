@@ -55,6 +55,7 @@ class TTA_Settings_Admin {
                 echo '<p>' . esc_html__( 'No debug messages logged yet.', 'tta' ) . '</p>';
             }
         } elseif ( 'api' === $active_tab ) {
+            $import_results = [];
             if ( isset( $_POST['tta_save_api_settings'] ) && check_admin_referer( 'tta_save_api_settings_action', 'tta_save_api_settings_nonce' ) ) {
                 $login = isset( $_POST['tta_authnet_login_id'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_login_id'] ) ) : '';
                 $trans = isset( $_POST['tta_authnet_transaction_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_transaction_key'] ) ) : '';
@@ -63,6 +64,17 @@ class TTA_Settings_Admin {
                 update_option( 'tta_authnet_transaction_key', $trans, false );
                 update_option( 'tta_sendgrid_api_key', $send, false );
                 echo '<div class="updated"><p>' . esc_html__( 'API settings saved.', 'tta' ) . '</p></div>';
+            }
+
+            if ( isset( $_POST['tta_process_csv'] ) && check_admin_referer( 'tta_process_csv_action', 'tta_process_csv_nonce' ) ) {
+                if ( ! empty( $_FILES['tta_arb_csv']['tmp_name'] ) ) {
+                    $dry            = ! empty( $_POST['tta_dry_run'] );
+                    $api            = new TTA_AuthorizeNet_API();
+                    $import_results = TTA_Subscription_Importer::process_csv( $_FILES['tta_arb_csv']['tmp_name'], $dry, $api );
+                    echo '<div class="updated"><p>' . esc_html__( 'CSV processed.', 'tta' ) . '</p></div>';
+                } else {
+                    echo '<div class="error"><p>' . esc_html__( 'No CSV file uploaded.', 'tta' ) . '</p></div>';
+                }
             }
 
             $login = get_option( 'tta_authnet_login_id', '' );
@@ -78,6 +90,31 @@ class TTA_Settings_Admin {
             echo '</tbody></table>';
             echo '<p><input type="submit" name="tta_save_api_settings" class="button button-primary" value="' . esc_attr__( 'Save API Settings', 'tta' ) . '"></p>';
             echo '</form>';
+
+            echo '<hr><h2>' . esc_html__( 'Import Subscriptions from CSV', 'tta' ) . '</h2>';
+            echo '<form method="post" enctype="multipart/form-data" action="?page=tta-settings&tab=api">';
+            wp_nonce_field( 'tta_process_csv_action', 'tta_process_csv_nonce' );
+            echo '<p><input type="file" name="tta_arb_csv" accept=".csv" /></p>';
+            echo '<p><label><input type="checkbox" name="tta_dry_run" value="1" checked> ' . esc_html__( 'Dry run (no subscriptions created)', 'tta' ) . '</label></p>';
+            echo '<p><input type="submit" name="tta_process_csv" class="button button-secondary" value="' . esc_attr__( 'Process CSV', 'tta' ) . '"></p>';
+            echo '</form>';
+
+            if ( $import_results ) {
+                echo '<h3>' . esc_html__( 'Results', 'tta' ) . '</h3>';
+                echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Email', 'tta' ) . '</th><th>' . esc_html__( 'Level', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th><th>' . esc_html__( 'Transaction', 'tta' ) . '</th><th>' . esc_html__( 'Subscription', 'tta' ) . '</th><th>' . esc_html__( 'Error', 'tta' ) . '</th></tr></thead><tbody>';
+                foreach ( $import_results as $row ) {
+                    echo '<tr>';
+                    echo '<td>' . esc_html( $row['email'] ) . '</td>';
+                    echo '<td>' . esc_html( $row['level'] ) . '</td>';
+                    echo '<td>' . esc_html( $row['status'] ) . '</td>';
+                    echo '<td>' . esc_html( $row['transaction_id'] ?? '' ) . '</td>';
+                    echo '<td>' . esc_html( $row['subscription_id'] ?? '' ) . '</td>';
+                    echo '<td>' . esc_html( $row['error'] ?? '' ) . '</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table>';
+            }
+
             echo '<script>document.querySelectorAll(".tta-reveal").forEach(function(btn){btn.addEventListener("click",function(){var t=document.getElementById(btn.dataset.target);if(t.type==="password"){t.type="text";btn.textContent="' . esc_js( __( 'Hide', 'tta' ) ) . '";}else{t.type="password";btn.textContent="' . esc_js( __( 'Reveal', 'tta' ) ) . '";}});});</script>';
         } else {
             if ( isset( $_POST['tta_flush_cache'] ) && check_admin_referer( 'tta_flush_cache_action', 'tta_flush_cache_nonce' ) ) {

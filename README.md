@@ -1,6 +1,6 @@
 # Trying To Adult Management Plugin
 
-This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin`. Authorize.Net and SendGrid API keys are configured in the WordPress dashboard under **TTA Settings → API Settings**. The values are stored in the database using WordPress options and can alternatively be supplied via environment variables (`TTA_AUTHNET_LOGIN_ID`, `TTA_AUTHNET_TRANSACTION_KEY`, `TTA_SENDGRID_API_KEY`).
+This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin`. Authorize.Net and SendGrid API keys are configured in the WordPress dashboard under **TTA Settings → API Settings**. The values are stored in the database using WordPress options and can alternatively be supplied via environment variables (`TTA_AUTHNET_LOGIN_ID`, `TTA_AUTHNET_TRANSACTION_KEY`, `TTA_SENDGRID_API_KEY`). The API Settings tab also lets administrators upload a two‑column CSV of emails and membership levels to convert recent Authorize.Net transactions into Automated Recurring Billing subscriptions. A Dry Run option reports matching transactions without creating subscriptions.
 
 SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can create a `twilio-config.php` file or set environment variables:
 

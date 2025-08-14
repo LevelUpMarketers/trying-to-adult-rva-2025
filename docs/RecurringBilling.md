@@ -23,3 +23,15 @@ Each time a user logs in the plugin checks the status of any stored subscription
 If the gateway reports a problem, the member's `membership_level` is temporarily
 set to `free` and `subscription_status` becomes `paymentproblem` until the issue
 is resolved.
+
+## Importing Existing Transactions
+
+For migrations or testing scenarios you can bulk create subscriptions from past
+transactions. Under **TTA Settings → API Settings** upload a CSV containing two
+columns: email address and membership level. For each row the plugin searches
+Authorize.Net for the most recent transaction matching the email with an order
+description containing "Trying to Adult RVA - Subscription Renewal" and converts
+it into an open‑ended monthly subscription with the membership level as the
+subscription name and an order description of "Initial 2025 Website Launch". Use
+the **Dry run** option to preview matched transactions without creating
+subscriptions. The results of each row are displayed after processing.
