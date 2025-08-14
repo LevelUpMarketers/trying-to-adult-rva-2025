@@ -779,6 +779,9 @@ class TTA_AuthorizeNet_API {
             return $matches;
         }
 
+        $email = strtolower( trim( (string) $email ) );
+        TTA_Debug_Logger::log( 'find_transactions_by_email lookup=' . ( $email ?: '[none]' ) );
+
         $merchant_auth = new AnetAPI\MerchantAuthenticationType();
         $merchant_auth->setName( $this->login_id );
         $merchant_auth->setTransactionKey( $this->transaction_key );
@@ -845,13 +848,11 @@ class TTA_AuthorizeNet_API {
 
                         $bill_email = '';
                         if ( $bill && method_exists( $bill, 'getEmail' ) ) {
-                            $bill_email = strtolower( trim( $bill->getEmail() ) );
+                            $bill_email = strtolower( trim( (string) $bill->getEmail() ) );
                         }
                         if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
-                            $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
+                            $bill_email = strtolower( trim( (string) $txn->getCustomer()->getEmail() ) );
                         }
-
-                        TTA_Debug_Logger::log( 'find_transactions_by_email email=' . ( $bill_email ?: '[none]' ) );
 
                         if ( '' === $bill_email ) {
                             $ship_to    = method_exists( $txn, 'getShipTo' ) ? $txn->getShipTo() : null;
@@ -861,7 +862,7 @@ class TTA_AuthorizeNet_API {
                             $ship_email = '';
 
                             if ( $ship_to && method_exists( $ship_to, 'getEmail' ) ) {
-                                $ship_email = strtolower( trim( $ship_to->getEmail() ) );
+                                $ship_email = strtolower( trim( (string) $ship_to->getEmail() ) );
                                 if ( $ship_email ) {
                                     $bill_email = $ship_email;
                                 }
@@ -879,7 +880,8 @@ class TTA_AuthorizeNet_API {
                             }
                         }
 
-                        if ( $bill_email === strtolower( trim( $email ) ) ) {
+                        if ( $bill_email === $email ) {
+                            TTA_Debug_Logger::log( 'find_transactions_by_email match=' . $bill_email );
                             $seen[ $summary->getTransId() ] = true;
                             $matches[]                      = [
                                 'id'                 => $summary->getTransId(),
