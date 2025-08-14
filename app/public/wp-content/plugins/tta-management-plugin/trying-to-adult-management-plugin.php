@@ -27,6 +27,16 @@ define( 'TTA_PREMIUM_SUBSCRIPTION_NAME', 'Trying to Adult Premium Membership' );
 define( 'TTA_BASIC_SUBSCRIPTION_DESCRIPTION', 'Monthly Basic Membership subscription for Trying to Adult.' );
 define( 'TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION', 'Monthly Premium Membership subscription for Trying to Adult.' );
 
+if ( ! defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS', 93 );
+}
+if ( ! defined( 'TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS', 20 );
+}
+if ( ! defined( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS', 200 );
+}
+
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
@@ -56,8 +66,8 @@ if ( $tta_sendgrid_key && ! defined( 'TTA_SENDGRID_API_KEY' ) ) {
     define( 'TTA_SENDGRID_API_KEY', $tta_sendgrid_key );
 }
 if ( ! defined( 'TTA_AUTHNET_SANDBOX' ) ) {
-    $sandbox = getenv( 'TTA_AUTHNET_SANDBOX' );
-    define( 'TTA_AUTHNET_SANDBOX', $sandbox ? ( 'true' === strtolower( $sandbox ) ) : true );
+    // Uncomment the following line to use the Authorize.Net sandbox.
+    // define( 'TTA_AUTHNET_SANDBOX', true );
 }
 
 // Warn administrators if Authorize.Net credentials are missing.

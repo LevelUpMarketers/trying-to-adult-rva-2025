@@ -104,27 +104,20 @@ class TTA_Settings_Admin {
                 $lines = [];
                 foreach ( $import_results as $row ) {
                     $line = sprintf(
-                        '%s %s (%s) - ',
-                        $row['first'],
-                        $row['last'],
+                        '%s (%s) - ',
+                        $row['email'],
                         $row['membership']
                     );
                     switch ( $row['status'] ) {
-                        case 'created':
-                            $line .= sprintf(
-                                'subscription %s created from transaction %s for %s on %s',
-                                $row['subscription_id'] ?? '',
-                                $row['transaction_id'] ?? '',
-                                $row['amount'] ?? '',
-                                $row['date'] ?? ''
-                            );
-                            break;
                         case 'found':
                             $line .= sprintf(
-                                'found transaction %s for %s on %s',
+                                'found transaction %s for %s on %s status %s invoice %s - %s',
                                 $row['transaction_id'] ?? '',
                                 $row['amount'] ?? '',
-                                $row['date'] ?? ''
+                                $row['date'] ?? '',
+                                $row['transaction_status'] ?? '',
+                                $row['invoice'] ?? '',
+                                $row['details'] ?? ''
                             );
                             break;
                         case 'error':

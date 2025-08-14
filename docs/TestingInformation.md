@@ -1,6 +1,6 @@
 # Testing Information
 
-This document summarizes test accounts and card numbers used for local development of the Trying To Adult Management Plugin. The data below is provided by Authorize.Net for sandbox use only.
+This document summarizes test accounts and card numbers used for local development of the Trying To Adult Management Plugin. The data below is provided by Authorize.Net for sandbox use only. The plugin talks to the live Authorize.Net environment by default; to run tests against the sandbox uncomment the `define( 'TTA_AUTHNET_SANDBOX', true );` line near the top of `trying-to-adult-management-plugin.php`.
 
 ## Test Members
 

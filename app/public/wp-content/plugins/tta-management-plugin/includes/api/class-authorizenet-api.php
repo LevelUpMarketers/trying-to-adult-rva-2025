@@ -85,7 +85,7 @@ class TTA_AuthorizeNet_API {
         $this->login_id        = $login_id        ?: ( defined( 'TTA_AUTHNET_LOGIN_ID' ) ? TTA_AUTHNET_LOGIN_ID : '' );
         $this->transaction_key = $transaction_key ?: ( defined( 'TTA_AUTHNET_TRANSACTION_KEY' ) ? TTA_AUTHNET_TRANSACTION_KEY : '' );
         if ( null === $sandbox ) {
-            $sandbox = defined( 'TTA_AUTHNET_SANDBOX' ) ? TTA_AUTHNET_SANDBOX : true;
+            $sandbox = defined( 'TTA_AUTHNET_SANDBOX' ) ? TTA_AUTHNET_SANDBOX : false;
         }
         $this->environment = $sandbox ? ANetEnvironment::SANDBOX : ANetEnvironment::PRODUCTION;
     }
@@ -646,7 +646,10 @@ class TTA_AuthorizeNet_API {
      * @param int      $days_back    How many days to look back through settled transactions.
      * @return array|null            Transaction details or null if none found.
      */
-    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = 365 ) {
+    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = null ) {
+        if ( null === $days_back ) {
+            $days_back = defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93;
+        }
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return null;
         }
@@ -741,6 +744,114 @@ class TTA_AuthorizeNet_API {
         }
 
         return null;
+    }
+
+    /**
+     * Retrieve settled transactions associated with a billing email.
+     *
+     * @param string $email     Billing email address.
+     * @param int    $days_back How many days back to search.
+     * @return array[] Array of transactions.
+     */
+    public function find_transactions_by_email( $email, $days_back = null, $limit = 20, $max_requests = 200 ) {
+        $days_back = $days_back ?? ( defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93 );
+        $matches   = [];
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return $matches;
+        }
+
+        $merchant_auth = new AnetAPI\MerchantAuthenticationType();
+        $merchant_auth->setName( $this->login_id );
+        $merchant_auth->setTransactionKey( $this->transaction_key );
+
+        $seen      = [];
+        $end       = new \DateTime();
+        $remaining = max( 1, intval( $days_back ) );
+        $scanned   = 0;
+
+        while ( $remaining > 0 && $scanned < $max_requests && count( $matches ) < $limit ) {
+            $chunk = min( 31, $remaining );
+            $from  = ( clone $end )->modify( '-' . $chunk . ' days' );
+
+            $batch_request = new AnetAPI\GetSettledBatchListRequest();
+            $batch_request->setMerchantAuthentication( $merchant_auth );
+            $batch_request->setFirstSettlementDate( $from );
+            $batch_request->setLastSettlementDate( $end );
+
+            $batch_controller = new AnetController\GetSettledBatchListController( $batch_request );
+            $batch_response   = $batch_controller->executeWithApiResponse( $this->environment );
+            $this->log_response( 'get_settled_batch_list', $batch_response );
+
+            if ( $batch_response && 'Ok' === $batch_response->getMessages()->getResultCode() && $batch_response->getBatchList() ) {
+                foreach ( $batch_response->getBatchList() as $batch ) {
+                    if ( $scanned >= $max_requests || count( $matches ) >= $limit ) {
+                        break;
+                    }
+
+                    $list_request = new AnetAPI\GetTransactionListRequest();
+                    $list_request->setMerchantAuthentication( $merchant_auth );
+                    $list_request->setBatchId( $batch->getBatchId() );
+
+                    $list_controller = new AnetController\GetTransactionListController( $list_request );
+                    $list_response   = $list_controller->executeWithApiResponse( $this->environment );
+                    $this->log_response( 'get_transaction_list', $list_response );
+
+                    if ( ! $list_response || 'Ok' !== $list_response->getMessages()->getResultCode() || ! $list_response->getTransactions() ) {
+                        continue;
+                    }
+
+                    foreach ( $list_response->getTransactions() as $summary ) {
+                        if ( $scanned >= $max_requests || count( $matches ) >= $limit ) {
+                            break;
+                        }
+                        if ( isset( $seen[ $summary->getTransId() ] ) ) {
+                            continue;
+                        }
+                        $scanned++;
+
+                        $detail_request = new AnetAPI\GetTransactionDetailsRequest();
+                        $detail_request->setMerchantAuthentication( $merchant_auth );
+                        $detail_request->setTransId( $summary->getTransId() );
+                        $detail_controller = new AnetController\GetTransactionDetailsController( $detail_request );
+                        $detail_response   = $detail_controller->executeWithApiResponse( $this->environment );
+                        $this->log_response( 'get_transaction_details', $detail_response );
+
+                        if ( ! $detail_response || 'Ok' !== $detail_response->getMessages()->getResultCode() ) {
+                            continue;
+                        }
+
+                        $txn   = $detail_response->getTransaction();
+                        $bill  = $txn->getBillTo();
+                        $order = $txn->getOrder();
+
+                        $bill_email = '';
+                        if ( $bill && method_exists( $bill, 'getEmail' ) ) {
+                            $bill_email = strtolower( trim( $bill->getEmail() ) );
+                        }
+                        if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
+                            $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
+                        }
+
+                        if ( $bill_email === strtolower( trim( $email ) ) ) {
+                            $seen[ $summary->getTransId() ] = true;
+                            $matches[]                      = [
+                                'id'                 => $summary->getTransId(),
+                                'amount'             => $txn->getSettleAmount(),
+                                'date'               => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                                'transaction_status' => $txn->getTransactionStatus(),
+                                'invoice'            => $order ? (string) $order->getInvoiceNumber() : '',
+                                'details'            => $order ? (string) $order->getDescription() : '',
+                            ];
+                        }
+                    }
+                }
+            }
+
+            $end       = $from;
+            $remaining -= $chunk;
+        }
+
+        return $matches;
     }
 
     /**
