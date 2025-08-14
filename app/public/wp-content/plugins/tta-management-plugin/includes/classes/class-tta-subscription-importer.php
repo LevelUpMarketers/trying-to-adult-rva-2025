@@ -35,8 +35,12 @@ class TTA_Subscription_Importer {
                 continue;
             }
 
-            $row     = [ 'email' => $email, 'level' => $level ];
-            $txn     = $api->find_transaction_by_email_and_description( $email, 'Trying to Adult RVA - Subscription Renewal' );
+            $row         = [ 'email' => $email, 'level' => $level ];
+            $descriptions = [
+                'Monthly Premium Membership subscription for Trying to Adult.',
+                'Monthly Basic Membership subscription for Trying to Adult.',
+            ];
+            $txn         = $api->find_transaction_by_email_and_invoice_description( $email, $descriptions );
             if ( $txn ) {
                 $row['transaction_id'] = $txn['id'];
                 $row['amount']         = $txn['amount'];

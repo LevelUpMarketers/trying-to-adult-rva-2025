@@ -29,8 +29,8 @@ is resolved.
 For migrations or testing scenarios you can bulk create subscriptions from past
 transactions. Under **TTA Settings → API Settings** upload a CSV containing two
 columns: email address and membership level. For each row the plugin searches
-Authorize.Net for the most recent transaction matching the email with an order
-description containing "Trying to Adult RVA - Subscription Renewal" and converts
+Authorize.Net for the most recent transaction matching the email with an invoice
+description containing either "Monthly Premium Membership subscription for Trying to Adult." or "Monthly Basic Membership subscription for Trying to Adult." and converts
 it into an open‑ended monthly subscription with the membership level as the
 subscription name and an order description of "Initial 2025 Website Launch". Use
 the **Dry run** option to preview matched transactions without creating

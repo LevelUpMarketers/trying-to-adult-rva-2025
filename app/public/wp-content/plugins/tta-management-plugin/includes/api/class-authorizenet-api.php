@@ -638,7 +638,15 @@ class TTA_AuthorizeNet_API {
      * @param int    $days_back   How many days of batches to search.
      * @return array|null { id:string, amount:float, date:string }
      */
-    public function find_transaction_by_email_and_description( $email, $description, $days_back = 365 ) {
+    /**
+     * Locate the most recent settled transaction for an email matching any invoice description.
+     *
+     * @param string   $email        Customer email address.
+     * @param string[] $descriptions Array of invoice description fragments to search for.
+     * @param int      $days_back    How many days to look back through settled transactions.
+     * @return array|null            Transaction details or null if none found.
+     */
+    public function find_transaction_by_email_and_invoice_description( $email, array $descriptions, $days_back = 365 ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return null;
         }
@@ -708,13 +716,17 @@ class TTA_AuthorizeNet_API {
                 $desc     = $order ? $order->getDescription() : '';
                 $custmail = $cust ? strtolower( $cust->getEmail() ) : '';
 
-                if ( $custmail === strtolower( $email ) && false !== stripos( $desc, $description ) ) {
-                    return [
-                        'id'      => $summary->getTransId(),
-                        'amount'  => $txn->getSettleAmount(),
-                        'date'    => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
-                        'details' => $desc,
-                    ];
+                if ( $custmail === strtolower( $email ) ) {
+                    foreach ( $descriptions as $needle ) {
+                        if ( false !== stripos( $desc, $needle ) ) {
+                            return [
+                                'id'      => $summary->getTransId(),
+                                'amount'  => $txn->getSettleAmount(),
+                                'date'    => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                                'details' => $desc,
+                            ];
+                        }
+                    }
                 }
             }
         }
