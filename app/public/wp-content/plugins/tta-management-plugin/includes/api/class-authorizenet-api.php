@@ -317,6 +317,53 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
+     * Retrieve detailed information for a transaction.
+     *
+     * @param string $transaction_id Authorize.Net transaction ID.
+     * @return array { success:bool, amount?:float, email?:string, error?:string }
+     */
+    public function get_transaction_details( $transaction_id ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
+        }
+
+        $auth = new AnetAPI\MerchantAuthenticationType();
+        $auth->setName( $this->login_id );
+        $auth->setTransactionKey( $this->transaction_key );
+
+        $request = new AnetAPI\GetTransactionDetailsRequest();
+        $request->setMerchantAuthentication( $auth );
+        $request->setTransId( $transaction_id );
+
+        $controller = new AnetController\GetTransactionDetailsController( $request );
+        $response   = $controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'get_transaction_details', $response );
+
+        if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
+            $txn   = $response->getTransaction();
+            $bill  = $txn ? $txn->getBillTo() : null;
+            $email = '';
+            if ( $bill && method_exists( $bill, 'getEmail' ) ) {
+                $email = strtolower( trim( (string) $bill->getEmail() ) );
+            }
+            if ( '' === $email && $txn && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
+                $email = strtolower( trim( (string) $txn->getCustomer()->getEmail() ) );
+            }
+
+            return [
+                'success' => true,
+                'amount'  => $txn ? $txn->getSettleAmount() : 0,
+                'email'   => $email,
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $this->format_error( $response, null, 'API error' ),
+        ];
+    }
+
+    /**
      * Create a recurring subscription via the Authorize.Net API.
      *
      * @param float  $amount     Monthly charge amount.
