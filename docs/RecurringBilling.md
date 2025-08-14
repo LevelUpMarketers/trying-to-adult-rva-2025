@@ -37,4 +37,5 @@ converted into an open‑ended monthly subscription with the membership level as
 the subscription name and an order description of "Initial 2025 Website Launch".
 Use the **Dry run** option to preview matched transactions without creating
 subscriptions. The results of each row, including transaction details, are
-displayed after processing.
+printed line by line in a read‑only text area beneath the **Process CSV** button
+after processing.

@@ -101,35 +101,45 @@ class TTA_Settings_Admin {
 
             if ( $import_results ) {
                 echo '<h3>' . esc_html__( 'Results', 'tta' ) . '</h3>';
-                echo '<table class="widefat"><thead><tr>'
-                    . '<th>' . esc_html__( 'First', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Last', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Email', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Membership', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Status', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Transaction ID', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Amount', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Date', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Description', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Subscription ID', 'tta' ) . '</th>'
-                    . '<th>' . esc_html__( 'Error', 'tta' ) . '</th>'
-                    . '</tr></thead><tbody>';
+                $lines = [];
                 foreach ( $import_results as $row ) {
-                    echo '<tr>';
-                    echo '<td>' . esc_html( $row['first'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['last'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['email'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['membership'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['status'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['transaction_id'] ?? '' ) . '</td>';
-                    echo '<td>' . esc_html( $row['amount'] ?? '' ) . '</td>';
-                    echo '<td>' . esc_html( $row['date'] ?? '' ) . '</td>';
-                    echo '<td>' . esc_html( $row['details'] ?? '' ) . '</td>';
-                    echo '<td>' . esc_html( $row['subscription_id'] ?? '' ) . '</td>';
-                    echo '<td>' . esc_html( $row['error'] ?? '' ) . '</td>';
-                    echo '</tr>';
+                    $line = sprintf(
+                        '%s %s (%s) - ',
+                        $row['first'],
+                        $row['last'],
+                        $row['membership']
+                    );
+                    switch ( $row['status'] ) {
+                        case 'created':
+                            $line .= sprintf(
+                                'subscription %s created from transaction %s for %s on %s',
+                                $row['subscription_id'] ?? '',
+                                $row['transaction_id'] ?? '',
+                                $row['amount'] ?? '',
+                                $row['date'] ?? ''
+                            );
+                            break;
+                        case 'found':
+                            $line .= sprintf(
+                                'found transaction %s for %s on %s',
+                                $row['transaction_id'] ?? '',
+                                $row['amount'] ?? '',
+                                $row['date'] ?? ''
+                            );
+                            break;
+                        case 'error':
+                            $line .= sprintf(
+                                'error: %s',
+                                $row['error'] ?? ''
+                            );
+                            break;
+                        default:
+                            $line .= esc_html__( 'no matching transaction found', 'tta' );
+                            break;
+                    }
+                    $lines[] = $line;
                 }
-                echo '</tbody></table>';
+                echo '<textarea readonly style="width:100%;height:200px;">' . esc_html( implode( "\n", $lines ) ) . '</textarea>';
             }
 
             echo '<script>document.querySelectorAll(".tta-reveal").forEach(function(btn){btn.addEventListener("click",function(){var t=document.getElementById(btn.dataset.target);if(t.type==="password"){t.type="text";btn.textContent="' . esc_js( __( 'Hide', 'tta' ) ) . '";}else{t.type="password";btn.textContent="' . esc_js( __( 'Reveal', 'tta' ) ) . '";}});});</script>';
