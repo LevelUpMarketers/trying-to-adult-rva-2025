@@ -646,7 +646,10 @@ class TTA_AuthorizeNet_API {
      * @param int      $days_back    How many days to look back through settled transactions.
      * @return array|null            Transaction details or null if none found.
      */
-    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = 365 ) {
+    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = null ) {
+        if ( null === $days_back ) {
+            $days_back = defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93;
+        }
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return null;
         }
@@ -750,8 +753,9 @@ class TTA_AuthorizeNet_API {
      * @param int    $days_back How many days back to search.
      * @return array[] Array of transactions.
      */
-    public function find_transactions_by_email( $email, $days_back = 365 ) {
-        $matches = [];
+    public function find_transactions_by_email( $email, $days_back = null ) {
+        $days_back = $days_back ?? ( defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93 );
+        $matches   = [];
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return $matches;
         }

@@ -35,5 +35,6 @@ ID, amount, date, status, invoice number, and order description. The import is a
 read‑only operation; the optional **Dry run** checkbox simply performs the
 search without affecting any data. Authorize.Net limits each settled-batch
 lookup to a 31‑day range; the importer automatically iterates through multiple
-windows to cover the requested period.
+windows to cover the requested period. By default it only searches the most
+recent three months (configured via `TTA_AUTHNET_IMPORT_LOOKBACK_DAYS`).
 

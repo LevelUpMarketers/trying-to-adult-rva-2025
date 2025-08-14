@@ -27,6 +27,10 @@ define( 'TTA_PREMIUM_SUBSCRIPTION_NAME', 'Trying to Adult Premium Membership' );
 define( 'TTA_BASIC_SUBSCRIPTION_DESCRIPTION', 'Monthly Basic Membership subscription for Trying to Adult.' );
 define( 'TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION', 'Monthly Premium Membership subscription for Trying to Adult.' );
 
+if ( ! defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS', 93 );
+}
+
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
