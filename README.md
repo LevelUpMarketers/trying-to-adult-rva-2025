@@ -1,17 +1,8 @@
 # Trying To Adult Management Plugin
 
-This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin` within this repository. For development you may place the API credentials in an `authnet-config.php` file at the plugin root or set them as environment variables before WordPress loads:
+This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin`. Authorize.Net and SendGrid API keys are configured in the WordPress dashboard under **TTA Settings → API Settings**. The values are stored in the database using WordPress options and can alternatively be supplied via environment variables (`TTA_AUTHNET_LOGIN_ID`, `TTA_AUTHNET_TRANSACTION_KEY`, `TTA_SENDGRID_API_KEY`). The API Settings tab also lets administrators upload a four‑column CSV (`first`,`last`,`email`,`membership`) to convert recent Authorize.Net transactions into Automated Recurring Billing subscriptions. Each row is matched by first and last name against settled transactions whose invoice description contains the Premium or Basic membership strings and can be processed in a Dry Run mode that reports matching transactions without creating subscriptions.
 
-```
-define('TTA_AUTHNET_LOGIN_ID', 'your_login_id');
-define('TTA_AUTHNET_TRANSACTION_KEY', 'your_transaction_key');
-# Optional: set to 'false' for production
-define('TTA_AUTHNET_SANDBOX', true);
-```
-If these constants are not defined, checkout will fail and an admin notice will be displayed. When deploying to production, move the credentials out of the plugin directory.
-
-SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can
-create a `twilio-config.php` file or set environment variables:
+SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can create a `twilio-config.php` file or set environment variables:
 
 ```
 define('TTA_TWILIO_SID', 'your_account_sid');

@@ -23,3 +23,24 @@ Each time a user logs in the plugin checks the status of any stored subscription
 If the gateway reports a problem, the member's `membership_level` is temporarily
 set to `free` and `subscription_status` becomes `paymentproblem` until the issue
 is resolved.
+
+## Importing Existing Transactions
+
+For migrations or testing scenarios you can bulk create subscriptions from past
+transactions. Under **TTA Settings → API Settings** upload a CSV containing four
+columns: `first`, `last`, `email`, and `membership`. For each row the plugin
+searches Authorize.Net for the most recent settled transaction whose billing
+first and last name match and whose invoice description contains either
+"Monthly Premium Membership subscription for Trying to Adult." or "Monthly Basic
+Membership subscription for Trying to Adult.". Matching transactions are
+converted into an open‑ended monthly subscription with the membership level as
+the subscription name and an order description of "Initial 2025 Website Launch".
+Use the **Dry run** option to preview matched transactions without creating
+subscriptions. The results of each row, including transaction details, are
+printed line by line in a read‑only text area beneath the **Process CSV** button
+after processing.
+Name comparisons are case-insensitive and trimmed to help match entries even
+if Authorize.Net contains minor variations like extra spaces or middle
+initials. The importer also checks both the order description and invoice number
+for the membership phrases.
+

@@ -629,4 +629,201 @@ class TTA_AuthorizeNet_API {
             'error'   => $this->format_error( $response, null, 'API error' ),
         ];
     }
+
+    /**
+     * Find the most recent transaction for an email with a matching description.
+     *
+     * @param string $email       Customer email address.
+     * @param string $description Description text to search within the order description.
+     * @param int    $days_back   How many days of batches to search.
+     * @return array|null { id:string, amount:float, date:string }
+     */
+    /**
+     * Locate the most recent settled transaction for an email matching any invoice description.
+     *
+     * @param string   $email        Customer email address.
+     * @param string[] $descriptions Array of invoice description fragments to search for.
+     * @param int      $days_back    How many days to look back through settled transactions.
+     * @return array|null            Transaction details or null if none found.
+     */
+    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = 365 ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return null;
+        }
+
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication->setName( $this->login_id );
+        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+
+        $now  = new \DateTime();
+        $from = ( clone $now )->modify( '-' . intval( $days_back ) . ' days' );
+
+        $batch_request = new AnetAPI\GetSettledBatchListRequest();
+        $batch_request->setMerchantAuthentication( $merchantAuthentication );
+        $batch_request->setFirstSettlementDate( $from );
+        $batch_request->setLastSettlementDate( $now );
+
+        $batch_controller = new AnetController\GetSettledBatchListController( $batch_request );
+        $batch_response   = $batch_controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'get_settled_batch_list', $batch_response );
+
+        if ( ! $batch_response || 'Ok' !== $batch_response->getMessages()->getResultCode() ) {
+            return null;
+        }
+
+        $batches = $batch_response->getBatchList();
+        if ( ! $batches ) {
+            return null;
+        }
+
+        usort( $batches, function ( $a, $b ) {
+            return $b->getSettlementTimeUTC()->getTimestamp() - $a->getSettlementTimeUTC()->getTimestamp();
+        } );
+
+        foreach ( $batches as $batch ) {
+            $list_request = new AnetAPI\GetTransactionListRequest();
+            $list_request->setMerchantAuthentication( $merchantAuthentication );
+            $list_request->setBatchId( $batch->getBatchId() );
+
+            $list_controller = new AnetController\GetTransactionListController( $list_request );
+            $list_response   = $list_controller->executeWithApiResponse( $this->environment );
+            $this->log_response( 'get_transaction_list', $list_response );
+
+            if ( ! $list_response || 'Ok' !== $list_response->getMessages()->getResultCode() || ! $list_response->getTransactions() ) {
+                continue;
+            }
+
+            $transactions = $list_response->getTransactions();
+            usort( $transactions, function ( $a, $b ) {
+                return $b->getSubmitTimeUTC()->getTimestamp() - $a->getSubmitTimeUTC()->getTimestamp();
+            } );
+
+            foreach ( $transactions as $summary ) {
+                $detail_request = new AnetAPI\GetTransactionDetailsRequest();
+                $detail_request->setMerchantAuthentication( $merchantAuthentication );
+                $detail_request->setTransId( $summary->getTransId() );
+                $detail_controller = new AnetController\GetTransactionDetailsController( $detail_request );
+                $detail_response   = $detail_controller->executeWithApiResponse( $this->environment );
+                $this->log_response( 'get_transaction_details', $detail_response );
+
+                if ( ! $detail_response || 'Ok' !== $detail_response->getMessages()->getResultCode() ) {
+                    continue;
+                }
+
+                $txn   = $detail_response->getTransaction();
+                $txn   = $detail_response->getTransaction();
+                $bill  = $txn->getBillTo();
+                $order = $txn->getOrder();
+                $desc  = '';
+
+                if ( $order ) {
+                    $desc = trim( $order->getDescription() . ' ' . $order->getInvoiceNumber() );
+                }
+
+                $first      = $bill ? strtolower( trim( $bill->getFirstName() ) ) : '';
+                $last       = $bill ? strtolower( trim( $bill->getLastName() ) ) : '';
+                $first_name = strtolower( trim( $first_name ) );
+                $last_name  = strtolower( trim( $last_name ) );
+
+                if ( false !== stripos( $first, $first_name ) && false !== stripos( $last, $last_name ) ) {
+                    foreach ( $descriptions as $needle ) {
+                        if ( false !== stripos( $desc, $needle ) ) {
+                            return [
+                                'id'      => $summary->getTransId(),
+                                'amount'  => $txn->getSettleAmount(),
+                                'date'    => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                                'details' => $desc,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Create a subscription based on a previous transaction.
+     *
+     * @param string $transaction_id Original transaction ID.
+     * @param float  $amount         Subscription amount.
+     * @param string $name           Subscription name.
+     * @param string $description    Order description.
+     * @param string $start_date     YYYY-MM-DD start date.
+     * @return array { success:bool, subscription_id?:string, error?:string }
+     */
+    public function create_subscription_from_transaction( $transaction_id, $amount, $name, $description = '', $start_date = null ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
+        }
+
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication->setName( $this->login_id );
+        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+
+        $profile_request = new AnetAPI\CreateCustomerProfileFromTransactionRequest();
+        $profile_request->setMerchantAuthentication( $merchantAuthentication );
+        $profile_request->setTransId( $transaction_id );
+
+        $profile_controller = new AnetController\CreateCustomerProfileFromTransactionController( $profile_request );
+        $profile_response   = $profile_controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'create_customer_profile_from_transaction', $profile_response );
+
+        if ( ! $profile_response || 'Ok' !== $profile_response->getMessages()->getResultCode() ) {
+            return [ 'success' => false, 'error' => $this->format_error( $profile_response, null, 'Profile creation failed' ) ];
+        }
+
+        $customer_profile_id = $profile_response->getCustomerProfileId();
+        $payment_profiles    = $profile_response->getCustomerPaymentProfileIdList();
+        $payment_profile_id  = $payment_profiles ? $payment_profiles[0] : null;
+        if ( ! $payment_profile_id ) {
+            return [ 'success' => false, 'error' => 'Payment profile missing' ];
+        }
+
+        $interval = new AnetAPI\PaymentScheduleType\IntervalAType();
+        $interval->setLength( 1 );
+        $interval->setUnit( 'months' );
+
+        $schedule = new AnetAPI\PaymentScheduleType();
+        $schedule->setInterval( $interval );
+        $schedule->setStartDate( $start_date ? new \DateTime( $start_date ) : new \DateTime( 'now' ) );
+        $schedule->setTotalOccurrences( 9999 );
+
+        $order = new AnetAPI\OrderType();
+        if ( $description ) {
+            $order->setDescription( $description );
+        }
+
+        $profile = new AnetAPI\CustomerProfileIdType();
+        $profile->setCustomerProfileId( $customer_profile_id );
+        $profile->setPaymentProfileId( $payment_profile_id );
+
+        $subscription = new AnetAPI\ARBSubscriptionType();
+        $subscription->setName( $name );
+        $subscription->setOrder( $order );
+        $subscription->setPaymentSchedule( $schedule );
+        $subscription->setAmount( $amount );
+        $subscription->setProfile( $profile );
+
+        $request = new AnetAPI\ARBCreateSubscriptionRequest();
+        $request->setMerchantAuthentication( $merchantAuthentication );
+        $request->setSubscription( $subscription );
+
+        $controller = new AnetController\ARBCreateSubscriptionController( $request );
+        $response   = $controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'create_subscription_from_transaction', $response );
+
+        if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
+            return [
+                'success'         => true,
+                'subscription_id' => $response->getSubscriptionId(),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $this->format_error( $response, null, 'API error' ),
+        ];
+    }
 }
