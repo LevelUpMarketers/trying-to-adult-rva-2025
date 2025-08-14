@@ -58,12 +58,12 @@ echo do_shortcode( $header_shortcode );
         }
   ?>
     <tr class="tta-event-row" data-event-ute-id="<?php echo esc_attr( $e['ute_id'] ); ?>">
-      <td><?php echo $img; ?></td>
-      <td><?php echo esc_html( $e['name'] ); ?></td>
-      <td><?php echo esc_html( tta_format_event_datetime( $e['date'], $e['time'] ) ); ?></td>
-      <td><?php echo intval( tta_get_expected_attendee_count( $e['ute_id'] ) ); ?></td>
-      <td><?php echo esc_html( $status ); ?></td>
-      <td class="tta-toggle-cell"><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>
+      <td data-label="<?php echo esc_attr__( 'Event Image', 'tta' ); ?>"><?php echo $img; ?></td>
+      <td data-label="<?php echo esc_attr__( 'Event Name', 'tta' ); ?>"><?php echo esc_html( $e['name'] ); ?></td>
+      <td data-label="<?php echo esc_attr__( 'Date & Time', 'tta' ); ?>"><?php echo esc_html( tta_format_event_datetime( $e['date'], $e['time'] ) ); ?></td>
+      <td data-label="<?php echo esc_attr__( '# of Expected Attendees', 'tta' ); ?>"><?php echo intval( tta_get_expected_attendee_count( $e['ute_id'] ) ); ?></td>
+      <td data-label="<?php echo esc_attr__( 'Status', 'tta' ); ?>"><?php echo esc_html( $status ); ?></td>
+      <td class="tta-toggle-cell" data-label=""><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>
     </tr>
   <?php endforeach; else : ?>
     <tr><td colspan="5"><?php esc_html_e( 'No upcoming events found.', 'tta' ); ?></td></tr>

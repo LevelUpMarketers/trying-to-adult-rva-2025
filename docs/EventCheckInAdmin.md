@@ -6,6 +6,11 @@ no-shows. The page loads event details, a list of ticket holders and buttons to
 update each record via AJAX. Attendance status writes back to the
 `tta_attendees` table and the interface updates instantly without a full refresh.
 
+On screens 1199px wide or narrower, the events table converts into stacked
+cards for easier mobile use. Each event row becomes a full-width block with
+labels for its fields, and tapping the block reveals the attendee list just like
+on desktop.
+
 ### Table details
 
 - Attendees who cancelled or requested a refund no longer appear in the list so

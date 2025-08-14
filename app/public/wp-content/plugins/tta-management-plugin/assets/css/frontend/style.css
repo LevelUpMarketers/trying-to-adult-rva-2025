@@ -75,3 +75,36 @@
 .tta-checkin-wrap .tta-attendance-details h4{
   margin-bottom:0px;
 }
+
+@media (max-width: 1199px){
+  .tta-checkin-wrap table,
+  .tta-checkin-wrap thead,
+  .tta-checkin-wrap tbody,
+  .tta-checkin-wrap th,
+  .tta-checkin-wrap td,
+  .tta-checkin-wrap tr{
+    display:block;
+  }
+  .tta-checkin-wrap thead{display:none;}
+  .tta-checkin-wrap tr{
+    border:1px solid #ddd;
+    margin-bottom:15px;
+    padding:10px;
+  }
+  .tta-checkin-wrap td{
+    padding:8px 10px;
+    position:relative;
+  }
+  .tta-checkin-wrap td[data-label]::before{
+    content:attr(data-label);
+    font-weight:600;
+    display:block;
+    margin-bottom:4px;
+  }
+  .tta-checkin-wrap td.tta-toggle-cell{
+    text-align:right;
+  }
+  .tta-checkin-wrap td.tta-toggle-cell::before{content:'';}
+  .tta-checkin-wrap tr.tta-inline-row{border:none;padding:0;}
+  .tta-checkin-wrap tr.tta-inline-row td{padding:0;}
+}
