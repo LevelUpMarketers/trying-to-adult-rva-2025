@@ -113,12 +113,10 @@ if ( is_admin() ) {
 }
 
 
-/* KEEP THE LINES BELOW COMMENTED OUT FOR SUCCESFULLY INITIALLY INSTALLING AND ACTIVATING ON DIFFERENT WEBSITES - THIS CAUSES ISSUES APPARENTLY!
 // Load Composer autoloader if present within the plugin directory.
 if ( file_exists( TTA_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once TTA_PLUGIN_DIR . 'vendor/autoload.php';
 }
-*/
 
 // Autoload TTA_ classes
 spl_autoload_register( function ( $class ) {
