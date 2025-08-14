@@ -36,7 +36,9 @@ class TTA_Subscription_Importer {
             }
 
             $lookback     = defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93;
-            $transactions = $api->find_transactions_by_email( $email, $lookback );
+            $limit        = defined( 'TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS' ) ? TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS : 20;
+            $max_requests = defined( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS' ) ? TTA_AUTHNET_IMPORT_MAX_REQUESTS : 200;
+            $transactions = $api->find_transactions_by_email( $email, $lookback, $limit, $max_requests );
             if ( $transactions ) {
                 foreach ( $transactions as $txn ) {
                     $results[] = [

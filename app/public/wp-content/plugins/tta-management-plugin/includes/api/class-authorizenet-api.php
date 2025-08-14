@@ -753,7 +753,7 @@ class TTA_AuthorizeNet_API {
      * @param int    $days_back How many days back to search.
      * @return array[] Array of transactions.
      */
-    public function find_transactions_by_email( $email, $days_back = null ) {
+    public function find_transactions_by_email( $email, $days_back = null, $limit = 20, $max_requests = 200 ) {
         $days_back = $days_back ?? ( defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ? TTA_AUTHNET_IMPORT_LOOKBACK_DAYS : 93 );
         $matches   = [];
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
@@ -764,11 +764,12 @@ class TTA_AuthorizeNet_API {
         $merchant_auth->setName( $this->login_id );
         $merchant_auth->setTransactionKey( $this->transaction_key );
 
-        $seen       = [];
-        $end        = new \DateTime();
-        $remaining  = max( 1, intval( $days_back ) );
+        $seen      = [];
+        $end       = new \DateTime();
+        $remaining = max( 1, intval( $days_back ) );
+        $scanned   = 0;
 
-        while ( $remaining > 0 ) {
+        while ( $remaining > 0 && $scanned < $max_requests && count( $matches ) < $limit ) {
             $chunk = min( 31, $remaining );
             $from  = ( clone $end )->modify( '-' . $chunk . ' days' );
 
@@ -783,6 +784,10 @@ class TTA_AuthorizeNet_API {
 
             if ( $batch_response && 'Ok' === $batch_response->getMessages()->getResultCode() && $batch_response->getBatchList() ) {
                 foreach ( $batch_response->getBatchList() as $batch ) {
+                    if ( $scanned >= $max_requests || count( $matches ) >= $limit ) {
+                        break;
+                    }
+
                     $list_request = new AnetAPI\GetTransactionListRequest();
                     $list_request->setMerchantAuthentication( $merchant_auth );
                     $list_request->setBatchId( $batch->getBatchId() );
@@ -796,9 +801,14 @@ class TTA_AuthorizeNet_API {
                     }
 
                     foreach ( $list_response->getTransactions() as $summary ) {
+                        if ( $scanned >= $max_requests || count( $matches ) >= $limit ) {
+                            break;
+                        }
                         if ( isset( $seen[ $summary->getTransId() ] ) ) {
                             continue;
                         }
+                        $scanned++;
+
                         $detail_request = new AnetAPI\GetTransactionDetailsRequest();
                         $detail_request->setMerchantAuthentication( $merchant_auth );
                         $detail_request->setTransId( $summary->getTransId() );

@@ -30,6 +30,12 @@ define( 'TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION', 'Monthly Premium Membership subs
 if ( ! defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ) {
     define( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS', 93 );
 }
+if ( ! defined( 'TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_MAX_TRANSACTIONS', 20 );
+}
+if ( ! defined( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS' ) ) {
+    define( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS', 200 );
+}
 
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
