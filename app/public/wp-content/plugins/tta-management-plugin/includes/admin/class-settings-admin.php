@@ -109,22 +109,14 @@ class TTA_Settings_Admin {
                         $row['membership']
                     );
                     switch ( $row['status'] ) {
-                        case 'created':
-                            $line .= sprintf(
-                                'subscription %s created from transaction %s for %s on %s - %s',
-                                $row['subscription_id'] ?? '',
-                                $row['transaction_id'] ?? '',
-                                $row['amount'] ?? '',
-                                $row['date'] ?? '',
-                                $row['details'] ?? ''
-                            );
-                            break;
                         case 'found':
                             $line .= sprintf(
-                                'found transaction %s for %s on %s - %s',
+                                'found transaction %s for %s on %s status %s invoice %s - %s',
                                 $row['transaction_id'] ?? '',
                                 $row['amount'] ?? '',
                                 $row['date'] ?? '',
+                                $row['transaction_status'] ?? '',
+                                $row['invoice'] ?? '',
                                 $row['details'] ?? ''
                             );
                             break;

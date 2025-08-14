@@ -29,13 +29,9 @@ is resolved.
 For migrations or testing scenarios you can bulk create subscriptions from past
 transactions. Under **TTA Settings → API Settings** upload a CSV containing two
 columns: `email` and `membership`. For each row the plugin searches
-Authorize.Net for the most recent settled transaction whose billing email
-matches and whose order description contains "Trying to Adult RVA - Subscription
-Renewal". Matching transactions are converted into an open‑ended monthly
-subscription with the membership level as the subscription name and an order
-description of "Initial 2025 Website Launch". Use the **Dry run** option to
-preview matched transactions without creating subscriptions. The results of each
-row, including transaction details like the order description, are printed line
-by line in a read‑only text area beneath the **Process CSV** button after
-processing.
+Authorize.Net for settled transactions whose billing email matches the CSV
+address. All matching transactions are listed in the **Results** area with their
+ID, amount, date, status, invoice number, and order description. The import is a
+read‑only operation; the optional **Dry run** checkbox simply performs the
+search without affecting any data.
 

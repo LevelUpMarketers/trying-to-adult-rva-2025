@@ -35,34 +35,28 @@ class TTA_Subscription_Importer {
                 continue;
             }
 
-            $row = [
-                'email'      => $email,
-                'membership' => $member,
-            ];
-
-            $txn = $api->find_transaction_by_email_and_description( $email, TTA_SUBSCRIPTION_RENEWAL_DESCRIPTION );
-            if ( $txn ) {
-                $row['transaction_id'] = $txn['id'];
-                $row['amount']         = $txn['amount'];
-                $row['date']           = $txn['date'];
-                $row['details']        = $txn['details'];
-                if ( $dry_run ) {
-                    $row['status'] = 'found';
-                } else {
-                    $start = ( new DateTime( $txn['date'] ) )->modify( '+1 month' )->format( 'Y-m-d' );
-                    $res   = $api->create_subscription_from_transaction( $txn['id'], $txn['amount'], $member, 'Initial 2025 Website Launch', $start );
-                    if ( $res['success'] ) {
-                        $row['status']         = 'created';
-                        $row['subscription_id'] = $res['subscription_id'];
-                    } else {
-                        $row['status'] = 'error';
-                        $row['error']  = $res['error'] ?? '';
-                    }
+            $transactions = $api->find_transactions_by_email( $email );
+            if ( $transactions ) {
+                foreach ( $transactions as $txn ) {
+                    $results[] = [
+                        'email'             => $email,
+                        'membership'        => $member,
+                        'status'            => 'found',
+                        'transaction_id'    => $txn['id'],
+                        'amount'            => $txn['amount'],
+                        'date'              => $txn['date'],
+                        'transaction_status'=> $txn['transaction_status'],
+                        'invoice'           => $txn['invoice'],
+                        'details'           => $txn['details'],
+                    ];
                 }
             } else {
-                $row['status'] = 'not_found';
+                $results[] = [
+                    'email'      => $email,
+                    'membership' => $member,
+                    'status'     => 'not_found',
+                ];
             }
-            $results[] = $row;
         }
         fclose( $handle );
         return $results;

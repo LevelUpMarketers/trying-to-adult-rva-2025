@@ -85,7 +85,7 @@ class TTA_AuthorizeNet_API {
         $this->login_id        = $login_id        ?: ( defined( 'TTA_AUTHNET_LOGIN_ID' ) ? TTA_AUTHNET_LOGIN_ID : '' );
         $this->transaction_key = $transaction_key ?: ( defined( 'TTA_AUTHNET_TRANSACTION_KEY' ) ? TTA_AUTHNET_TRANSACTION_KEY : '' );
         if ( null === $sandbox ) {
-            $sandbox = defined( 'TTA_AUTHNET_SANDBOX' ) ? TTA_AUTHNET_SANDBOX : true;
+            $sandbox = defined( 'TTA_AUTHNET_SANDBOX' ) ? TTA_AUTHNET_SANDBOX : false;
         }
         $this->environment = $sandbox ? ANetEnvironment::SANDBOX : ANetEnvironment::PRODUCTION;
     }
@@ -744,16 +744,16 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
-     * Find the most recent settled transaction matching a billing email and order description.
+     * Retrieve settled transactions associated with a billing email.
      *
-     * @param string $email        Billing email address.
-     * @param string $description  Description substring to search for.
-     * @param int    $days_back    How many days back to search.
-     * @return array|null { id:string, amount:float, date:string, details:string }
+     * @param string $email     Billing email address.
+     * @param int    $days_back How many days back to search.
+     * @return array[] Array of transactions.
      */
-    public function find_transaction_by_email_and_description( $email, $description, $days_back = 365 ) {
+    public function find_transactions_by_email( $email, $days_back = 365 ) {
+        $matches = [];
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
-            return null;
+            return $matches;
         }
 
         $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
@@ -773,17 +773,13 @@ class TTA_AuthorizeNet_API {
         $this->log_response( 'get_settled_batch_list', $batch_response );
 
         if ( ! $batch_response || 'Ok' !== $batch_response->getMessages()->getResultCode() ) {
-            return null;
+            return $matches;
         }
 
         $batches = $batch_response->getBatchList();
         if ( ! $batches ) {
-            return null;
+            return $matches;
         }
-
-        usort( $batches, function ( $a, $b ) {
-            return $b->getSettlementTimeUTC()->getTimestamp() - $a->getSettlementTimeUTC()->getTimestamp();
-        } );
 
         foreach ( $batches as $batch ) {
             $list_request = new AnetAPI\GetTransactionListRequest();
@@ -798,12 +794,7 @@ class TTA_AuthorizeNet_API {
                 continue;
             }
 
-            $transactions = $list_response->getTransactions();
-            usort( $transactions, function ( $a, $b ) {
-                return $b->getSubmitTimeUTC()->getTimestamp() - $a->getSubmitTimeUTC()->getTimestamp();
-            } );
-
-            foreach ( $transactions as $summary ) {
+            foreach ( $list_response->getTransactions() as $summary ) {
                 $detail_request = new AnetAPI\GetTransactionDetailsRequest();
                 $detail_request->setMerchantAuthentication( $merchantAuthentication );
                 $detail_request->setTransId( $summary->getTransId() );
@@ -827,22 +818,20 @@ class TTA_AuthorizeNet_API {
                     $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
                 }
 
-                $email = strtolower( trim( $email ) );
-                if ( $bill_email === $email ) {
-                    $desc = $order ? (string) $order->getDescription() : '';
-                    if ( false !== stripos( $desc, $description ) ) {
-                        return [
-                            'id'      => $summary->getTransId(),
-                            'amount'  => $txn->getSettleAmount(),
-                            'date'    => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
-                            'details' => $desc,
-                        ];
-                    }
+                if ( $bill_email === strtolower( trim( $email ) ) ) {
+                    $matches[] = [
+                        'id'                => $summary->getTransId(),
+                        'amount'            => $txn->getSettleAmount(),
+                        'date'              => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                        'transaction_status'=> $txn->getTransactionStatus(),
+                        'invoice'           => $order ? (string) $order->getInvoiceNumber() : '',
+                        'details'           => $order ? (string) $order->getDescription() : '',
+                    ];
                 }
             }
         }
 
-        return null;
+        return $matches;
     }
 
     /**
