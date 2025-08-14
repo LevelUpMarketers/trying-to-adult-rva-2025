@@ -39,3 +39,8 @@ Use the **Dry run** option to preview matched transactions without creating
 subscriptions. The results of each row, including transaction details, are
 printed line by line in a read‑only text area beneath the **Process CSV** button
 after processing.
+Name comparisons are case-insensitive and trimmed to help match entries even
+if Authorize.Net contains minor variations like extra spaces or middle
+initials. The importer also checks both the order description and invoice number
+for the membership phrases.
+

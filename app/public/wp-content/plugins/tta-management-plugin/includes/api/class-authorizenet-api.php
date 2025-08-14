@@ -711,13 +711,21 @@ class TTA_AuthorizeNet_API {
                 }
 
                 $txn   = $detail_response->getTransaction();
+                $txn   = $detail_response->getTransaction();
                 $bill  = $txn->getBillTo();
                 $order = $txn->getOrder();
-                $desc  = $order ? $order->getDescription() : '';
-                $first = $bill ? strtolower( $bill->getFirstName() ) : '';
-                $last  = $bill ? strtolower( $bill->getLastName() ) : '';
+                $desc  = '';
 
-                if ( $first === strtolower( $first_name ) && $last === strtolower( $last_name ) ) {
+                if ( $order ) {
+                    $desc = trim( $order->getDescription() . ' ' . $order->getInvoiceNumber() );
+                }
+
+                $first      = $bill ? strtolower( trim( $bill->getFirstName() ) ) : '';
+                $last       = $bill ? strtolower( trim( $bill->getLastName() ) ) : '';
+                $first_name = strtolower( trim( $first_name ) );
+                $last_name  = strtolower( trim( $last_name ) );
+
+                if ( false !== stripos( $first, $first_name ) && false !== stripos( $last, $last_name ) ) {
                     foreach ( $descriptions as $needle ) {
                         if ( false !== stripos( $desc, $needle ) ) {
                             return [
