@@ -646,7 +646,7 @@ class TTA_AuthorizeNet_API {
      * @param int      $days_back    How many days to look back through settled transactions.
      * @return array|null            Transaction details or null if none found.
      */
-    public function find_transaction_by_email_and_invoice_description( $email, array $descriptions, $days_back = 365 ) {
+    public function find_transaction_by_name_and_invoice_description( $first_name, $last_name, array $descriptions, $days_back = 365 ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return null;
         }
@@ -710,13 +710,14 @@ class TTA_AuthorizeNet_API {
                     continue;
                 }
 
-                $txn      = $detail_response->getTransaction();
-                $cust     = $txn->getCustomer();
-                $order    = $txn->getOrder();
-                $desc     = $order ? $order->getDescription() : '';
-                $custmail = $cust ? strtolower( $cust->getEmail() ) : '';
+                $txn   = $detail_response->getTransaction();
+                $bill  = $txn->getBillTo();
+                $order = $txn->getOrder();
+                $desc  = $order ? $order->getDescription() : '';
+                $first = $bill ? strtolower( $bill->getFirstName() ) : '';
+                $last  = $bill ? strtolower( $bill->getLastName() ) : '';
 
-                if ( $custmail === strtolower( $email ) ) {
+                if ( $first === strtolower( $first_name ) && $last === strtolower( $last_name ) ) {
                     foreach ( $descriptions as $needle ) {
                         if ( false !== stripos( $desc, $needle ) ) {
                             return [

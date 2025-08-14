@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class TTA_Subscription_Importer {
     /**
-     * Process a CSV file of email and membership level rows.
+     * Process a CSV file of first name, last name, email, and membership level rows.
      *
      * @param string               $file    Uploaded CSV path.
      * @param bool                 $dry_run Whether to skip creating subscriptions.
@@ -29,26 +29,35 @@ class TTA_Subscription_Importer {
         // Skip header row.
         fgetcsv( $handle );
         while ( ( $data = fgetcsv( $handle ) ) !== false ) {
-            $email = sanitize_email( $data[0] ?? '' );
-            $level = sanitize_text_field( $data[1] ?? '' );
-            if ( empty( $email ) ) {
+            $first  = sanitize_text_field( $data[0] ?? '' );
+            $last   = sanitize_text_field( $data[1] ?? '' );
+            $email  = sanitize_email( $data[2] ?? '' );
+            $member = sanitize_text_field( $data[3] ?? '' );
+            if ( empty( $first ) || empty( $last ) ) {
                 continue;
             }
 
-            $row         = [ 'email' => $email, 'level' => $level ];
-            $descriptions = [
-                'Monthly Premium Membership subscription for Trying to Adult.',
-                'Monthly Basic Membership subscription for Trying to Adult.',
+            $row         = [
+                'first'      => $first,
+                'last'       => $last,
+                'email'      => $email,
+                'membership' => $member,
             ];
-            $txn         = $api->find_transaction_by_email_and_invoice_description( $email, $descriptions );
+            $descriptions = [
+                TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION,
+                TTA_BASIC_SUBSCRIPTION_DESCRIPTION,
+            ];
+            $txn         = $api->find_transaction_by_name_and_invoice_description( $first, $last, $descriptions );
             if ( $txn ) {
                 $row['transaction_id'] = $txn['id'];
                 $row['amount']         = $txn['amount'];
+                $row['date']           = $txn['date'];
+                $row['details']        = $txn['details'];
                 if ( $dry_run ) {
                     $row['status'] = 'found';
                 } else {
                     $start = ( new DateTime( $txn['date'] ) )->modify( '+1 month' )->format( 'Y-m-d' );
-                    $res   = $api->create_subscription_from_transaction( $txn['id'], $txn['amount'], $level, 'Initial 2025 Website Launch', $start );
+                    $res   = $api->create_subscription_from_transaction( $txn['id'], $txn['amount'], $member, 'Initial 2025 Website Launch', $start );
                     if ( $res['success'] ) {
                         $row['status']         = 'created';
                         $row['subscription_id'] = $res['subscription_id'];

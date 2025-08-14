@@ -101,13 +101,30 @@ class TTA_Settings_Admin {
 
             if ( $import_results ) {
                 echo '<h3>' . esc_html__( 'Results', 'tta' ) . '</h3>';
-                echo '<table class="widefat"><thead><tr><th>' . esc_html__( 'Email', 'tta' ) . '</th><th>' . esc_html__( 'Level', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th><th>' . esc_html__( 'Transaction', 'tta' ) . '</th><th>' . esc_html__( 'Subscription', 'tta' ) . '</th><th>' . esc_html__( 'Error', 'tta' ) . '</th></tr></thead><tbody>';
+                echo '<table class="widefat"><thead><tr>'
+                    . '<th>' . esc_html__( 'First', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Last', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Email', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Membership', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Status', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Transaction ID', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Amount', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Date', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Description', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Subscription ID', 'tta' ) . '</th>'
+                    . '<th>' . esc_html__( 'Error', 'tta' ) . '</th>'
+                    . '</tr></thead><tbody>';
                 foreach ( $import_results as $row ) {
                     echo '<tr>';
+                    echo '<td>' . esc_html( $row['first'] ) . '</td>';
+                    echo '<td>' . esc_html( $row['last'] ) . '</td>';
                     echo '<td>' . esc_html( $row['email'] ) . '</td>';
-                    echo '<td>' . esc_html( $row['level'] ) . '</td>';
+                    echo '<td>' . esc_html( $row['membership'] ) . '</td>';
                     echo '<td>' . esc_html( $row['status'] ) . '</td>';
                     echo '<td>' . esc_html( $row['transaction_id'] ?? '' ) . '</td>';
+                    echo '<td>' . esc_html( $row['amount'] ?? '' ) . '</td>';
+                    echo '<td>' . esc_html( $row['date'] ?? '' ) . '</td>';
+                    echo '<td>' . esc_html( $row['details'] ?? '' ) . '</td>';
                     echo '<td>' . esc_html( $row['subscription_id'] ?? '' ) . '</td>';
                     echo '<td>' . esc_html( $row['error'] ?? '' ) . '</td>';
                     echo '</tr>';
