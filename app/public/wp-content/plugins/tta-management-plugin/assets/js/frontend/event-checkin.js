@@ -2,26 +2,57 @@ jQuery(function($){
   // Toggle event rows
   $(document).on('click', '.tta-event-row', function(e){
     if ($(e.target).is('button, a')) return;
-    var $row   = $(this),
-        $arrow = $row.find('.tta-toggle-arrow'),
-        ute    = $row.data('event-ute-id'),
-        $ex    = $row.next('.tta-inline-row');
+    var $row       = $(this),
+        $arrow     = $row.find('.tta-toggle-arrow'),
+        ute        = $row.data('event-ute-id'),
+        isMobile   = window.matchMedia('(max-width:1199px)').matches,
+        $toggleCell= $row.find('.tta-toggle-cell'),
+        $container = $toggleCell.find('.tta-inline-container'),
+        $ex        = $row.next('.tta-inline-row');
 
-    if ($ex.length){
-      $arrow.removeClass('open');
-      $ex.remove();
+    if (isMobile){
+      if ($toggleCell.hasClass('open')){
+        $arrow.removeClass('open');
+        $row.removeClass('open');
+        $toggleCell.removeClass('open');
+        $container.slideUp().empty();
+        return;
+      }
+      $('.tta-toggle-cell.open').removeClass('open').find('.tta-inline-container').slideUp().empty();
+      $('.tta-inline-row').remove();
+      $('.tta-toggle-arrow').removeClass('open');
+      $('.tta-event-row').removeClass('open');
+      $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
+        if(!res.success) return;
+        $container.html(res.data.html).slideDown();
+        $arrow.addClass('open');
+        $row.addClass('open');
+        $toggleCell.addClass('open');
+      }, 'json');
       return;
     }
 
-    $('.tta-inline-row').remove();
-    $('.tta-toggle-arrow').removeClass('open');
+    if ($ex.length){
+      $arrow.removeClass('open');
+      $row.removeClass('open');
+      $ex.find('.tta-inline-wrapper').slideUp(200, function(){ $ex.remove(); });
+      return;
+    }
+
+    var $open = $('.tta-inline-row');
+    if ($open.length){
+      $open.prev('.tta-event-row').removeClass('open').find('.tta-toggle-arrow').removeClass('open');
+      $open.find('.tta-inline-wrapper').slideUp(200, function(){ $open.remove(); });
+    }
 
     $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
       if(!res.success) return;
       var colspan = $row.find('td').length;
-      var $new = $('<tr class="tta-inline-row"><td colspan="'+colspan+'">'+res.data.html+'</td></tr>');
+      var $new = $('<tr class="tta-inline-row"><td colspan="'+colspan+'"><div class="tta-inline-wrapper" style="display:none">'+res.data.html+'</div></td></tr>');
       $row.after($new);
+      $new.find('.tta-inline-wrapper').slideDown(200);
       $arrow.addClass('open');
+      $row.addClass('open');
     }, 'json');
   });
 

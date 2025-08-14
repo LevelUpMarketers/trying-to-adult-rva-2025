@@ -37,11 +37,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
   <?php if ( $attendees ) :
     foreach ( $attendees as $a ) : ?>
     <tr data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>">
-      <td><?php echo esc_html( $a['first_name'] . ' ' . $a['last_name'] ); ?></td>
-      <td><?php echo esc_html( $a['email'] ); ?></td>
-      <td><?php echo intval( $a['attended_count'] ); ?></td>
-      <td><?php echo isset( $a['assistance_note'] ) ? esc_html( $a['assistance_note'] ) : '-'; ?></td>
-      <td class="status-label"><?php echo esc_html( ucwords( str_replace('_',' ', $a['status'] ) ) ); ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Name:', 'tta' ); ?></span><?php echo esc_html( $a['first_name'] . ' ' . $a['last_name'] ); ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Email:', 'tta' ); ?></span><?php echo esc_html( $a['email'] ); ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Events Attended:', 'tta' ); ?></span><?php echo intval( $a['attended_count'] ); ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Needs Assistance:', 'tta' ); ?></span><?php echo isset( $a['assistance_note'] ) ? esc_html( $a['assistance_note'] ) : '-'; ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Status:', 'tta' ); ?></span><span class="status-label"><?php echo esc_html( ucwords( str_replace('_',' ', $a['status'] ) ) ); ?></span></td>
       <td>
         <button class="button tta-mark-attendance" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="checked_in"><?php esc_html_e( 'Check In', 'tta' ); ?></button>
         <button class="button tta-mark-attendance" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="no_show"><?php esc_html_e( 'No-Show', 'tta' ); ?></button>

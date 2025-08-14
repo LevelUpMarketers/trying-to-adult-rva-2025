@@ -575,7 +575,7 @@ function tta_get_event_attendees( $event_ute_id ) {
               FROM {$att_archive} a
               JOIN {$tickets_archive} t ON a.ticket_id = t.id
              WHERE t.event_ute_id = %s)
-            ORDER BY last_name, first_name";
+            ORDER BY first_name, last_name";
 
     return $wpdb->get_results(
         $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ),
@@ -606,7 +606,7 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
                FROM {$att_archive} a
                JOIN {$tickets_archive} t ON a.ticket_id = t.id
               WHERE t.event_ute_id = %s)
-            ORDER BY last_name, first_name";
+            ORDER BY first_name, last_name";
 
     $rows = $wpdb->get_results( $wpdb->prepare( $sql, $event_ute_id, $event_ute_id ), ARRAY_A );
 
