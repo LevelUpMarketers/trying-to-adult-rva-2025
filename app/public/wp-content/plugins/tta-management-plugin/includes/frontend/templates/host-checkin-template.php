@@ -39,8 +39,7 @@ echo do_shortcode( $header_shortcode );
 <table class="widefat striped">
   <thead>
     <tr>
-      <th><?php esc_html_e( 'Event Image', 'tta' ); ?></th>
-      <th><?php esc_html_e( 'Event Name', 'tta' ); ?></th>
+      <th><?php esc_html_e( 'Event', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Date & Time', 'tta' ); ?></th>
       <th><?php esc_html_e( '# of Expected Attendees', 'tta' ); ?></th>
       <th></th>
@@ -56,14 +55,16 @@ echo do_shortcode( $header_shortcode );
         }
   ?>
     <tr class="tta-event-row" data-event-ute-id="<?php echo esc_attr( $e['ute_id'] ); ?>">
-      <td data-label="<?php echo esc_attr__( 'Event Image', 'tta' ); ?>"><?php echo $img; ?></td>
-      <td data-label="<?php echo esc_attr__( 'Event Name', 'tta' ); ?>"><?php echo esc_html( $e['name'] ); ?></td>
+      <td class="tta-event-cell" data-label="<?php echo esc_attr__( 'Event', 'tta' ); ?>">
+        <?php echo $img; ?>
+        <div class="tta-event-name"><?php echo esc_html( $e['name'] ); ?></div>
+      </td>
       <td data-label="<?php echo esc_attr__( 'Date & Time', 'tta' ); ?>"><?php echo esc_html( tta_format_event_datetime( $e['date'], $e['time'] ) ); ?></td>
       <td data-label="<?php echo esc_attr__( '# of Expected Attendees', 'tta' ); ?>"><?php echo intval( tta_get_expected_attendee_count( $e['ute_id'] ) ); ?></td>
-      <td class="tta-toggle-cell" data-label=""><span class="tta-toggle-text"><strong><?php esc_html_e( 'See All Attendees', 'tta' ); ?></strong></span><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>
+      <td class="tta-toggle-cell" data-label=""><span class="tta-toggle-text"><strong><?php esc_html_e( 'See All Attendees', 'tta' ); ?></strong></span><img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ); ?>" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"><div class="tta-inline-container"></div></td>
     </tr>
   <?php endforeach; else : ?>
-    <tr><td colspan="5"><?php esc_html_e( 'No upcoming events found.', 'tta' ); ?></td></tr>
+    <tr><td colspan="4"><?php esc_html_e( 'No upcoming events found.', 'tta' ); ?></td></tr>
   <?php endif; ?>
   </tbody>
 </table>

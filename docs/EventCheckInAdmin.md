@@ -11,11 +11,13 @@ cards for easier mobile use. Each event row becomes a full-width block with
 labels for its fields, and tapping the block reveals the attendee list just like
 on desktop.
 
-The desktop view drops the former **Status** column to simplify the layout. On
-mobile, the toggle cell displays a bold “See All Attendees” prompt so it’s clear
-where to tap. When expanded, the attendee list now shows labels such as
-**Name**, **Email**, and **Status** before each value to keep the details tied to
-their event.
+The desktop view drops the former **Status** column to simplify the layout and
+combines the image and name into a single **Event** column. On mobile, the
+toggle cell displays a bold “See All Attendees” prompt so it’s clear where to
+tap. When expanded on screens 1199px wide or narrower, the attendee list now
+appears inside the toggle cell itself and shows labels such as **Name**,
+**Email**, and **Status** before each value. These labels are hidden on wider
+screens because the table headers remain visible.
 
 ### Table details
 

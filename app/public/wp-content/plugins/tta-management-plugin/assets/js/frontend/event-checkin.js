@@ -2,10 +2,35 @@ jQuery(function($){
   // Toggle event rows
   $(document).on('click', '.tta-event-row', function(e){
     if ($(e.target).is('button, a')) return;
-    var $row   = $(this),
-        $arrow = $row.find('.tta-toggle-arrow'),
-        ute    = $row.data('event-ute-id'),
-        $ex    = $row.next('.tta-inline-row');
+    var $row       = $(this),
+        $arrow     = $row.find('.tta-toggle-arrow'),
+        ute        = $row.data('event-ute-id'),
+        isMobile   = window.matchMedia('(max-width:1199px)').matches,
+        $toggleCell= $row.find('.tta-toggle-cell'),
+        $container = $toggleCell.find('.tta-inline-container'),
+        $ex        = $row.next('.tta-inline-row');
+
+    if (isMobile){
+      if ($toggleCell.hasClass('open')){
+        $arrow.removeClass('open');
+        $row.removeClass('open');
+        $toggleCell.removeClass('open');
+        $container.slideUp().empty();
+        return;
+      }
+      $('.tta-toggle-cell.open').removeClass('open').find('.tta-inline-container').slideUp().empty();
+      $('.tta-inline-row').remove();
+      $('.tta-toggle-arrow').removeClass('open');
+      $('.tta-event-row').removeClass('open');
+      $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
+        if(!res.success) return;
+        $container.html(res.data.html).slideDown();
+        $arrow.addClass('open');
+        $row.addClass('open');
+        $toggleCell.addClass('open');
+      }, 'json');
+      return;
+    }
 
     if ($ex.length){
       $arrow.removeClass('open');
@@ -17,6 +42,7 @@ jQuery(function($){
     $('.tta-inline-row').remove();
     $('.tta-toggle-arrow').removeClass('open');
     $('.tta-event-row').removeClass('open');
+    $('.tta-toggle-cell.open').removeClass('open').find('.tta-inline-container').empty().hide();
 
     $.post(TTA_Checkin.ajax_url, { action:'tta_get_event_attendance', nonce:TTA_Checkin.get_nonce, event_ute_id: ute }, function(res){
       if(!res.success) return;
