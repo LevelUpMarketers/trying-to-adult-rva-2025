@@ -756,79 +756,85 @@ class TTA_AuthorizeNet_API {
             return $matches;
         }
 
-        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
-        $merchantAuthentication->setName( $this->login_id );
-        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+        $merchant_auth = new AnetAPI\MerchantAuthenticationType();
+        $merchant_auth->setName( $this->login_id );
+        $merchant_auth->setTransactionKey( $this->transaction_key );
 
-        $now  = new \DateTime();
-        $from = ( clone $now )->modify( '-' . intval( $days_back ) . ' days' );
+        $seen       = [];
+        $end        = new \DateTime();
+        $remaining  = max( 1, intval( $days_back ) );
 
-        $batch_request = new AnetAPI\GetSettledBatchListRequest();
-        $batch_request->setMerchantAuthentication( $merchantAuthentication );
-        $batch_request->setFirstSettlementDate( $from );
-        $batch_request->setLastSettlementDate( $now );
+        while ( $remaining > 0 ) {
+            $chunk = min( 31, $remaining );
+            $from  = ( clone $end )->modify( '-' . $chunk . ' days' );
 
-        $batch_controller = new AnetController\GetSettledBatchListController( $batch_request );
-        $batch_response   = $batch_controller->executeWithApiResponse( $this->environment );
-        $this->log_response( 'get_settled_batch_list', $batch_response );
+            $batch_request = new AnetAPI\GetSettledBatchListRequest();
+            $batch_request->setMerchantAuthentication( $merchant_auth );
+            $batch_request->setFirstSettlementDate( $from );
+            $batch_request->setLastSettlementDate( $end );
 
-        if ( ! $batch_response || 'Ok' !== $batch_response->getMessages()->getResultCode() ) {
-            return $matches;
-        }
+            $batch_controller = new AnetController\GetSettledBatchListController( $batch_request );
+            $batch_response   = $batch_controller->executeWithApiResponse( $this->environment );
+            $this->log_response( 'get_settled_batch_list', $batch_response );
 
-        $batches = $batch_response->getBatchList();
-        if ( ! $batches ) {
-            return $matches;
-        }
+            if ( $batch_response && 'Ok' === $batch_response->getMessages()->getResultCode() && $batch_response->getBatchList() ) {
+                foreach ( $batch_response->getBatchList() as $batch ) {
+                    $list_request = new AnetAPI\GetTransactionListRequest();
+                    $list_request->setMerchantAuthentication( $merchant_auth );
+                    $list_request->setBatchId( $batch->getBatchId() );
 
-        foreach ( $batches as $batch ) {
-            $list_request = new AnetAPI\GetTransactionListRequest();
-            $list_request->setMerchantAuthentication( $merchantAuthentication );
-            $list_request->setBatchId( $batch->getBatchId() );
+                    $list_controller = new AnetController\GetTransactionListController( $list_request );
+                    $list_response   = $list_controller->executeWithApiResponse( $this->environment );
+                    $this->log_response( 'get_transaction_list', $list_response );
 
-            $list_controller = new AnetController\GetTransactionListController( $list_request );
-            $list_response   = $list_controller->executeWithApiResponse( $this->environment );
-            $this->log_response( 'get_transaction_list', $list_response );
+                    if ( ! $list_response || 'Ok' !== $list_response->getMessages()->getResultCode() || ! $list_response->getTransactions() ) {
+                        continue;
+                    }
 
-            if ( ! $list_response || 'Ok' !== $list_response->getMessages()->getResultCode() || ! $list_response->getTransactions() ) {
-                continue;
+                    foreach ( $list_response->getTransactions() as $summary ) {
+                        if ( isset( $seen[ $summary->getTransId() ] ) ) {
+                            continue;
+                        }
+                        $detail_request = new AnetAPI\GetTransactionDetailsRequest();
+                        $detail_request->setMerchantAuthentication( $merchant_auth );
+                        $detail_request->setTransId( $summary->getTransId() );
+                        $detail_controller = new AnetController\GetTransactionDetailsController( $detail_request );
+                        $detail_response   = $detail_controller->executeWithApiResponse( $this->environment );
+                        $this->log_response( 'get_transaction_details', $detail_response );
+
+                        if ( ! $detail_response || 'Ok' !== $detail_response->getMessages()->getResultCode() ) {
+                            continue;
+                        }
+
+                        $txn   = $detail_response->getTransaction();
+                        $bill  = $txn->getBillTo();
+                        $order = $txn->getOrder();
+
+                        $bill_email = '';
+                        if ( $bill && method_exists( $bill, 'getEmail' ) ) {
+                            $bill_email = strtolower( trim( $bill->getEmail() ) );
+                        }
+                        if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
+                            $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
+                        }
+
+                        if ( $bill_email === strtolower( trim( $email ) ) ) {
+                            $seen[ $summary->getTransId() ] = true;
+                            $matches[]                      = [
+                                'id'                 => $summary->getTransId(),
+                                'amount'             => $txn->getSettleAmount(),
+                                'date'               => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
+                                'transaction_status' => $txn->getTransactionStatus(),
+                                'invoice'            => $order ? (string) $order->getInvoiceNumber() : '',
+                                'details'            => $order ? (string) $order->getDescription() : '',
+                            ];
+                        }
+                    }
+                }
             }
 
-            foreach ( $list_response->getTransactions() as $summary ) {
-                $detail_request = new AnetAPI\GetTransactionDetailsRequest();
-                $detail_request->setMerchantAuthentication( $merchantAuthentication );
-                $detail_request->setTransId( $summary->getTransId() );
-                $detail_controller = new AnetController\GetTransactionDetailsController( $detail_request );
-                $detail_response   = $detail_controller->executeWithApiResponse( $this->environment );
-                $this->log_response( 'get_transaction_details', $detail_response );
-
-                if ( ! $detail_response || 'Ok' !== $detail_response->getMessages()->getResultCode() ) {
-                    continue;
-                }
-
-                $txn   = $detail_response->getTransaction();
-                $bill  = $txn->getBillTo();
-                $order = $txn->getOrder();
-
-                $bill_email = '';
-                if ( $bill && method_exists( $bill, 'getEmail' ) ) {
-                    $bill_email = strtolower( trim( $bill->getEmail() ) );
-                }
-                if ( '' === $bill_email && $txn->getCustomer() && method_exists( $txn->getCustomer(), 'getEmail' ) ) {
-                    $bill_email = strtolower( trim( $txn->getCustomer()->getEmail() ) );
-                }
-
-                if ( $bill_email === strtolower( trim( $email ) ) ) {
-                    $matches[] = [
-                        'id'                => $summary->getTransId(),
-                        'amount'            => $txn->getSettleAmount(),
-                        'date'              => $txn->getSubmitTimeUTC()->format( 'Y-m-d' ),
-                        'transaction_status'=> $txn->getTransactionStatus(),
-                        'invoice'           => $order ? (string) $order->getInvoiceNumber() : '',
-                        'details'           => $order ? (string) $order->getDescription() : '',
-                    ];
-                }
-            }
+            $end       = $from;
+            $remaining -= $chunk;
         }
 
         return $matches;
