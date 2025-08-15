@@ -255,6 +255,61 @@ jQuery(function($){
     }, 'json');
   });
 
+  // Email Logs tab
+  var $logs = $('#tta-email-logs');
+  if ($logs.length) {
+    $logs.on('click', '.tta-email-log-event', function(){
+      $(this).next('.tta-email-log-details').toggle();
+      $(this).find('.tta-toggle-arrow').toggleClass('open');
+    });
+
+    $logs.on('click', '.tta-email-log-list', function(e){
+      e.preventDefault();
+      var $btn = $(this);
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_log_recipients',
+        nonce: TTA_Ajax.email_logs_nonce,
+        event_id: $btn.data('event'),
+        hook: $btn.data('hook')
+      }, function(res){
+        if(res.success){
+          alert(res.data.join('\n'));
+        }
+      });
+    });
+
+    $logs.on('click', '.tta-email-log-delete', function(e){
+      e.preventDefault();
+      if(!confirm('Delete this scheduled email?')) return;
+      var $btn = $(this), row=$btn.closest('tr');
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_log_delete',
+        nonce: TTA_Ajax.email_logs_nonce,
+        event_id: $btn.data('event'),
+        hook: $btn.data('hook'),
+        template: $btn.data('template')
+      }, function(res){
+        if(res.success){ row.remove(); }
+      });
+    });
+  }
+
+  var $history = $('#tta-email-history');
+  if ($history.length) {
+    $history.on('click', '#tta-email-clear-log', function(e){
+      e.preventDefault();
+      if(!confirm('Clear email log?')) return;
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_clear_log',
+        nonce: TTA_Ajax.email_log_clear_nonce
+      }, function(res){
+        if(res.success){
+          $history.find('table tbody').empty();
+        }
+      });
+    });
+  }
+
   // Inline edit for Venues
   $(document).on('click', '#tta-venues-manage .widefat tbody tr[data-venue-id]', function(e){
     if($(e.target).is('a,button,input,textarea,select')) return;

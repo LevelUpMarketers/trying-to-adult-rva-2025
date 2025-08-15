@@ -1,6 +1,12 @@
 # Email and SMS Templates
 
-The plugin sends automated notifications to members. Administrators can edit the text for each message from **Email & SMS** in the WordPress admin menu. Templates are listed in a table similar to the Manage Events page. Click a row to expand an inline form containing the fields for that communication. Each form has its own **Save Changes** button and progress spinner.
+The plugin sends automated notifications to members. Administrators can manage these messages from **TTA Email & SMS** in the WordPress admin. The page contains three tabs:
+
+1. **Email Templates** – existing template editor described below.
+2. **Email Logs** – lists scheduled reminder and thank‑you emails grouped by event. Each job exposes its current recipient list via AJAX and can be deleted before it runs.
+3. **Email History** – a running log of all attempted emails including recipient address and delivery result. A **Clear Log** button removes all entries.
+
+Templates are listed in a table similar to the Manage Events page. Click a row to expand an inline form containing the fields for that communication. Each form has its own **Save Changes** button and progress spinner.
 
 ## Available Templates
 
@@ -18,6 +24,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `volunteer_reminder_24hr` | Reminder to volunteers 24 hours before their event. |
 | `volunteer_reminder_2hr` | Reminder to volunteers two hours before their event. |
 | `assistance_request` | Sent to event hosts when a member asks for help finding the group. |
+| `post_event_review` | Sent 24 hours after an event is archived to attendees marked as checked in. |
 
 Each template stores:
 
