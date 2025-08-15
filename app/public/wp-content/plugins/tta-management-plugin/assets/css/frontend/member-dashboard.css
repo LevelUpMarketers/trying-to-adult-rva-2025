@@ -232,10 +232,14 @@
     font-weight: bold;
     font-size: 16px;
 }
-
+.tta-upcoming-event-indiv-holder{
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
 .tta-assistance-form{
-    margin-top:20px;
-    border-bottom: 1px solid #ddd;
+    margin-top:55px;
     margin-bottom: 10px;
 }
 /* Upcoming events layout */
@@ -261,9 +265,9 @@
 
 
 .tta-ticket-details {
+  margin: 20px;
   margin-left:0px;
   margin-bottom:10px;
-  margin: 20px;
 }
 .tta-ticket-details ul {
   margin:4px 0 0 20px;
@@ -458,12 +462,31 @@
   .tta-progress-spinner{
     display: block;
     margin-top: 30px;
+    height:30px;
+    text-align:center;
   }
   .tta-admin-progress-spinner-svg{
     left:0;
   }
   .tta-admin-progress-response-p{
     text-align:center;
+  }
+  #tta-update-card-form > p {
+    display: block;
+    width: 100%;
+  }
+  #tta-update-card-form input, #tta-update-card-form select{
+    width:100%!important;
+  }
+  #tta-update-card-form p {
+    margin-right: 0px;
+  }
+  .tta-upcoming-event {
+    display: block;
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    gap: 15px;
+    margin-bottom: 10px;
   }
 }
 

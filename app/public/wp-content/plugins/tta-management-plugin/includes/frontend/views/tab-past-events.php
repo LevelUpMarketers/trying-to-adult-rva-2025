@@ -73,6 +73,7 @@
               $time_str  = trim( $start_fmt . ( $end_fmt ? ' – ' . $end_fmt : '' ) );
           }
           ?>
+          <div class="tta-upcoming-event-indiv-holder">
           <div class="tta-upcoming-event">
             <?php if ( $thumb ) : ?>
               <div class="tta-upcoming-thumb"><?php echo $thumb; ?></div>
@@ -106,6 +107,7 @@
               <?php endforeach; ?>
               </ul>
             </div>
+          </div>
           <?php endforeach; ?>
       <?php endforeach; ?>
   <?php else : ?>

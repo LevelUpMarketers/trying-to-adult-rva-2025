@@ -120,7 +120,7 @@
             </label>
           </p>
           <p class="tta-submit-wrap">
-            <button type="submit" class="button"><?php esc_html_e( 'Update Card', 'tta' ); ?></button>
+            <button type="submit" class="button"><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></button>
             <span class="tta-progress-spinner">
               <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
             </span>
@@ -223,7 +223,7 @@
           </label>
         </p>
         <p class="tta-submit-wrap">
-          <button type="submit" class="button"><?php esc_html_e( 'Update Card', 'tta' ); ?></button>
+          <button type="submit" class="button"><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></button>
           <span class="tta-progress-spinner">
             <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
           </span>

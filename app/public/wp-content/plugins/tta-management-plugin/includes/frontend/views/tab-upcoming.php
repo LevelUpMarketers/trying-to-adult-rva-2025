@@ -21,6 +21,7 @@
               $time_str  = trim( $start_fmt . ( $end_fmt ? ' – ' . $end_fmt : '' ) );
           }
           ?>
+          <div class="tta-upcoming-event-indiv-holder">
           <div class="tta-upcoming-event">
             <?php if ( $thumb ) : ?>
               <div class="tta-upcoming-thumb"><?php echo $thumb; ?></div>
@@ -135,6 +136,7 @@
             </span>
             <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
           </div>
+        </div>
       <?php endforeach; ?>
   <?php else : ?>
       <p><?php esc_html_e( 'No upcoming events found.', 'tta' ); ?></p>
