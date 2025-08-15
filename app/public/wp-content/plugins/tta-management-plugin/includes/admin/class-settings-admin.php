@@ -93,6 +93,15 @@ class TTA_Settings_Admin {
                             $level = 'premium';
                         }
 
+                        if ( $email ) {
+                            global $wpdb;
+                            $members_table = $wpdb->prefix . 'tta_members';
+                            $existing_sub  = $wpdb->get_var( $wpdb->prepare( "SELECT subscription_id FROM {$members_table} WHERE email = %s", $email ) );
+                            if ( $existing_sub ) {
+                                $api->cancel_subscription( $existing_sub );
+                            }
+                        }
+
                         $result = $api->create_subscription_from_transaction( $transaction_id, $amount, $tag ?: 'Membership Subscription', $tag );
 
                         if ( empty( $result['success'] ) ) {

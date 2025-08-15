@@ -65,6 +65,10 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
         $transaction_id = '';
 
         if ( $membership_total > 0 ) {
+            $existing_sub = tta_get_user_subscription_id( get_current_user_id() );
+            if ( $existing_sub ) {
+                $api->cancel_subscription( $existing_sub );
+            }
             $charge = $api->charge(
                 $membership_total,
                 preg_replace( '/\D/', '', $_POST['card_number'] ),
