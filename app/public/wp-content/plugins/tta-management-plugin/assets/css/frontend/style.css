@@ -96,12 +96,17 @@
 
 .tta-event-cell img{
   display:block;
-  margin:0 auto;
 }
 .tta-event-name{
   margin-top:6px;
-  text-align:center;
   font-weight:600;
+}
+
+.button.tta-mark-attendance{
+  display: block;
+  margin-bottom: 10px;
+  width: 100%;
+  min-width: 150px;
 }
 
 .tta-info-title{
@@ -133,6 +138,14 @@
   .tta-checkin-wrap td{
     padding:8px 10px;
     position:relative;
+    text-align: center;
+  }
+  .tta-event-cell img {
+    margin: 0 auto;
+  }
+  .tta-checkin-wrap {
+    margin-left: 10px;
+    margin-right: 10px;
   }
   .tta-checkin-wrap td[data-label]::before{
     content:attr(data-label);

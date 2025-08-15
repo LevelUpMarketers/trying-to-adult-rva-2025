@@ -42,15 +42,14 @@
       }
       $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status );
       ?>
-      <p class="tta-subscription-issue-message"><?php esc_html_e( 'Looks like there\'s an issue with your subscription! Please use the form below to provide updated payment and billing information.', 'tta' ); ?></p>
+      <p class="tta-subscription-issue-message"><?php esc_html_e( 'Looks like there\'s an issue with your subscription! Please use the form below to provide updated payment and billing information.', 'tta' ); ?> <a class="tta-become-a-member-again" href="<?php echo esc_url( home_url( '/become-a-member' ) ); ?>"><?php esc_html_e( 'or purchase a new membership here!', 'tta' ); ?></a></p>
       <?php if ( $gateway_status ) : ?>
         <p><span class="tta-bmi-bold"><?php esc_html_e( 'Gateway Status:', 'tta' ); ?></span> <?php echo esc_html( $gateway_status ); ?></p>
       <?php endif; ?>
       <p><span class="tta-bmi-bold"><?php esc_html_e( 'Your Membership Status:', 'tta' ); ?></span> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
       <?php if ( ! empty( $info['last4'] ) ) : ?>
-        <p><?php esc_html_e( 'Card on File:', 'tta' ); ?> **** <?php echo esc_html( $info['last4'] ); ?></p>
+        <p><span class="tta-bmi-bold"><?php esc_html_e( 'Card on File:', 'tta' ); ?></span> **** <?php echo esc_html( $info['last4'] ); ?></p>
       <?php endif; ?>
-      <p class="tta-subscription-issue-message"><?php esc_html_e( 'Please use the form below to provide updated payment and billing information,', 'tta' ); ?> <a class="tta-become-a-member-again" href="<?php echo esc_url( home_url( '/become-a-member' ) ); ?>"><?php esc_html_e( 'or purchase a new membership here!', 'tta' ); ?></a></p>
       <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
       <?php if ( 'cancelled' !== $status ) : ?>
         <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">

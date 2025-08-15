@@ -160,7 +160,7 @@
 .spacer-row td {
   height:20px; padding:0; border:none;
 }
-.tta-wider-and-bigger-rows { width:32%; }
+.tta-wider-and-bigger-rows { width:358px; }
 #tab-profile .form-table .tta-wider-and-bigger-rows th {
   width:180px; height:200px;
 }
@@ -221,8 +221,8 @@
 }
 
 .view-value img{
-  max-height:150px;
-  max-width:150px;
+  max-height:135px;
+  max-width:135px;
 }
 
 #select-profile-image{
@@ -344,6 +344,23 @@
   margin-top: 10px;
 }
 
+#tab-profile #tta-member-dashboard-form > table > tbody > tr:nth-child(21) > td > span{
+  background:none;
+}
+.tta-subscription-issue-message{
+  margin: 10px 0px;
+  color: red;
+  font-size: 16px;
+  margin-bottom: 10px !important;
+}
+.tta-subscription-issue-message .tta-become-a-member-again{
+  font-weight: bold;
+  text-decoration: underline;
+}
+.tta-bmi-bold{
+  font-weight:bold;
+}
+
 /* Responsive mobile layout */
 @media (max-width: 1199px) {
   .tta-member-dashboard {
@@ -375,6 +392,78 @@
     border: 1px solid #ddd;
     border-top: none;
     box-sizing: border-box;
+  }
+  .tta-dashboard-content{
+    background-color:initial;
+  }
+  #tab-profile, #tab-upcoming, #tab-waitlist, #tab-past, #tab-billing{
+    margin-bottom: 20px;
+    position: relative;
+    bottom: 10px;
+  }
+  #tab-profile .form-table tr {
+    width: 100%;
+  }
+  #tab-profile .form-table th {
+    width: 100%;
+    display: block;
+    text-align: center;
+  }
+  .profile-row td{
+    text-align: center;
+    width: 100%;
+    display: block;
+  }
+  .profile-row .tta-tooltip-icon{
+    display:none;
+  }
+  #tab-profile .form-table label, #tab-profile .form-table .tta-fake-label {
+    position: relative;
+    left: 0px;
+  }
+  #tab-profile .form-table .tta-wider-and-bigger-rows th {
+    width: 100%;
+    height: initial;
+  }
+  #tab-profile .form-table .tta-wider-and-bigger-rows label, #tab-profile .form-table .tta-wider-and-bigger-rows .tta-fake-label {
+    width: initial;
+  }
+  .tta-member-dashboard-wrap {
+    padding: 20px;
+  }
+  #tab-profile .form-table tr {
+    display: inline-block;
+    vertical-align: top;
+    margin: 0px 0px 20px 0px;
+  }
+  #tab-profile .form-table input, #tab-profile .form-table select, #tab-profile .form-table textarea {
+    width: 100%;
+    height: 35px;
+  }
+  .tta-submit-wrap{
+    text-align:center;
+  }
+  .is-editing #interests-container {
+    width: 100%;
+  }
+  #tta-member-dashboard-form > table > tbody > tr > td > fieldset{
+    text-align:left;
+  }
+  .is-editing #tab-profile .form-table label, .is-editing #tab-profile .form-table .tta-fake-label {
+    top: 0px;
+  }
+  #tab-profile .form-table .spacer-row {
+    display: none;
+  }
+  .tta-progress-spinner{
+    display: block;
+    margin-top: 30px;
+  }
+  .tta-admin-progress-spinner-svg{
+    left:0;
+  }
+  .tta-admin-progress-response-p{
+    text-align:center;
   }
 }
 
