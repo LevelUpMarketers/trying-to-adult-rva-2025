@@ -1004,7 +1004,7 @@ class TTA_AuthorizeNet_API {
 
         $profile = new AnetAPI\CustomerProfileIdType();
         $profile->setCustomerProfileId( $customer_profile_id );
-        $profile->setPaymentProfileId( $payment_profile_id );
+        $profile->setCustomerPaymentProfileId( $payment_profile_id );
 
         $subscription = new AnetAPI\ARBSubscriptionType();
         $subscription->setName( $name );

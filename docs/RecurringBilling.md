@@ -31,9 +31,11 @@ directly from the admin area. Under **TTA Settings → API Settings** enter an
 Authorize.Net transaction ID and click **Convert to Subscription**. The plugin
 retrieves the transaction details, creates an Automated Recurring Billing
 subscription for the same amount and stores the returned subscription ID in the
-matching `tta_members` record based on the billing email. Transactions for $5
-are tagged as **Trying to Adult Basic Membership** while $10 charges become
-**Trying to Adult Premium Membership** so the subscription is clearly labeled in
-Authorize.Net. The results of each conversion are displayed on the settings page
-and written to the debug log.
+matching `tta_members` record based on the billing email. To ensure Authorize.Net
+associates the correct billing method, the subscription request references the
+payment profile via the `customerPaymentProfileId` field.
+Transactions for $5 are tagged as **Trying to Adult Basic Membership** while $10
+charges become **Trying to Adult Premium Membership** so the subscription is
+clearly labeled in Authorize.Net. The results of each conversion are displayed
+on the settings page and written to the debug log.
 
