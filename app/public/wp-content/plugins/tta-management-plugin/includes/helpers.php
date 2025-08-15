@@ -1316,35 +1316,47 @@ function tta_sync_subscription_status( $wp_user_id ) {
         return;
     }
 
-    $level = tta_get_user_membership_level( $wp_user_id );
+    $level  = tta_get_user_membership_level( $wp_user_id );
     $sub_id = tta_get_user_subscription_id( $wp_user_id );
-    if ( ! $sub_id || 'free' === $level ) {
+    if ( ! $sub_id ) {
         return;
     }
 
-    $info   = tta_get_subscription_status_info( $sub_id );
-    $status = $info['status'] ?? '';
-    if ( ! $status ) {
+    $info           = tta_get_subscription_status_info( $sub_id );
+    $gateway_status = strtolower( $info['status'] ?? '' );
+    if ( ! $gateway_status ) {
         return;
+    }
+
+    if ( in_array( $gateway_status, [ 'cancelled', 'canceled', 'terminated' ], true ) ) {
+        $status = 'cancelled';
+    } elseif ( 'active' === $gateway_status ) {
+        $status = 'active';
+    } else {
+        $status = 'paymentproblem';
     }
 
     $current = tta_get_user_subscription_status( $wp_user_id );
 
     if ( 'active' !== $status ) {
-        update_user_meta( $wp_user_id, 'tta_prev_level', $level );
+        if ( 'free' !== $level ) {
+            update_user_meta( $wp_user_id, 'tta_prev_level', $level );
+        }
         tta_update_user_membership_level( $wp_user_id, 'free', null, $status );
         if ( $status !== $current ) {
             tta_log_subscription_status_change( $wp_user_id, $status );
         }
     } else {
-        if ( 'paymentproblem' === $current ) {
+        if ( 'free' === $level ) {
             $prev = get_user_meta( $wp_user_id, 'tta_prev_level', true );
             if ( ! in_array( $prev, [ 'basic', 'premium' ], true ) ) {
                 $prev = 'basic';
             }
             tta_update_user_membership_level( $wp_user_id, $prev, null, 'active' );
             delete_user_meta( $wp_user_id, 'tta_prev_level' );
-            tta_log_subscription_status_change( $wp_user_id, 'active' );
+            if ( 'active' !== $current ) {
+                tta_log_subscription_status_change( $wp_user_id, 'active' );
+            }
         } elseif ( 'active' !== $current ) {
             tta_update_user_subscription_status( $wp_user_id, 'active' );
             tta_log_subscription_status_change( $wp_user_id, 'active' );
