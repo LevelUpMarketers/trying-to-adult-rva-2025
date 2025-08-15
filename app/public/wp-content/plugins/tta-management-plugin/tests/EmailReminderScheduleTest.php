@@ -81,9 +81,17 @@ class EmailReminderScheduleTest extends TestCase {
         $this->assertContains( 'tta_volunteer_reminder_email', $hooks );
     }
 
+    public function test_schedule_post_event_thanks_creates_event() {
+        require_once __DIR__ . '/../includes/email/class-email-reminders.php';
+        TTA_Email_Reminders::schedule_post_event_thanks( 1 );
+        $this->assertCount( 1, $GLOBALS['scheduled'] );
+        $this->assertSame( 'tta_post_event_thanks_email', $GLOBALS['scheduled'][0][1] );
+    }
+
     public function test_clear_event_emails_removes_events() {
         require_once __DIR__ . '/../includes/email/class-email-reminders.php';
         TTA_Email_Reminders::schedule_event_emails( 1 );
+        TTA_Email_Reminders::schedule_post_event_thanks( 1 );
         TTA_Email_Reminders::clear_event_emails( 1 );
         $hooks = [];
         foreach ( $GLOBALS['cleared'] as $entry ) {
@@ -92,5 +100,6 @@ class EmailReminderScheduleTest extends TestCase {
         $this->assertContains( 'tta_attendee_reminder_email', $hooks );
         $this->assertContains( 'tta_host_reminder_email', $hooks );
         $this->assertContains( 'tta_volunteer_reminder_email', $hooks );
+        $this->assertContains( 'tta_post_event_thanks_email', $hooks );
     }
 }

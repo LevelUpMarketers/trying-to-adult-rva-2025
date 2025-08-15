@@ -8,3 +8,7 @@ details of past events without modifying them. Associated ticket rows live in
 historical metrics remain available. Because editing is disabled, the event
 description is shown as plain HTML and TinyMCE is not loaded when viewing
 archived events.
+
+When events move into the archive, any pending reminder emails are cleared and a
+thank-you message is scheduled to send to checked-in attendees 24 hours later.
+The follow-up email includes a link inviting them to leave a Google review.

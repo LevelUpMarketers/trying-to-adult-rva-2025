@@ -118,6 +118,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your volunteer shift begins in two hours. Event details are below.', 'tta'),
                 'sms_text'    => '',
             ],
+            'post_event_review' => [
+                'label'       => __( 'Post-Event Thank You', 'tta' ),
+                'type'        => 'External',
+                'category'    => 'Post Event',
+                'description' => __( 'Sent to attendees who checked in after the event asking for a Google review.', 'tta' ),
+                'email_subject' => __( 'Thanks for attending!', 'tta' ),
+                'email_body'  => __( 'We hope you enjoyed the event. Please consider leaving a review: https://g.page/r/tryingtoadultrva/review', 'tta' ),
+                'sms_text'    => '',
+            ],
             'assistance_request' => [
                 'label'       => __('Assistance Request', 'tta'),
                 'type'        => 'Internal',

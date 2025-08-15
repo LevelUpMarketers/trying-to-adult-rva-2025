@@ -18,6 +18,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `volunteer_reminder_24hr` | Reminder to volunteers 24 hours before their event. |
 | `volunteer_reminder_2hr` | Reminder to volunteers two hours before their event. |
 | `assistance_request` | Sent to event hosts when a member asks for help finding the group. |
+| `post_event_review` | Sent 24 hours after an event is archived to attendees marked as checked in. |
 
 Each template stores:
 

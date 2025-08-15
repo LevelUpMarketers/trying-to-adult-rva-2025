@@ -10,6 +10,7 @@ class TTA_Email_Reminders {
         add_action( 'tta_attendee_reminder_email', [ __CLASS__, 'send_attendee_reminder' ], 10, 2 );
         add_action( 'tta_host_reminder_email', [ __CLASS__, 'send_host_reminder' ], 10, 2 );
         add_action( 'tta_volunteer_reminder_email', [ __CLASS__, 'send_volunteer_reminder' ], 10, 2 );
+        add_action( 'tta_post_event_thanks_email', [ __CLASS__, 'send_post_event_thanks' ], 10, 1 );
     }
 
     /**
@@ -50,6 +51,23 @@ class TTA_Email_Reminders {
     }
 
     /**
+     * Schedule a post-event thank you email 24 hours after archiving.
+     *
+     * @param int $event_id Event ID.
+     */
+    public static function schedule_post_event_thanks( $event_id ) {
+        $event_id = intval( $event_id );
+        if ( ! $event_id ) {
+            return;
+        }
+        $timestamp = time() + DAY_IN_SECONDS;
+        if ( wp_next_scheduled( 'tta_post_event_thanks_email', [ $event_id ] ) ) {
+            return;
+        }
+        wp_schedule_single_event( $timestamp, 'tta_post_event_thanks_email', [ $event_id ] );
+    }
+
+    /**
      * Clear any scheduled reminder emails for an event.
      *
      * @param int $event_id Event ID.
@@ -64,11 +82,13 @@ class TTA_Email_Reminders {
             'tta_attendee_reminder_email'  => [ 'reminder_24hr', 'reminder_2hr' ],
             'tta_host_reminder_email'      => [ 'host_reminder_24hr', 'host_reminder_2hr' ],
             'tta_volunteer_reminder_email' => [ 'volunteer_reminder_24hr', 'volunteer_reminder_2hr' ],
+            'tta_post_event_thanks_email'  => [ null ],
         ];
 
         foreach ( $hooks as $hook => $keys ) {
             foreach ( $keys as $key ) {
-                wp_clear_scheduled_hook( $hook, [ $event_id, $key ] );
+                $args = null === $key ? [ $event_id ] : [ $event_id, $key ];
+                wp_clear_scheduled_hook( $hook, $args );
             }
         }
     }
@@ -133,6 +153,48 @@ class TTA_Email_Reminders {
     public static function send_volunteer_reminder( $event_id, $template_key ) {
         $emails = tta_get_event_host_volunteer_emails( $event_id, 'volunteer' );
         self::send_generic_reminder( $event_id, $template_key, $emails );
+    }
+
+    /**
+     * Send thank you emails to attendees who checked in.
+     *
+     * @param int $event_id Event ID.
+     */
+    public static function send_post_event_thanks( $event_id ) {
+        $event_id  = intval( $event_id );
+        $templates = tta_get_comm_templates();
+        if ( empty( $templates['post_event_review'] ) ) {
+            return;
+        }
+        $ute_id = tta_get_event_ute_id( $event_id );
+        if ( ! $ute_id ) {
+            return;
+        }
+        $event = tta_get_event_for_email( $ute_id );
+        $all   = tta_get_event_attendees_with_status( $ute_id );
+        $attendees = array_filter( $all, function ( $a ) {
+            return isset( $a['status'] ) && 'checked_in' === $a['status'];
+        } );
+        if ( empty( $event ) || empty( $attendees ) ) {
+            return;
+        }
+        $tpl     = $templates['post_event_review'];
+        $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+        foreach ( $attendees as $att ) {
+            $context = [
+                'user_email' => sanitize_email( $att['email'] ),
+                'first_name' => sanitize_text_field( $att['first_name'] ),
+                'last_name'  => sanitize_text_field( $att['last_name'] ),
+                'member'     => [],
+            ];
+            $tokens      = self::build_tokens( $event, $context, [ $att ] );
+            $subject_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+            $subject     = tta_strip_bold( strtr( $subject_raw, $tokens ) );
+            $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+            $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+            $body        = nl2br( $body_txt );
+            wp_mail( $context['user_email'], $subject, $body, $headers );
+        }
     }
 
     /**
