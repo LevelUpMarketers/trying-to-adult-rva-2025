@@ -94,6 +94,64 @@ class TTA_Email_Reminders {
     }
 
     /**
+     * Retrieve scheduled email jobs grouped by event.
+     *
+     * @return array
+     */
+    public static function get_scheduled_emails() {
+        $cron  = _get_cron_array();
+        $hooks = [
+            'tta_attendee_reminder_email',
+            'tta_host_reminder_email',
+            'tta_volunteer_reminder_email',
+            'tta_post_event_thanks_email',
+        ];
+        $scheduled = [];
+        foreach ( $cron as $timestamp => $events ) {
+            foreach ( $events as $hook => $jobs ) {
+                if ( ! in_array( $hook, $hooks, true ) ) {
+                    continue;
+                }
+                foreach ( $jobs as $job ) {
+                    $args     = $job['args'];
+                    $event_id = intval( $args[0] ?? 0 );
+                    if ( ! $event_id ) {
+                        continue;
+                    }
+                    if ( ! isset( $scheduled[ $event_id ] ) ) {
+                        $event                = tta_get_event_for_email( tta_get_event_ute_id( $event_id ) );
+                        $scheduled[ $event_id ] = [ 'name' => $event['name'] ?? '#', 'jobs' => [] ];
+                    }
+                    $template = $args[1] ?? '';
+                    $labels   = [
+                        'tta_attendee_reminder_email'  => [
+                            'reminder_24hr' => __( 'Attendee 24hr Reminder', 'tta' ),
+                            'reminder_2hr'  => __( 'Attendee 3hr Reminder', 'tta' ),
+                        ],
+                        'tta_host_reminder_email'      => [
+                            'host_reminder_24hr' => __( 'Host 24hr Reminder', 'tta' ),
+                            'host_reminder_2hr'  => __( 'Host 3hr Reminder', 'tta' ),
+                        ],
+                        'tta_volunteer_reminder_email' => [
+                            'volunteer_reminder_24hr' => __( 'Volunteer 24hr Reminder', 'tta' ),
+                            'volunteer_reminder_2hr'  => __( 'Volunteer 3hr Reminder', 'tta' ),
+                        ],
+                        'tta_post_event_thanks_email'  => [ '' => __( 'Post Event Thank You', 'tta' ) ],
+                    ];
+                    $label = $labels[ $hook ][ $template ] ?? $hook;
+                    $scheduled[ $event_id ]['jobs'][] = [
+                        'hook'      => $hook,
+                        'template'  => $template,
+                        'timestamp' => $timestamp,
+                        'label'     => $label,
+                    ];
+                }
+            }
+        }
+        return $scheduled;
+    }
+
+    /**
      * Schedule a single cron event if future and not already scheduled.
      */
     protected static function schedule_single( $timestamp, $hook, array $args ) {
@@ -139,7 +197,8 @@ class TTA_Email_Reminders {
             $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
             $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
             $body        = nl2br( $body_txt );
-            wp_mail( $context['user_email'], $subject, $body, $headers );
+            $sent = wp_mail( $context['user_email'], $subject, $body, $headers );
+            self::log_email( $event_id, $template_key, $context['user_email'], $sent );
         }
     }
 
@@ -193,7 +252,8 @@ class TTA_Email_Reminders {
             $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
             $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
             $body        = nl2br( $body_txt );
-            wp_mail( $context['user_email'], $subject, $body, $headers );
+            $sent = wp_mail( $context['user_email'], $subject, $body, $headers );
+            self::log_email( $event_id, 'post_event_review', $context['user_email'], $sent );
         }
     }
 
@@ -230,7 +290,8 @@ class TTA_Email_Reminders {
             $body_raw    = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
             $body_txt    = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
             $body        = nl2br( $body_txt );
-            wp_mail( $email, $subject, $body, $headers );
+            $sent = wp_mail( $email, $subject, $body, $headers );
+            self::log_email( $event_id, $template_key, $email, $sent );
         }
     }
 
@@ -243,5 +304,63 @@ class TTA_Email_Reminders {
         $m     = $ref->getMethod( 'build_tokens' );
         $m->setAccessible( true );
         return $m->invoke( $email, $event, $member, $attendees, $refund );
+    }
+
+    /** Log an email attempt. */
+    protected static function log_email( $event_id, $template, $recipient, $sent ) {
+        $log   = get_option( 'tta_email_log', [] );
+        $log[] = [
+            'time'      => time(),
+            'event_id'  => intval( $event_id ),
+            'template'  => sanitize_text_field( $template ),
+            'recipient' => sanitize_email( $recipient ),
+            'status'    => $sent ? 'sent' : 'fail',
+        ];
+        if ( count( $log ) > 500 ) {
+            $log = array_slice( $log, -500 );
+        }
+        update_option( 'tta_email_log', $log, false );
+    }
+
+    /** Retrieve the stored email log. */
+    public static function get_email_log() {
+        return get_option( 'tta_email_log', [] );
+    }
+
+    /** Clear the stored email log. */
+    public static function clear_email_log() {
+        delete_option( 'tta_email_log' );
+    }
+
+    /**
+     * Get recipient emails for a hook.
+     *
+     * @param int    $event_id Event ID.
+     * @param string $hook     Cron hook.
+     * @return array
+     */
+    public static function get_recipient_emails( $event_id, $hook ) {
+        switch ( $hook ) {
+            case 'tta_attendee_reminder_email':
+                $ute_id   = tta_get_event_ute_id( $event_id );
+                $att      = tta_get_event_attendees_with_status( $ute_id );
+                return array_values( array_filter( array_map( function ( $a ) {
+                    return sanitize_email( $a['email'] );
+                }, $att ) ) );
+            case 'tta_host_reminder_email':
+                return array_map( 'sanitize_email', tta_get_event_host_volunteer_emails( $event_id, 'host' ) );
+            case 'tta_volunteer_reminder_email':
+                return array_map( 'sanitize_email', tta_get_event_host_volunteer_emails( $event_id, 'volunteer' ) );
+            case 'tta_post_event_thanks_email':
+                $ute_id  = tta_get_event_ute_id( $event_id );
+                $all     = tta_get_event_attendees_with_status( $ute_id );
+                $checked = array_filter( $all, function ( $a ) {
+                    return isset( $a['status'] ) && 'checked_in' === $a['status'];
+                } );
+                return array_values( array_map( function ( $a ) {
+                    return sanitize_email( $a['email'] );
+                }, $checked ) );
+        }
+        return [];
     }
 }

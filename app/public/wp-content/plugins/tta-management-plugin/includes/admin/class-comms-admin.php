@@ -170,6 +170,33 @@ class TTA_Comms_Admin {
     }
 
     public function render_page(){
+        $tabs = [
+            'templates' => __( 'Email Templates', 'tta' ),
+            'logs'      => __( 'Email Logs', 'tta' ),
+            'history'   => __( 'Email History', 'tta' ),
+        ];
+        $current = isset( $_GET['tab'] ) && array_key_exists( $_GET['tab'], $tabs ) ? $_GET['tab'] : 'templates';
+
+        echo '<h1>TTA Email & SMS</h1><h2 class="nav-tab-wrapper">';
+        foreach ( $tabs as $slug => $label ) {
+            $class = $current === $slug ? ' nav-tab-active' : '';
+            $url   = esc_url( add_query_arg( [ 'page' => 'tta-comms', 'tab' => $slug ], admin_url( 'admin.php' ) ) );
+            printf( '<a href="%s" class="nav-tab%s">%s</a>', $url, $class, esc_html( $label ) );
+        }
+        echo '</h2><div class="wrap">';
+
+        if ( 'logs' === $current ) {
+            $this->render_logs_tab();
+        } elseif ( 'history' === $current ) {
+            $this->render_history_tab();
+        } else {
+            $this->render_templates_tab();
+        }
+
+        echo '</div>';
+    }
+
+    protected function render_templates_tab(){
         $templates = $this->get_templates();
 
         if ( isset( $_POST['template_key'] ) && isset( $_POST['tta_comms_save_nonce'] ) && check_admin_referer( 'tta_comms_save_action', 'tta_comms_save_nonce' ) ) {
@@ -181,7 +208,6 @@ class TTA_Comms_Admin {
             echo '<div class="updated"><p>'.esc_html__( 'Template saved.', 'tta' ).'</p></div>';
         }
 
-        echo '<div class="wrap"><h1>'.esc_html__( 'Email & SMS', 'tta' ).'</h1>';
         echo '<table class="widefat striped"><thead><tr>';
         echo '<th>'.esc_html__( 'Communication Name', 'tta' ).'</th>';
         echo '<th>'.esc_html__( 'Communication Type', 'tta' ).'</th>';
@@ -299,6 +325,104 @@ class TTA_Comms_Admin {
         }
 
         echo '</tbody></table></div>';
+    }
+
+    /** Render scheduled email jobs. */
+    protected function render_logs_tab() {
+        $scheduled = TTA_Email_Reminders::get_scheduled_emails();
+        $per_page  = 20;
+        $paged     = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $event_ids = array_keys( $scheduled );
+        $total     = count( $event_ids );
+        $slice     = array_slice( $event_ids, ( $paged - 1 ) * $per_page, $per_page );
+
+        echo '<div id="tta-email-logs">';
+        if ( empty( $slice ) ) {
+            echo '<p>' . esc_html__( 'No scheduled emails.', 'tta' ) . '</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Event', 'tta' ) . '</th><th></th></tr></thead><tbody>';
+            foreach ( $slice as $event_id ) {
+                $info = $scheduled[ $event_id ];
+                echo '<tr class="tta-email-log-event" data-event="' . esc_attr( $event_id ) . '">';
+                echo '<td>' . esc_html( $info['name'] ) . '</td>';
+                echo '<td class="tta-toggle-cell"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ) . '" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>';
+                echo '</tr>';
+                echo '<tr class="tta-email-log-details tta-inline-row" style="display:none;">';
+                echo '<td colspan="2"><div class="tta-inline-container" style="display:none;">';
+                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
+                foreach ( $info['jobs'] as $job ) {
+                    $time = date_i18n( 'Y-m-d H:i', $job['timestamp'] );
+                    echo '<tr>';
+                    echo '<td>' . esc_html( $job['label'] ) . '</td>';
+                    echo '<td>' . esc_html( $time ) . '</td>';
+                    echo '<td>';
+                    echo '<button class="button tta-email-log-list" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'See Email List', 'tta' ) . '</button> ';
+                    echo '<button class="button tta-email-log-delete" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'Delete', 'tta' ) . '</button>';
+                    echo '</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table></div></td></tr>';
+            }
+            echo '</tbody></table>';
+
+            $base = add_query_arg( [ 'page' => 'tta-comms', 'tab' => 'logs', 'paged' => '%#%' ], admin_url( 'admin.php' ) );
+            echo '<div class="tablenav"><div class="tablenav-pages">';
+            echo paginate_links( [
+                'base'      => $base,
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => ceil( $total / $per_page ),
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+                'end_size'  => 1,
+                'mid_size'  => 2,
+            ] );
+            echo '</div></div>';
+        }
+        echo '</div>';
+    }
+
+    /** Render email history log. */
+    protected function render_history_tab() {
+        $log      = TTA_Email_Reminders::get_email_log();
+        $per_page = 20;
+        $paged    = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $total    = count( $log );
+        $slice    = array_slice( array_reverse( $log ), ( $paged - 1 ) * $per_page, $per_page );
+
+        echo '<div id="tta-email-history">';
+        echo '<p><button id="tta-email-clear-log" class="button">' . esc_html__( 'Clear Log', 'tta' ) . '</button></p>';
+        if ( empty( $slice ) ) {
+            echo '<p>' . esc_html__( 'No emails logged.', 'tta' ) . '</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time', 'tta' ) . '</th><th>' . esc_html__( 'Event ID', 'tta' ) . '</th><th>' . esc_html__( 'Template', 'tta' ) . '</th><th>' . esc_html__( 'Recipient', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th></tr></thead><tbody>';
+            foreach ( $slice as $entry ) {
+                $time = date_i18n( 'Y-m-d H:i', $entry['time'] );
+                echo '<tr>'; // escape fields
+                echo '<td>' . esc_html( $time ) . '</td>';
+                echo '<td>' . esc_html( $entry['event_id'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['template'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['recipient'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['status'] ) . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+
+            $base = add_query_arg( [ 'page' => 'tta-comms', 'tab' => 'history', 'paged' => '%#%' ], admin_url( 'admin.php' ) );
+            echo '<div class="tablenav"><div class="tablenav-pages">';
+            echo paginate_links( [
+                'base'      => $base,
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => ceil( $total / $per_page ),
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+                'end_size'  => 1,
+                'mid_size'  => 2,
+            ] );
+            echo '</div></div>';
+        }
+        echo '</div>';
     }
 }
 
