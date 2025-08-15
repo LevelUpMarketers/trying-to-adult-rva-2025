@@ -83,11 +83,14 @@ class TTA_Settings_Admin {
                         $amount = (float) $details['amount'];
                         $email  = sanitize_email( $details['email'] );
 
-                        $tag = '';
+                        $tag   = '';
+                        $level = '';
                         if ( abs( $amount - 5.0 ) < 0.01 ) {
-                            $tag = 'Trying to Adult Basic Membership';
+                            $tag   = 'Trying to Adult Basic Membership';
+                            $level = 'basic';
                         } elseif ( abs( $amount - 10.0 ) < 0.01 ) {
-                            $tag = 'Trying to Adult Premium Membership';
+                            $tag   = 'Trying to Adult Premium Membership';
+                            $level = 'premium';
                         }
 
                         $result = $api->create_subscription_from_transaction( $transaction_id, $amount, $tag ?: 'Membership Subscription', $tag );
@@ -103,7 +106,14 @@ class TTA_Settings_Admin {
                                 $members_table = $wpdb->prefix . 'tta_members';
                                 $member_id     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$members_table} WHERE email = %s", $email ) );
                                 if ( $member_id ) {
-                                    $wpdb->update( $members_table, [ 'subscription_id' => $subscription_id ], [ 'id' => $member_id ] );
+                                    $data = [
+                                        'subscription_id'     => $subscription_id,
+                                        'subscription_status' => 'active',
+                                    ];
+                                    if ( $level ) {
+                                        $data['membership_level'] = $level;
+                                    }
+                                    $wpdb->update( $members_table, $data, [ 'id' => $member_id ] );
                                 }
                             }
 
