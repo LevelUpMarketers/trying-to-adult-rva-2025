@@ -5,6 +5,7 @@ if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 class EmailReminderScheduleTest extends TestCase {
     protected function setUp(): void {
         $GLOBALS['scheduled'] = [];
+        $GLOBALS['cleared']   = [];
         if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', sys_get_temp_dir() . '/wp/' ); }
         if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
         if ( ! defined( 'HOUR_IN_SECONDS' ) ) { define( 'HOUR_IN_SECONDS', 3600 ); }
@@ -16,6 +17,17 @@ class EmailReminderScheduleTest extends TestCase {
         if ( ! function_exists( 'wp_next_scheduled' ) ) {
             function wp_next_scheduled( $hook, $args = [] ) {
                 return false;
+            }
+        }
+        if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+            function wp_clear_scheduled_hook( $hook, $args = [] ) {
+                $GLOBALS['cleared'][] = [ $hook, $args ];
+                foreach ( $GLOBALS['scheduled'] as $i => $event ) {
+                    if ( $event[1] === $hook && $event[2] === $args ) {
+                        unset( $GLOBALS['scheduled'][ $i ] );
+                    }
+                }
+                $GLOBALS['scheduled'] = array_values( $GLOBALS['scheduled'] );
             }
         }
         $GLOBALS['wpdb'] = new class {
@@ -56,6 +68,7 @@ class EmailReminderScheduleTest extends TestCase {
 
     protected function tearDown(): void {
         $GLOBALS['scheduled'] = [];
+        $GLOBALS['cleared']   = [];
     }
 
     public function test_schedule_event_emails_creates_six_events() {
@@ -63,6 +76,19 @@ class EmailReminderScheduleTest extends TestCase {
         TTA_Email_Reminders::schedule_event_emails( 1 );
         $this->assertCount( 6, $GLOBALS['scheduled'] );
         $hooks = array_column( $GLOBALS['scheduled'], 1 );
+        $this->assertContains( 'tta_attendee_reminder_email', $hooks );
+        $this->assertContains( 'tta_host_reminder_email', $hooks );
+        $this->assertContains( 'tta_volunteer_reminder_email', $hooks );
+    }
+
+    public function test_clear_event_emails_removes_events() {
+        require_once __DIR__ . '/../includes/email/class-email-reminders.php';
+        TTA_Email_Reminders::schedule_event_emails( 1 );
+        TTA_Email_Reminders::clear_event_emails( 1 );
+        $hooks = [];
+        foreach ( $GLOBALS['cleared'] as $entry ) {
+            $hooks[] = is_array( $entry ) ? $entry[0] : $entry;
+        }
         $this->assertContains( 'tta_attendee_reminder_email', $hooks );
         $this->assertContains( 'tta_host_reminder_email', $hooks );
         $this->assertContains( 'tta_volunteer_reminder_email', $hooks );

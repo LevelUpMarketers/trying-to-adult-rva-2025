@@ -50,6 +50,30 @@ class TTA_Email_Reminders {
     }
 
     /**
+     * Clear any scheduled reminder emails for an event.
+     *
+     * @param int $event_id Event ID.
+     */
+    public static function clear_event_emails( $event_id ) {
+        $event_id = intval( $event_id );
+        if ( ! $event_id ) {
+            return;
+        }
+
+        $hooks = [
+            'tta_attendee_reminder_email'  => [ 'reminder_24hr', 'reminder_2hr' ],
+            'tta_host_reminder_email'      => [ 'host_reminder_24hr', 'host_reminder_2hr' ],
+            'tta_volunteer_reminder_email' => [ 'volunteer_reminder_24hr', 'volunteer_reminder_2hr' ],
+        ];
+
+        foreach ( $hooks as $hook => $keys ) {
+            foreach ( $keys as $key ) {
+                wp_clear_scheduled_hook( $hook, [ $event_id, $key ] );
+            }
+        }
+    }
+
+    /**
      * Schedule a single cron event if future and not already scheduled.
      */
     protected static function schedule_single( $timestamp, $hook, array $args ) {

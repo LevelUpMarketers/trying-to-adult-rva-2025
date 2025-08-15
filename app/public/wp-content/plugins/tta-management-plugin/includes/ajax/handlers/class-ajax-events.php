@@ -207,7 +207,10 @@ class TTA_Ajax_Events {
         $tickets_table  = $wpdb->prefix . 'tta_tickets';
         $waitlist_table = $wpdb->prefix . 'tta_waitlist';
 
-        $id = intval( $_POST['tta_event_id'] );
+        $id        = intval( $_POST['tta_event_id'] );
+        $existing  = $wpdb->get_row( $wpdb->prepare( "SELECT date, time FROM {$events_table} WHERE id = %d", $id ), ARRAY_A );
+        $old_date  = $existing['date'] ?? '';
+        $old_start = explode( '|', $existing['time'] ?? '' )[0] ?? '';
         $address_parts = [
             tta_sanitize_text_field( $_POST['street_address'] ?? '' ),
             tta_sanitize_text_field( $_POST['address_2']      ?? '' ),
@@ -249,6 +252,8 @@ class TTA_Ajax_Events {
             'volunteers'           => implode( ',', tta_get_member_ids_by_names( $_POST['volunteers'] ?? [] ) ),
             'host_notes'           => tta_sanitize_textarea_field( $_POST['host_notes'] ?? '' ),
         ];
+
+        $reschedule = ( $old_date !== $event_data['date'] ) || ( $old_start !== $start );
 
         $updated = $wpdb->update( $events_table, $event_data, [ 'id' => $id ] );
         if ( false === $updated ) {
@@ -343,7 +348,10 @@ class TTA_Ajax_Events {
         }
 
         $page_url = $page_id ? get_permalink( $page_id ) : '';
-        TTA_Email_Reminders::schedule_event_emails( $event_id );
+        if ( $reschedule ) {
+            TTA_Email_Reminders::clear_event_emails( $id );
+            TTA_Email_Reminders::schedule_event_emails( $id );
+        }
         TTA_Cache::flush();
         wp_send_json_success([ 'message'=>'Event updated!','page_url'=>$page_url ]);
     }

@@ -27,6 +27,9 @@ if ( isset( $_GET['action'] ) && $_GET['action'] === 'delete' && isset( $_GET['e
         );
         $ute_id = $event_row['ute_id'] ?? null;
 
+        // Remove any scheduled reminder emails
+        TTA_Email_Reminders::clear_event_emails( $event_id );
+
         if ( $ute_id ) {
             $tickets_table    = $wpdb->prefix . 'tta_tickets_archive';
             $att_archive      = $wpdb->prefix . 'tta_attendees_archive';
