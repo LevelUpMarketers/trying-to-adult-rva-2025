@@ -34,55 +34,101 @@
         <?php esc_html_e( 'Reactivate Membership', 'tta' ); ?>
       </a>
     </p>
-  <?php elseif ( 'paymentproblem' === $status ) :
-    $info = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
-    ?>
-    <p><?php esc_html_e( 'Looks like there\'s an issue with your subscription.', 'tta' ); ?></p>
-    <?php if ( ! empty( $info['status'] ) ) : ?>
-      <?php
-        $display_status = ( isset( $info['status'] ) && 'paymentproblem' === strtolower( $info['status'] ) ) ? __( 'Payment problem', 'tta' ) : ucfirst( $info['status'] );
+    <?php elseif ( 'paymentproblem' === $status ) :
+      $info           = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
+      $gateway_status = '';
+      if ( ! empty( $info['status'] ) ) {
+        $gateway_status = ( 'paymentproblem' === strtolower( $info['status'] ) ) ? __( 'Payment problem', 'tta' ) : ucfirst( $info['status'] );
+      }
+      $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status );
       ?>
-      <p><?php printf( esc_html__( 'Gateway status: %s', 'tta' ), esc_html( $display_status ) ); ?></p>
-    <?php endif; ?>
-    <?php if ( ! empty( $info['last4'] ) ) : ?>
-      <p><?php esc_html_e( 'Card on File:', 'tta' ); ?> **** <?php echo esc_html( $info['last4'] ); ?></p>
-    <?php endif; ?>
-    <p><?php esc_html_e( 'Please use the form below to provide updated payment and billing information.', 'tta' ); ?></p>
-    <?php $price = tta_get_membership_price( get_user_meta( get_current_user_id(), 'tta_prev_level', true ) ?: 'basic' ); ?>
-    <?php $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status ); ?>
-    <p><?php esc_html_e( 'Status:', 'tta' ); ?> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
-    <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
-    <?php if ( 'cancelled' !== $status ) : ?>
-      <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">
-        <?php wp_nonce_field( 'tta_member_front_update', 'nonce' ); ?>
-        <input type="hidden" name="action" value="tta_update_payment" />
-        <p>
-          <label>
-            <?php esc_html_e( 'Card Number', 'tta' ); ?><br />
-            <input type="text" name="card_number" placeholder="&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;" required />
-          </label>
-        </p>
-        <p>
-          <label>
-            <?php esc_html_e( 'Expiration', 'tta' ); ?><br />
-            <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
-          </label>
-        </p>
-        <p>
-          <label>
-            <?php esc_html_e( 'CVC', 'tta' ); ?><br />
-            <input type="text" name="card_cvc" placeholder="123" required />
-          </label>
-        </p>
-        <p class="tta-submit-wrap">
-          <button type="submit" class="button"><?php esc_html_e( 'Update Card', 'tta' ); ?></button>
-          <span class="tta-progress-spinner">
-            <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
-          </span>
-          <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
-        </p>
-      </form>
-    <?php endif; ?>
+      <p class="tta-subscription-issue-message"><?php esc_html_e( 'Looks like there\'s an issue with your subscription! Please use the form below to provide updated payment and billing information.', 'tta' ); ?></p>
+      <?php if ( $gateway_status ) : ?>
+        <p><span class="tta-bmi-bold"><?php esc_html_e( 'Gateway Status:', 'tta' ); ?></span> <?php echo esc_html( $gateway_status ); ?></p>
+      <?php endif; ?>
+      <p><span class="tta-bmi-bold"><?php esc_html_e( 'Your Membership Status:', 'tta' ); ?></span> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>
+      <?php if ( ! empty( $info['last4'] ) ) : ?>
+        <p><?php esc_html_e( 'Card on File:', 'tta' ); ?> **** <?php echo esc_html( $info['last4'] ); ?></p>
+      <?php endif; ?>
+      <p class="tta-subscription-issue-message"><?php esc_html_e( 'Please use the form below to provide updated payment and billing information,', 'tta' ); ?> <a class="tta-become-a-member-again" href="<?php echo esc_url( home_url( '/become-a-member' ) ); ?>"><?php esc_html_e( 'or purchase a new membership here!', 'tta' ); ?></a></p>
+      <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
+      <?php if ( 'cancelled' !== $status ) : ?>
+        <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">
+          <?php wp_nonce_field( 'tta_member_front_update', 'nonce' ); ?>
+          <input type="hidden" name="action" value="tta_update_payment" />
+          <p>
+            <label>
+              <?php esc_html_e( 'Card Number', 'tta' ); ?><br />
+              <input type="text" name="card_number" placeholder="&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226;" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'Expiration', 'tta' ); ?><br />
+              <input type="text" class="tta-card-exp" name="exp_date" placeholder="MM/YY" required maxlength="5" pattern="\d{2}/\d{2}" inputmode="numeric" />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'CVC', 'tta' ); ?><br />
+              <input type="text" name="card_cvc" placeholder="123" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'Billing First Name', 'tta' ); ?><br />
+              <input type="text" name="bill_first" value="<?php echo esc_attr( $member['first_name'] ); ?>" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'Billing Last Name', 'tta' ); ?><br />
+              <input type="text" name="bill_last" value="<?php echo esc_attr( $member['last_name'] ); ?>" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'Street Address', 'tta' ); ?><br />
+              <input type="text" name="bill_address" value="<?php echo esc_attr( $street_address ); ?>" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'Address Line 2', 'tta' ); ?><br />
+              <input type="text" name="bill_address2" value="<?php echo esc_attr( $address_2 ); ?>" />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'City', 'tta' ); ?><br />
+              <input type="text" name="bill_city" value="<?php echo esc_attr( $city ); ?>" required />
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'State', 'tta' ); ?><br />
+              <select name="bill_state">
+                <?php foreach ( tta_get_us_states() as $abbr => $name ) : ?>
+                  <option value="<?php echo esc_attr( $abbr ); ?>" <?php selected( $state, $abbr ); ?>><?php echo esc_html( $name ); ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+          </p>
+          <p>
+            <label>
+              <?php esc_html_e( 'ZIP', 'tta' ); ?><br />
+              <input type="text" name="bill_zip" value="<?php echo esc_attr( $zip ); ?>" required />
+            </label>
+          </p>
+          <p class="tta-submit-wrap">
+            <button type="submit" class="button"><?php esc_html_e( 'Update Card', 'tta' ); ?></button>
+            <span class="tta-progress-spinner">
+              <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+            </span>
+            <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
+          </p>
+        </form>
+      <?php endif; ?>
   <?php else :
     $price = tta_get_membership_price( $level );
     ?>

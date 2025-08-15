@@ -24,9 +24,8 @@ The status is also verified once per day for active sessions and again whenever 
 member views the **Billing & Membership Info** tab. If the gateway reports a
 problem, the member's `membership_level` is temporarily set to `free` and
 `subscription_status` is set to `paymentproblem`. The dashboard then displays a
-message prompting the user to update their billing details. When new payment
-information is submitted the
-plugin attempts to retry the failed charge immediately—on success the stored
+subscription issue notice with full billing and address fields plus a link to purchase a new membership.
+When new payment information is submitted the plugin attempts to retry the failed charge immediately—on success the stored
 membership level and `subscription_status` return to `active`.
 
 ## Converting Past Transactions
