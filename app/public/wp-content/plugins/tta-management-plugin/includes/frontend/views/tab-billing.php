@@ -2,9 +2,12 @@
 <div id="tab-billing" class="tta-dashboard-section">
   <h3><?php esc_html_e( 'Billing & Membership Info', 'tta' ); ?></h3>
   <?php
-  $level  = strtolower( $member['membership_level'] ?? 'free' );
-  $status = strtolower( $member['subscription_status'] ?? '' );
-  $sub_id = $member['subscription_id'] ?? '';
+  tta_sync_subscription_status( get_current_user_id() );
+  $ctx    = tta_get_current_user_context();
+  $member = $ctx['member'];
+  $level  = strtolower( $ctx['membership_level'] ?? 'free' );
+  $status = strtolower( $ctx['subscription_status'] ?? '' );
+  $sub_id = $ctx['subscription_id'] ?? '';
   $last4  = $sub_id ? tta_get_subscription_card_last4( $sub_id ) : '';
   $cancel = ( 'cancelled' === $status ) ? tta_get_last_membership_cancellation( get_current_user_id() ) : null;
   if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) :
@@ -34,7 +37,7 @@
   <?php elseif ( 'paymentproblem' === $status ) :
     $info = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
     ?>
-    <p><?php esc_html_e( 'There was a problem processing your membership payment.', 'tta' ); ?></p>
+    <p><?php esc_html_e( 'Looks like there\'s an issue with your subscription.', 'tta' ); ?></p>
     <?php if ( ! empty( $info['status'] ) ) : ?>
       <?php
         $display_status = ( isset( $info['status'] ) && 'paymentproblem' === strtolower( $info['status'] ) ) ? __( 'Payment problem', 'tta' ) : ucfirst( $info['status'] );
@@ -44,7 +47,7 @@
     <?php if ( ! empty( $info['last4'] ) ) : ?>
       <p><?php esc_html_e( 'Card on File:', 'tta' ); ?> **** <?php echo esc_html( $info['last4'] ); ?></p>
     <?php endif; ?>
-    <p><?php esc_html_e( 'Please update your payment method below to restore your membership.', 'tta' ); ?></p>
+    <p><?php esc_html_e( 'Please use the form below to provide updated payment and billing information.', 'tta' ); ?></p>
     <?php $price = tta_get_membership_price( get_user_meta( get_current_user_id(), 'tta_prev_level', true ) ?: 'basic' ); ?>
     <?php $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status ); ?>
     <p><?php esc_html_e( 'Status:', 'tta' ); ?> <span id="tta-membership-status"><?php echo esc_html( $display_status ); ?></span></p>

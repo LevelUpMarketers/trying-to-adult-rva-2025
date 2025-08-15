@@ -184,6 +184,7 @@ register_deactivation_hook( __FILE__, array( 'TTA_Refund_Processor', 'clear_even
 // Initialize plugin
 add_action( 'plugins_loaded', array( 'TTA_Plugin', 'init' ) );
 add_action( 'wp_login', 'tta_check_subscription_on_login', 10, 2 );
+add_action( 'init', 'tta_check_subscription_on_init' );
 
 class TTA_Plugin {
     public static function init() {
