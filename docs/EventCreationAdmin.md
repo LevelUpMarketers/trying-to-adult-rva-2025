@@ -2,6 +2,8 @@
 
 Administrators manage events from the **TTA Events** pages. The editor collects standard details like the name, date and location along with optional images and links.
 
+After an event is saved, the plugin automatically schedules reminder emails for hosts, volunteers, and attendees. These messages are queued to send 24 hours and 3 hours before the event start time and always use the latest host, volunteer, and attendee lists when they run.
+
 ## Hosts and Volunteers
 
 Host and volunteer fields use an autocomplete list populated from members whose type is Volunteer, Admin or Super Admin. When the form is saved each name is converted to the member's WordPress user ID and stored in the `hosts` and `volunteers` columns. Older records that still contain names are handled automatically.

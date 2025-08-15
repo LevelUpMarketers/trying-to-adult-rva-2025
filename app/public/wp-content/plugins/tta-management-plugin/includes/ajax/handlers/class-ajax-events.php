@@ -343,6 +343,7 @@ class TTA_Ajax_Events {
         }
 
         $page_url = $page_id ? get_permalink( $page_id ) : '';
+        TTA_Email_Reminders::schedule_event_emails( $event_id );
         TTA_Cache::flush();
         wp_send_json_success([ 'message'=>'Event updated!','page_url'=>$page_url ]);
     }

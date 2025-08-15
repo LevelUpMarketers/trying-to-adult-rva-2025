@@ -941,20 +941,22 @@ function tta_get_event_attendee_image_ids( $event_id ) {
 }
 
 /**
- * Retrieve email addresses for all hosts and volunteers of an event.
+ * Retrieve email addresses for hosts and/or volunteers of an event.
  *
  * Supports both numeric user IDs and legacy name-based values.
  *
- * @param int $event_id Event ID.
+ * @param int         $event_id Event ID.
+ * @param string|null $role     Optional role filter: 'host' or 'volunteer'.
  * @return string[] List of unique emails.
  */
-function tta_get_event_host_volunteer_emails( $event_id ) {
+function tta_get_event_host_volunteer_emails( $event_id, $role = null ) {
     $event_id = intval( $event_id );
     if ( ! $event_id ) {
         return [];
     }
 
-    $cache_key = 'event_host_vol_emails_' . $event_id;
+    $role      = $role ? strtolower( $role ) : null;
+    $cache_key = 'event_host_vol_emails_' . $event_id . '_' . ( $role ?: 'all' );
     $cached    = TTA_Cache::get( $cache_key );
     if ( false !== $cached ) {
         return $cached;
@@ -996,18 +998,29 @@ function tta_get_event_host_volunteer_emails( $event_id ) {
     list( $host_ids, $host_names ) = $parse( $row['hosts'] ?? '' );
     list( $vol_ids,  $vol_names  ) = $parse( $row['volunteers'] ?? '' );
 
-    $emails = [];
+    $emails    = [];
+    $id_list   = [];
+    $name_list = [];
 
-    $id_list = array_unique( array_merge( $host_ids, $vol_ids ) );
+    if ( 'host' === $role ) {
+        $id_list   = $host_ids;
+        $name_list = $host_names;
+    } elseif ( 'volunteer' === $role ) {
+        $id_list   = $vol_ids;
+        $name_list = $vol_names;
+    } else {
+        $id_list   = array_unique( array_merge( $host_ids, $vol_ids ) );
+        $name_list = array_unique( array_merge( $host_names, $vol_names ) );
+    }
+
     if ( $id_list ) {
         $placeholders = implode( ',', array_fill( 0, count( $id_list ), '%d' ) );
-        $rows = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$members_table} WHERE wpuserid IN ($placeholders)", $id_list ) );
+        $rows         = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$members_table} WHERE wpuserid IN ($placeholders)", $id_list ) );
         foreach ( $rows as $em ) {
             $emails[] = sanitize_email( $em );
         }
     }
 
-    $name_list = array_unique( array_merge( $host_names, $vol_names ) );
     foreach ( $name_list as $nm ) {
         $rows = $wpdb->get_col( $wpdb->prepare( "SELECT email FROM {$members_table} WHERE LOWER(CONCAT(first_name,' ',last_name)) = %s", $nm ) );
         foreach ( $rows as $em ) {
