@@ -364,6 +364,16 @@
 .tta-bmi-bold{
   font-weight:bold;
 }
+.tta-attendance-summary-totals{
+  margin-bottom:0px;
+}
+.tta-for-margin-and-nothing-else-ha-ha{
+  display: block;
+  height: 20px;
+}
+.tta-leave-waitlist{
+  margin-top:10px;
+}
 
 .tta-billing-history-mobile {
   display: none;

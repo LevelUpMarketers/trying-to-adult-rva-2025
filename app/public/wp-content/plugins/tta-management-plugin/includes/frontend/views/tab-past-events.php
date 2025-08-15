@@ -49,8 +49,8 @@
         ?>
       </p>
     <?php endif; ?>
-    <p class="tta-attendance-summary"><?php printf( esc_html__( 'Total Events Attended: %d', 'tta' ), intval( $summary['attended'] ) ); ?></p>
-    <p class="tta-attendance-summary"><?php printf( esc_html__( 'Total Event No-Shows: %d', 'tta' ), intval( $summary['no_show'] ) ); ?></p>
+    <p class="tta-attendance-summary tta-attendance-summary-totals"><span class="tta-bmi-bold"><?php printf( esc_html__( 'Total Events Attended:', 'tta' ) ); ?></span> <?php echo intval( $summary['attended'] ); ?></p>
+    <p class="tta-attendance-summary tta-attendance-summary-totals"><span class="tta-bmi-bold"><?php printf( esc_html__( 'Total Event No-Shows:', 'tta' ) ); ?></span> <?php echo intval( $summary['no_show'] ); ?></p>
   </div>
   <?php
 
@@ -73,6 +73,7 @@
               $time_str  = trim( $start_fmt . ( $end_fmt ? ' – ' . $end_fmt : '' ) );
           }
           ?>
+          <span class="tta-for-margin-and-nothing-else-ha-ha"></span>
           <div class="tta-upcoming-event-indiv-holder">
           <div class="tta-upcoming-event">
             <?php if ( $thumb ) : ?>
