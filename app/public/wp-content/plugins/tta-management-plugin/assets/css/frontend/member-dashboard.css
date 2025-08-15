@@ -364,6 +364,20 @@
 .tta-bmi-bold{
   font-weight:bold;
 }
+.tta-attendance-summary-totals{
+  margin-bottom:0px;
+}
+.tta-for-margin-and-nothing-else-ha-ha{
+  display: block;
+  height: 20px;
+}
+.tta-leave-waitlist{
+  margin-top:10px;
+}
+
+.tta-billing-history-mobile {
+  display: none;
+}
 
 /* Responsive mobile layout */
 @media (max-width: 1199px) {
@@ -487,6 +501,23 @@
     padding: 15px 0;
     gap: 15px;
     margin-bottom: 10px;
+  }
+  .tta-billing-history--desktop {
+    display: none;
+  }
+  .tta-billing-history-mobile {
+    display: block;
+  }
+  .tta-billing-history-mobile-row {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    margin-bottom: 10px;
+  }
+  .tta-bhm-field {
+    margin-bottom: 4px;
+  }
+  .tta-bhm-field:last-child {
+    margin-bottom: 0;
   }
 }
 

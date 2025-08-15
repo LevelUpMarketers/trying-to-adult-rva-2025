@@ -237,7 +237,7 @@
   $history = tta_get_member_billing_history( get_current_user_id() );
   if ( $history ) : ?>
     <h4><?php esc_html_e( 'Payment History', 'tta' ); ?></h4>
-    <table class="widefat striped tta-billing-history">
+    <table class="widefat striped tta-billing-history tta-billing-history--desktop">
       <thead>
         <tr>
           <th><?php esc_html_e( 'Date', 'tta' ); ?></th>
@@ -269,6 +269,25 @@
         <?php endforeach; ?>
       </tbody>
     </table>
+
+    <div class="tta-billing-history-mobile">
+      <?php foreach ( $history as $row ) : ?>
+        <div class="tta-billing-history-mobile-row">
+          <div class="tta-bhm-field tta-bhm-date"><strong><?php esc_html_e( 'Date', 'tta' ); ?>:</strong> <?php echo esc_html( date_i18n( 'F j, Y', strtotime( $row['date'] ) ) ); ?></div>
+          <div class="tta-bhm-field tta-bhm-item"><strong><?php esc_html_e( 'Item', 'tta' ); ?>:</strong> 
+            <?php if ( ! empty( $row['url'] ) ) : ?>
+              <a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['description'] ); ?></a>
+            <?php else : ?>
+              <?php echo esc_html( $row['description'] ); ?>
+            <?php endif; ?>
+          </div>
+          <div class="tta-bhm-field tta-bhm-amount"><strong><?php esc_html_e( 'Amount', 'tta' ); ?>:</strong> $<?php echo esc_html( number_format( $row['amount'], 2 ) ); ?></div>
+          <div class="tta-bhm-field tta-bhm-transaction"><strong><?php esc_html_e( 'Transaction ID', 'tta' ); ?>:</strong> <?php echo esc_html( $row['transaction_id'] ?? '' ); ?></div>
+          <div class="tta-bhm-field tta-bhm-type"><strong><?php esc_html_e( 'Type', 'tta' ); ?>:</strong> <?php echo esc_html( ucwords( $row['type'] ) ); ?></div>
+          <div class="tta-bhm-field tta-bhm-method"><strong><?php esc_html_e( 'Payment Method', 'tta' ); ?>:</strong> <?php echo esc_html( $row['method'] ); ?></div>
+        </div>
+      <?php endforeach; ?>
+    </div>
   <?php else : ?>
     <p><?php esc_html_e( 'No transactions found.', 'tta' ); ?></p>
   <?php endif; ?>

@@ -66,7 +66,7 @@ their card information directly on the dashboard.
 If no membership is active and there is no payment issue, a simple message
 "You do not currently have a paid membership." appears instead of the controls.
 
-Below the membership controls is a **Payment History** table. It lists all
+Below the membership controls is a **Payment History** table. On screens narrower than 1200px the table is replaced with a stacked mobile layout for readability. It lists all
 transactions in chronological order including event purchases logged in the
 `tta_transactions` table, any refunds processed, and monthly membership charges
 retrieved from the Authorize.Net API. Refund transactions now appear alongside
