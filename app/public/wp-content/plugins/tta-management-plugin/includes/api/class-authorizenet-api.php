@@ -182,6 +182,83 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
+     * Retry the most recent charge for a subscription using its stored profile.
+     *
+     * @param string $subscription_id Subscription ID.
+     * @return array { success:bool, transaction_id?:string, error?:string }
+     */
+    public function retry_subscription_charge( $subscription_id ) {
+        $details = $this->get_subscription_details( $subscription_id );
+        if ( ! $details['success'] ) {
+            return [ 'success' => false, 'error' => $details['error'] ?? 'Unknown error' ];
+        }
+        $profile_id = $details['profile_id'] ?? '';
+        $payment_profile_id = $details['payment_profile_id'] ?? '';
+        $amount = $details['amount'] ?? 0;
+        if ( ! $profile_id || ! $payment_profile_id || ! $amount ) {
+            return [ 'success' => false, 'error' => 'Missing profile information' ];
+        }
+
+        return $this->charge_profile( $profile_id, $payment_profile_id, $amount );
+    }
+
+    /**
+     * Charge an existing customer profile/payment profile.
+     *
+     * @param string $profile_id         Customer profile ID.
+     * @param string $payment_profile_id Payment profile ID.
+     * @param float  $amount             Amount to charge.
+     * @return array { success:bool, transaction_id?:string, error?:string }
+     */
+    public function charge_profile( $profile_id, $payment_profile_id, $amount ) {
+        if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
+            return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
+        }
+
+        $merchantAuthentication = new AnetAPI\MerchantAuthenticationType();
+        $merchantAuthentication->setName( $this->login_id );
+        $merchantAuthentication->setTransactionKey( $this->transaction_key );
+
+        $profileToCharge = new AnetAPI\CustomerProfilePaymentType();
+        $profileToCharge->setCustomerProfileId( $profile_id );
+        $payProf = new AnetAPI\PaymentProfileType();
+        $payProf->setPaymentProfileId( $payment_profile_id );
+        $profileToCharge->setPaymentProfile( $payProf );
+
+        $transactionRequest = new AnetAPI\TransactionRequestType();
+        $transactionRequest->setTransactionType( 'authCaptureTransaction' );
+        $transactionRequest->setAmount( $amount );
+        $transactionRequest->setProfile( $profileToCharge );
+
+        $request = new AnetAPI\CreateTransactionRequest();
+        $request->setMerchantAuthentication( $merchantAuthentication );
+        $request->setTransactionRequest( $transactionRequest );
+
+        $controller = new AnetController\CreateTransactionController( $request );
+        $response   = $controller->executeWithApiResponse( $this->environment );
+        $this->log_response( 'charge_profile', $response );
+
+        if ( $response && 'Ok' === $response->getMessages()->getResultCode() ) {
+            $tresponse = $response->getTransactionResponse();
+            if ( $tresponse && $tresponse->getResponseCode() === '1' ) {
+                return [
+                    'success'        => true,
+                    'transaction_id' => $tresponse->getTransId(),
+                ];
+            }
+            return [
+                'success' => false,
+                'error'   => $this->format_error( $response, $tresponse, 'Transaction failed' ),
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error'   => $this->format_error( $response, null, 'API error' ),
+        ];
+    }
+
+    /**
      * Issue a refund for a previous transaction.
      *
      * @param float  $amount        Refund amount.
@@ -534,6 +611,8 @@ class TTA_AuthorizeNet_API {
             $status   = $sub && method_exists( $sub, 'getStatus' ) ? strtolower( $sub->getStatus() ) : '';
             $profile  = $sub ? $sub->getProfile() : null;
             $pay_prof = $profile ? $profile->getPaymentProfile() : null;
+            $profile_id = $profile && method_exists( $profile, 'getCustomerProfileId' ) ? $profile->getCustomerProfileId() : '';
+            $payment_profile_id = $profile && method_exists( $profile, 'getCustomerPaymentProfileId' ) ? $profile->getCustomerPaymentProfileId() : '';
             $payment  = $pay_prof ? $pay_prof->getPayment() : null;
             $card     = $payment ? $payment->getCreditCard() : null;
             $masked   = $card ? $card->getCardNumber() : '';
@@ -554,12 +633,14 @@ class TTA_AuthorizeNet_API {
             }
 
             $data = [
-                'success'   => true,
-                'card_last4'=> $last4,
-                'status'    => $status,
-                'amount'    => $amount,
-                'exp_date'  => $exp,
-                'billing'   => $billing,
+                'success'            => true,
+                'card_last4'         => $last4,
+                'status'             => $status,
+                'amount'             => $amount,
+                'exp_date'           => $exp,
+                'billing'            => $billing,
+                'profile_id'         => $profile_id,
+                'payment_profile_id' => $payment_profile_id,
             ];
 
             if ( $include_transactions ) {
@@ -1004,7 +1085,7 @@ class TTA_AuthorizeNet_API {
 
         $profile = new AnetAPI\CustomerProfileIdType();
         $profile->setCustomerProfileId( $customer_profile_id );
-        $profile->setPaymentProfileId( $payment_profile_id );
+        $profile->setCustomerPaymentProfileId( $payment_profile_id );
 
         $subscription = new AnetAPI\ARBSubscriptionType();
         $subscription->setName( $name );

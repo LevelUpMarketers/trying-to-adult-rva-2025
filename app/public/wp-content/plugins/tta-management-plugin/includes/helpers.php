@@ -1302,33 +1302,82 @@ function tta_check_subscription_on_login( $user_login, $user ) {
     }
     TTA_Cache::set( $cache_key, 1, HOUR_IN_SECONDS );
 
-    $level = tta_get_user_membership_level( $wp_user_id );
-    if ( 'free' === $level ) {
+    tta_sync_subscription_status( $wp_user_id );
+}
+
+/**
+ * Ensure a user's subscription status matches Authorize.Net.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_sync_subscription_status( $wp_user_id ) {
+    $wp_user_id = intval( $wp_user_id );
+    if ( ! $wp_user_id ) {
         return;
     }
 
+    $level  = tta_get_user_membership_level( $wp_user_id );
     $sub_id = tta_get_user_subscription_id( $wp_user_id );
     if ( ! $sub_id ) {
         return;
     }
 
-    $info = tta_get_subscription_status_info( $sub_id );
-    $status = $info['status'] ?? '';
+    $info           = tta_get_subscription_status_info( $sub_id );
+    $gateway_status = strtolower( $info['status'] ?? '' );
+    if ( ! $gateway_status ) {
+        return;
+    }
+
+    if ( in_array( $gateway_status, [ 'cancelled', 'canceled', 'terminated' ], true ) ) {
+        $status = 'cancelled';
+    } elseif ( 'active' === $gateway_status ) {
+        $status = 'active';
+    } else {
+        $status = 'paymentproblem';
+    }
+
+    $current = tta_get_user_subscription_status( $wp_user_id );
 
     if ( 'active' !== $status ) {
-        update_user_meta( $wp_user_id, 'tta_prev_level', $level );
-        tta_update_user_membership_level( $wp_user_id, 'free', null, 'paymentproblem' );
+        if ( 'free' !== $level ) {
+            update_user_meta( $wp_user_id, 'tta_prev_level', $level );
+        }
+        tta_update_user_membership_level( $wp_user_id, 'free', null, $status );
+        if ( $status !== $current ) {
+            tta_log_subscription_status_change( $wp_user_id, $status );
+        }
     } else {
-        $current = tta_get_user_subscription_status( $wp_user_id );
-        if ( 'paymentproblem' === $current ) {
+        if ( 'free' === $level ) {
             $prev = get_user_meta( $wp_user_id, 'tta_prev_level', true );
             if ( ! in_array( $prev, [ 'basic', 'premium' ], true ) ) {
                 $prev = 'basic';
             }
             tta_update_user_membership_level( $wp_user_id, $prev, null, 'active' );
             delete_user_meta( $wp_user_id, 'tta_prev_level' );
+            if ( 'active' !== $current ) {
+                tta_log_subscription_status_change( $wp_user_id, 'active' );
+            }
+        } elseif ( 'active' !== $current ) {
+            tta_update_user_subscription_status( $wp_user_id, 'active' );
+            tta_log_subscription_status_change( $wp_user_id, 'active' );
         }
     }
+}
+
+/**
+ * Periodic front-end check to keep subscription statuses in sync.
+ */
+function tta_check_subscription_on_init() {
+    if ( ! is_user_logged_in() ) {
+        return;
+    }
+    $wp_user_id = get_current_user_id();
+    $cache_key  = 'init_sub_check_' . $wp_user_id;
+    if ( TTA_Cache::get( $cache_key ) ) {
+        return;
+    }
+    TTA_Cache::set( $cache_key, 1, DAY_IN_SECONDS );
+    tta_sync_subscription_status( $wp_user_id );
 }
 
 /**
@@ -1377,6 +1426,39 @@ function tta_log_membership_cancellation( $wp_user_id, $level, $actor = 'member'
 
     TTA_Cache::delete( 'billing_hist_' . $wp_user_id );
     TTA_Cache::delete( 'mem_cancel_' . $wp_user_id );
+}
+
+/**
+ * Record a subscription status change in member history.
+ *
+ * @param int    $wp_user_id WordPress user ID.
+ * @param string $status     New status value.
+ */
+function tta_log_subscription_status_change( $wp_user_id, $status ) {
+    global $wpdb;
+    $members_table = $wpdb->prefix . 'tta_members';
+    $hist_table    = $wpdb->prefix . 'tta_memberhistory';
+
+    $member_id = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT id FROM {$members_table} WHERE wpuserid = %d LIMIT 1",
+            intval( $wp_user_id )
+        )
+    );
+    if ( ! $member_id ) {
+        return;
+    }
+
+    $wpdb->insert(
+        $hist_table,
+        [
+            'member_id'   => intval( $member_id ),
+            'wpuserid'    => intval( $wp_user_id ),
+            'action_type' => 'subscription_status',
+            'action_data' => wp_json_encode( [ 'status' => sanitize_text_field( $status ) ] ),
+        ],
+        [ '%d', '%d', '%s', '%s' ]
+    );
 }
 
 /**

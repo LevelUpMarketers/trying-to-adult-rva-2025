@@ -125,7 +125,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     $cancel   = tta_get_last_membership_cancellation( $member['wpuserid'] );
     $had_mem  = tta_user_had_membership( $member['wpuserid'] );
 
-    if ( 'free' === $level && ! in_array( $status, array( 'cancelled', 'paymentproblem' ), true ) ) {
+    if ( ! $sub_id ) {
         if ( $cancel ) {
             echo '<p>' . sprintf(
                 /* translators: 1: membership level, 2: date, 3: actor */
