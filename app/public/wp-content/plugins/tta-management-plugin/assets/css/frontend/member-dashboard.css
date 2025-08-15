@@ -365,6 +365,10 @@
   font-weight:bold;
 }
 
+.tta-billing-history-mobile {
+  display: none;
+}
+
 /* Responsive mobile layout */
 @media (max-width: 1199px) {
   .tta-member-dashboard {
@@ -487,6 +491,23 @@
     padding: 15px 0;
     gap: 15px;
     margin-bottom: 10px;
+  }
+  .tta-billing-history--desktop {
+    display: none;
+  }
+  .tta-billing-history-mobile {
+    display: block;
+  }
+  .tta-billing-history-mobile-row {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+    margin-bottom: 10px;
+  }
+  .tta-bhm-field {
+    margin-bottom: 4px;
+  }
+  .tta-bhm-field:last-child {
+    margin-bottom: 0;
   }
 }
 
