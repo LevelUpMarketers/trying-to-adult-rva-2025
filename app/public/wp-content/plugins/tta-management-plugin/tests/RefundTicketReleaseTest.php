@@ -39,7 +39,7 @@ class RefundTicketReleaseTest extends TestCase {
         global $wpdb;
         $wpdb = new DummyWpdbRefund();
         $wpdb->data['wp_tta_tickets'] = [ ['id'=>1,'event_ute_id'=>'ev1','ticketlimit'=>0] ];
-        $wpdb->data['wp_tta_cart_items'] = [ ['ticket_id'=>1,'expires_at'=>date('Y-m-d H:i:s', time()+300)] ];
+        $wpdb->data['wp_tta_cart_items'] = [ ['ticket_id'=>1,'expires_at'=>date('Y-m-d H:i:s', time()+600)] ];
         if (!function_exists('current_time')) {
             function current_time( $type = 'mysql', $gmt = false ) {
                 return 'timestamp' === $type ? time() : gmdate( 'Y-m-d H:i:s' );

@@ -182,7 +182,7 @@ class TTA_Cart {
         ['%d','%f'],['%d','%d']
       );
     } else {
-      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 300 );
+      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 600 );
       $this->wpdb->insert(
         $this->items_table,
         [
@@ -284,7 +284,7 @@ class TTA_Cart {
         ['%d'],['%d','%d']
       );
     } else {
-      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 300 );
+      $expire = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp', true ) + 600 );
       $this->wpdb->insert(
         $this->items_table,
         [
