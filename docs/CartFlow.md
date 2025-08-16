@@ -23,7 +23,7 @@ This document summarizes the current logic around the cart and checkout process 
    - Premium members cannot add another membership at all. Attempts to add Basic or Premium memberships are rejected.
    - When the cart only contains a membership, the table hides the **Ticket Reserved for…** column and the first column heading becomes **Event or Item**. Membership pricing shows "Per Month" in the price and subtotal columns, and the total row also displays "Per Month". Column spans adjust so the table remains aligned without the countdown column.
    - If both a membership and tickets are present, the total row displays the first charge (e.g. `$15.00 today, $5 Per Month`) so customers understand future recurring payments.
-   - A dedicated **Ticket Reserved for…** column displays a live five minute countdown for ticket rows.
+   - A dedicated **Ticket Reserved for…** column displays a live ten minute countdown for ticket rows.
   - The Quantity column enforces the per‑member limit configured for each ticket.
    - Discount codes are applied via an **Apply Discount** button. Multiple codes can be active and are split across matching event tickets. Active codes list the related event name in parentheses and appear beneath the cart total for easy removal.
    - The Price column always shows the base cost (e.g. `$20 x 2` when quantity is two). Subtotals strike through the original amount when discounts are applied.

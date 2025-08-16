@@ -4122,7 +4122,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                     </th>
                     <?php if ( $has_tickets ) : ?>
                     <th>
-                            <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'We reserve your ticket for 5 minutes so events don\'t oversell. After 5 minutes it becomes available to others.' ); ?>">
+                            <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( 'We reserve your ticket for 10 minutes so events don\'t oversell. After 10 minutes it becomes available to others.' ); ?>">
                                 <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Ticket Reserved for…', 'tta' ); ?>
@@ -4244,7 +4244,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                 <?php if ( $discount_codes ) : ?>
                 <tr class="tta-active-discounts">
                     <td colspan="6">
-                        <?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?>
+                        <span class="tta-discount-code-bold-title"><?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?></span>
                         <?php foreach ( $discount_codes as $code ) : ?>
                             <?php $ev = $code_events[ $code ] ?? ''; ?>
                             <span class="tta-discount-tag"><?php echo esc_html( $code . ( $ev ? " ($ev)" : '' ) ); ?> <button type="button" class="tta-remove-discount tta-remove-item" data-code="<?php echo esc_attr( $code ); ?>" aria-label="Remove"></button></span>
@@ -4305,7 +4305,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                     </th>
                     <?php if ( $has_tickets ) : ?>
                     <th>
-                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( "We reserve your ticket for 5 minutes so events don't oversell. After 5 minutes it becomes available to others." ); ?>">
+                        <span class="tta-tooltip-icon" data-tooltip="<?php echo esc_attr( "We reserve your ticket for 10 minutes so events don't oversell. After 10 minutes it becomes available to others." ); ?>">
                             <img src="<?php echo esc_url( ( defined( 'TTA_PLUGIN_URL' ) ? TTA_PLUGIN_URL : '' ) . 'assets/images/admin/question.svg' ); ?>" alt="?">
                         </span>
                         <?php esc_html_e( 'Ticket Reserved for…', 'tta' ); ?>
@@ -4415,7 +4415,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                 <?php if ( $discount_codes ) : ?>
                 <tr class="tta-active-discounts">
                     <td colspan="5">
-                        <?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?>
+                        <span class="tta-discount-code-bold-title"><?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?></span>
                         <?php foreach ( $discount_codes as $code ) : ?>
                             <?php $ev = $code_events[ $code ] ?? ''; ?>
                             <span class="tta-discount-tag"><?php echo esc_html( $code . ( $ev ? " ($ev)" : '' ) ); ?></span>
