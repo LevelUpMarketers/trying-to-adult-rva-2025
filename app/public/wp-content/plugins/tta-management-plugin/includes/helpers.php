@@ -4244,7 +4244,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                 <?php if ( $discount_codes ) : ?>
                 <tr class="tta-active-discounts">
                     <td colspan="6">
-                        <?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?>
+                        <span class="tta-discount-code-bold-title"><?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?></span>
                         <?php foreach ( $discount_codes as $code ) : ?>
                             <?php $ev = $code_events[ $code ] ?? ''; ?>
                             <span class="tta-discount-tag"><?php echo esc_html( $code . ( $ev ? " ($ev)" : '' ) ); ?> <button type="button" class="tta-remove-discount tta-remove-item" data-code="<?php echo esc_attr( $code ); ?>" aria-label="Remove"></button></span>
@@ -4415,7 +4415,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                 <?php if ( $discount_codes ) : ?>
                 <tr class="tta-active-discounts">
                     <td colspan="5">
-                        <?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?>
+                        <span class="tta-discount-code-bold-title"><?php esc_html_e( 'Active Discount Codes:', 'tta' ); ?></span>
                         <?php foreach ( $discount_codes as $code ) : ?>
                             <?php $ev = $code_events[ $code ] ?? ''; ?>
                             <span class="tta-discount-tag"><?php echo esc_html( $code . ( $ev ? " ($ev)" : '' ) ); ?></span>
