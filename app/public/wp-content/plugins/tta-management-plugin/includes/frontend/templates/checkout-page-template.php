@@ -12,6 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Initialize cart early for sessions
 $cart          = new TTA_Cart();
 $checkout_error = '';
+if ( isset( $_GET['reentry'] ) ) {
+    $cart->empty_cart();
+    $_SESSION['tta_membership_purchase'] = 'reentry';
+}
 
 if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] ) ) {
     check_admin_referer( 'tta_checkout_action', 'tta_checkout_nonce' );
@@ -65,10 +69,6 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
         $transaction_id = '';
 
         if ( $membership_total > 0 ) {
-            $existing_sub = tta_get_user_subscription_id( get_current_user_id() );
-            if ( $existing_sub ) {
-                $api->cancel_subscription( $existing_sub );
-            }
             $charge = $api->charge(
                 $membership_total,
                 preg_replace( '/\D/', '', $_POST['card_number'] ),
@@ -84,7 +84,7 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
                     $membership_total,
                     [
                         [
-                            'membership'  => ucfirst( $membership_level ) . ' Membership',
+                            'membership'  => tta_get_membership_label( $membership_level ),
                             'quantity'    => 1,
                             'price'       => $membership_total,
                             'final_price' => $membership_total,
@@ -96,28 +96,36 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
                     substr( preg_replace( '/\D/', '', $_POST['card_number'] ), -4 )
                 );
 
-                $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
-                $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
-                $sub = $api->create_subscription(
-                    $membership_total,
-                    preg_replace( '/\D/', '', $_POST['card_number'] ),
-                    $exp_date,
-                    tta_sanitize_text_field( $_POST['card_cvc'] ),
-                    $billing,
-                    $sub_name,
-                    $sub_desc,
-                    date( 'Y-m-d', strtotime( '+1 month' ) )
-                );
-                if ( $sub['success'] ) {
-                    tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'], 'active' );
-                    $_SESSION['tta_checkout_sub'] = [
-                        'subscription_id' => $sub['subscription_id'],
-                        'result_code'     => $sub['result_code'] ?? '',
-                        'message_code'    => $sub['message_code'] ?? '',
-                        'message_text'    => $sub['message_text'] ?? '',
-                    ];
+                if ( 'reentry' === $membership_level ) {
+                    tta_unban_user( get_current_user_id() );
                 } else {
-                    $checkout_error = $sub['error'];
+                    $existing_sub = tta_get_user_subscription_id( get_current_user_id() );
+                    if ( $existing_sub ) {
+                        $api->cancel_subscription( $existing_sub );
+                    }
+                    $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
+                    $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
+                    $sub = $api->create_subscription(
+                        $membership_total,
+                        preg_replace( '/\D/', '', $_POST['card_number'] ),
+                        $exp_date,
+                        tta_sanitize_text_field( $_POST['card_cvc'] ),
+                        $billing,
+                        $sub_name,
+                        $sub_desc,
+                        date( 'Y-m-d', strtotime( '+1 month' ) )
+                    );
+                    if ( $sub['success'] ) {
+                        tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'], 'active' );
+                        $_SESSION['tta_checkout_sub'] = [
+                            'subscription_id' => $sub['subscription_id'],
+                            'result_code'     => $sub['result_code'] ?? '',
+                            'message_code'    => $sub['message_code'] ?? '',
+                            'message_text'    => $sub['message_text'] ?? '',
+                        ];
+                    } else {
+                        $checkout_error = $sub['error'];
+                    }
                 }
             }
         }
@@ -170,7 +178,7 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
 
 $discount_codes   = $_SESSION['tta_discount_codes'] ?? [];
 $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
-$has_membership   = in_array( $membership_level, [ 'basic', 'premium' ], true );
+$has_membership   = in_array( $membership_level, [ 'basic', 'premium', 'reentry' ], true );
 get_header();
 
 $header_shortcode = '[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">CHECKOUT</p>[/vc_column_text][/vc_column][/vc_row]';
@@ -194,36 +202,40 @@ if ( $checkout_done ) {
         <div class="tta-checkout-complete">
             <?php
             if ( $member_level ) {
-                $amount = 'premium' === $member_level ? TTA_PREMIUM_MEMBERSHIP_PRICE : TTA_BASIC_MEMBERSHIP_PRICE;
-                printf(
-                    '<p>%s</p>',
-                    wp_kses_post(
-                        sprintf(
-                            __( "Thanks for becoming a %s Member! There's nothing else for you to do - you'll be automatically billed $%s once monthly, and can cancel anytime on your %s. An email will be sent to %s with your Membership Details. Thanks again, and enjoy your Membership perks!", 'tta' ),
-                            ucfirst( $member_level ),
-                            number_format_i18n( $amount, 0 ),
-                            '<a href="https://trying-to-adult-rva-2025.local/member-dashboard/?tab=billing">' . esc_html__( 'Member Dashboard', 'tta' ) . '</a>',
-                            esc_html( $user->user_email )
-                        )
-                    )
-                );
-
-                if ( 'basic' === $member_level ) {
+                if ( 'reentry' === $member_level ) {
+                    echo '<p>' . esc_html__( 'Thanks for purchasing a Re-Entry Ticket. Your account has been reinstated.', 'tta' ) . '</p>';
+                } else {
+                    $amount = 'premium' === $member_level ? TTA_PREMIUM_MEMBERSHIP_PRICE : TTA_BASIC_MEMBERSHIP_PRICE;
                     printf(
                         '<p>%s</p>',
                         wp_kses_post(
                             sprintf(
-                                __( "Did you know that there's even MORE perks and discounts to be had with a Premium Membership? %s", 'tta' ),
-                                '<a href="https://trying-to-adult-rva-2025.local/become-a-member/">' . esc_html__( 'Learn more here.', 'tta' ) . '</a>'
+                                __( "Thanks for becoming a %s Member! There's nothing else for you to do - you'll be automatically billed $%s once monthly, and can cancel anytime on your %s. An email will be sent to %s with your Membership Details. Thanks again, and enjoy your Membership perks!", 'tta' ),
+                                ucfirst( $member_level ),
+                                number_format_i18n( $amount, 0 ),
+                                '<a href="https://trying-to-adult-rva-2025.local/member-dashboard/?tab=billing">' . esc_html__( 'Member Dashboard', 'tta' ) . '</a>',
+                                esc_html( $user->user_email )
                             )
                         )
                     );
-                } elseif ( 'premium' === $member_level ) {
-                    printf(
-                        '<p>%s <a href="mailto:sam@tryingtoadultrva.com">sam@tryingtoadultrva.com</a> %s</p>',
-                        esc_html__( 'Did you know? You can earn a free event and other perks by referring friends and family! Let us know who you\'ve referred at', 'tta' ),
-                        esc_html__( "and we'll reach out.", 'tta' )
-                    );
+
+                    if ( 'basic' === $member_level ) {
+                        printf(
+                            '<p>%s</p>',
+                            wp_kses_post(
+                                sprintf(
+                                    __( "Did you know that there's even MORE perks and discounts to be had with a Premium Membership? %s", 'tta' ),
+                                    '<a href="https://trying-to-adult-rva-2025.local/become-a-member/">' . esc_html__( 'Learn more here.', 'tta' ) . '</a>'
+                                )
+                            )
+                        );
+                    } elseif ( 'premium' === $member_level ) {
+                        printf(
+                            '<p>%s <a href="mailto:sam@tryingtoadultrva.com">sam@tryingtoadultrva.com</a> %s</p>',
+                            esc_html__( 'Did you know? You can earn a free event and other perks by referring friends and family! Let us know who you\'ve referred at', 'tta' ),
+                            esc_html__( "and we'll reach out.", 'tta' )
+                        );
+                    }
                 }
             }
 

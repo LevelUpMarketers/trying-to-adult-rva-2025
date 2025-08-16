@@ -22,6 +22,7 @@ define( 'TTA_PLUGIN_VERSION', '0.4.5' );
 define( 'TTA_DB_VERSION', '1.11.0' );
 define( 'TTA_BASIC_MEMBERSHIP_PRICE', 5.00 );
 define( 'TTA_PREMIUM_MEMBERSHIP_PRICE', 10.00 );
+define( 'TTA_REENTRY_TICKET_PRICE', 25.00 );
 define( 'TTA_BASIC_SUBSCRIPTION_NAME', 'Trying to Adult Basic Membership' );
 define( 'TTA_PREMIUM_SUBSCRIPTION_NAME', 'Trying to Adult Premium Membership' );
 define( 'TTA_BASIC_SUBSCRIPTION_DESCRIPTION', 'Monthly Basic Membership subscription for Trying to Adult.' );
@@ -163,7 +164,7 @@ require_once TTA_PLUGIN_DIR . 'includes/shortcodes/class-homepage-shortcode.php'
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-member-dashboard.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-checkin-page-manager.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-become-member-page.php';
-require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-notice-bar.php';
+require_once TTA_PLUGIN_DIR . 'includes/frontend/class-tta-alert-bar.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart.php';
 require_once TTA_PLUGIN_DIR . 'includes/cart/class-cart-cleanup.php';
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-event-archiver.php';
@@ -221,8 +222,8 @@ class TTA_Plugin {
         TTA_Event_Archiver::init();
         TTA_Refund_Processor::init();
 
-        // Frontend notice bar
-        TTA_Notice_Bar::init();
+        // Frontend alert bar
+        TTA_Alert_Bar::init();
 
         // Clear plugin caches after a successful checkout
         add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );
