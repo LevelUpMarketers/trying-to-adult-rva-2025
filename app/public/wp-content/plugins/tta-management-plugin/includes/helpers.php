@@ -1170,6 +1170,8 @@ function tta_get_membership_label( $level ) {
             return __( 'Basic Member', 'tta' );
         case 'premium':
             return __( 'Premium Member', 'tta' );
+        case 'reentry':
+            return __( 'Re-Entry Ticket', 'tta' );
         default:
             return __( 'Free Member', 'tta' );
     }
@@ -1187,6 +1189,8 @@ function tta_get_membership_price( $level ) {
             return TTA_PREMIUM_MEMBERSHIP_PRICE;
         case 'basic':
             return TTA_BASIC_MEMBERSHIP_PRICE;
+        case 'reentry':
+            return TTA_REENTRY_TICKET_PRICE;
         default:
             return 0;
     }
@@ -1502,6 +1506,18 @@ function tta_user_is_banned( $wp_user_id ) {
     }
     $timestamp = strtotime( $until );
     return $timestamp && $timestamp > time();
+}
+
+/**
+ * Remove a user's banned status.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_unban_user( $wp_user_id ) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'tta_members';
+    $wpdb->update( $table, [ 'banned_until' => null ], [ 'wpuserid' => intval( $wp_user_id ) ], [ '%s' ], [ '%d' ] );
+    TTA_Cache::delete( 'banned_until_' . intval( $wp_user_id ) );
 }
 
 /**
@@ -4083,7 +4099,7 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
     $items            = $cart->get_items_with_discounts( $discount_codes );
     $total            = $cart->get_total( $discount_codes );
     $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
-    $has_membership   = in_array( $membership_level, [ 'basic', 'premium' ], true );
+    $has_membership   = in_array( $membership_level, [ 'basic', 'premium', 'reentry' ], true );
     $has_tickets      = ! empty( $items );
     $code_events = [];
     foreach ( $items as $row ) {
@@ -4195,11 +4211,11 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                 <?php if ( $has_membership ) : ?>
                     <?php $m_price = tta_get_membership_price( $membership_level ); ?>
                     <tr class="tta-membership-row" data-ticket="0">
-                        <td><?php echo esc_html( ucfirst( $membership_level ) . ' Membership' ); ?></td>
+                        <td><?php echo esc_html( tta_get_membership_label( $membership_level ) ); ?></td>
                         <?php if ( $has_tickets ) : ?><td></td><?php endif; ?>
                         <td>1</td>
-                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?> <?php esc_html_e( 'Per Month', 'tta' ); ?></td>
-                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?> <?php esc_html_e( 'Per Month', 'tta' ); ?></td>
+                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?><?php if ( 'reentry' !== $membership_level ) echo ' ' . esc_html__( 'Per Month', 'tta' ); ?></td>
+                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?><?php if ( 'reentry' !== $membership_level ) echo ' ' . esc_html__( 'Per Month', 'tta' ); ?></td>
                         <td><button type="button" id="tta-remove-membership" class="tta-remove-item" aria-label="Remove"></button></td>
                     </tr>
                 <?php endif; ?>
@@ -4214,7 +4230,9 @@ function tta_render_cart_contents( TTA_Cart $cart, $discount_codes = [], array $
                         $<?php echo esc_html( number_format( $total, 2 ) ); ?>
                         <?php
                         if ( $has_membership ) {
-                            if ( $has_tickets ) {
+                            if ( 'reentry' === $membership_level ) {
+                                // no extra text
+                            } elseif ( $has_tickets ) {
                                 echo ' ' . esc_html__( 'today,', 'tta' ) . ' $' . number_format( $m_total, 2 ) . ' ' . esc_html__( 'Per Month', 'tta' );
                             } else {
                                 echo ' ' . esc_html__( 'Per Month', 'tta' );
@@ -4264,7 +4282,7 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
     $items            = $cart->get_items_with_discounts( $discount_codes );
     $total            = $cart->get_total( $discount_codes );
     $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
-    $has_membership   = in_array( $membership_level, [ 'basic', 'premium' ], true );
+    $has_membership   = in_array( $membership_level, [ 'basic', 'premium', 'reentry' ], true );
     $has_tickets      = ! empty( $items );
     $code_events = [];
     foreach ( $items as $row ) {
@@ -4365,11 +4383,11 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                 <?php if ( $has_membership ) : ?>
                     <?php $m_price = tta_get_membership_price( $membership_level ); ?>
                     <tr class="tta-membership-row" data-ticket="0">
-                        <td><?php echo esc_html( ucfirst( $membership_level ) . ' Membership' ); ?></td>
+                        <td><?php echo esc_html( tta_get_membership_label( $membership_level ) ); ?></td>
                         <?php if ( $has_tickets ) : ?><td></td><?php endif; ?>
                         <td>1</td>
-                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?> <?php esc_html_e( 'Per Month', 'tta' ); ?></td>
-                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?> <?php esc_html_e( 'Per Month', 'tta' ); ?></td>
+                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?><?php if ( 'reentry' !== $membership_level ) echo ' ' . esc_html__( 'Per Month', 'tta' ); ?></td>
+                        <td>$<?php echo esc_html( number_format( $m_price, 2 ) ); ?><?php if ( 'reentry' !== $membership_level ) echo ' ' . esc_html__( 'Per Month', 'tta' ); ?></td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -4383,7 +4401,9 @@ function tta_render_checkout_summary( TTA_Cart $cart, $discount_codes = [] ) {
                         $<?php echo esc_html( number_format( $total, 2 ) ); ?>
                         <?php
                         if ( $has_membership ) {
-                            if ( $has_tickets ) {
+                            if ( 'reentry' === $membership_level ) {
+                                // no extra text
+                            } elseif ( $has_tickets ) {
                                 echo ' ' . esc_html__( 'today,', 'tta' ) . ' $' . number_format( $m_total, 2 ) . ' ' . esc_html__( 'Per Month', 'tta' );
                             } else {
                                 echo ' ' . esc_html__( 'Per Month', 'tta' );
