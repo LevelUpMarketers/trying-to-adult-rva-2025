@@ -66,9 +66,9 @@ if ( $tta_authnet_transaction ) {
 if ( $tta_sendgrid_key && ! defined( 'TTA_SENDGRID_API_KEY' ) ) {
     define( 'TTA_SENDGRID_API_KEY', $tta_sendgrid_key );
 }
+$tta_authnet_sandbox = get_option( 'tta_authnet_sandbox', false );
 if ( ! defined( 'TTA_AUTHNET_SANDBOX' ) ) {
-    // Uncomment the following line to use the Authorize.Net sandbox.
-    // define( 'TTA_AUTHNET_SANDBOX', true );
+    define( 'TTA_AUTHNET_SANDBOX', (bool) $tta_authnet_sandbox );
 }
 
 // Warn administrators if Authorize.Net credentials are missing.

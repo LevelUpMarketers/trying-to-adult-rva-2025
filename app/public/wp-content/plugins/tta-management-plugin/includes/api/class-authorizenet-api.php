@@ -104,7 +104,11 @@ class TTA_AuthorizeNet_API {
         $this->login_id        = $login_id        ?: ( defined( 'TTA_AUTHNET_LOGIN_ID' ) ? TTA_AUTHNET_LOGIN_ID : '' );
         $this->transaction_key = $transaction_key ?: ( defined( 'TTA_AUTHNET_TRANSACTION_KEY' ) ? TTA_AUTHNET_TRANSACTION_KEY : '' );
         if ( null === $sandbox ) {
-            $sandbox = defined( 'TTA_AUTHNET_SANDBOX' ) ? TTA_AUTHNET_SANDBOX : false;
+            if ( defined( 'TTA_AUTHNET_SANDBOX' ) ) {
+                $sandbox = TTA_AUTHNET_SANDBOX;
+            } else {
+                $sandbox = (bool) get_option( 'tta_authnet_sandbox', false );
+            }
         }
         $this->environment = $sandbox ? ANetEnvironment::SANDBOX : ANetEnvironment::PRODUCTION;
     }
