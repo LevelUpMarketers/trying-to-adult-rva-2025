@@ -183,6 +183,9 @@ class TTA_Ajax_Events {
             ] );
         }
 
+        // Schedule reminder emails for the new event
+        TTA_Email_Reminders::schedule_event_emails( $event_id );
+
         // 8) Return success
         $page_url = $page_id ? get_permalink( $page_id ) : '';
         TTA_Cache::flush();
