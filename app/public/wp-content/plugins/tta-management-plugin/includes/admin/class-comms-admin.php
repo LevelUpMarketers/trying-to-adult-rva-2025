@@ -351,7 +351,7 @@ class TTA_Comms_Admin {
                 echo '<td colspan="2"><div class="tta-inline-container" style="display:none;">';
                 echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
                 foreach ( $info['jobs'] as $job ) {
-                    $time = date_i18n( 'Y-m-d H:i', $job['timestamp'] );
+                    $time = wp_date( 'Y-m-d H:i', $job['timestamp'], wp_timezone() );
                     echo '<tr>';
                     echo '<td>' . esc_html( $job['label'] ) . '</td>';
                     echo '<td>' . esc_html( $time ) . '</td>';
@@ -397,7 +397,7 @@ class TTA_Comms_Admin {
         } else {
             echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time', 'tta' ) . '</th><th>' . esc_html__( 'Event ID', 'tta' ) . '</th><th>' . esc_html__( 'Template', 'tta' ) . '</th><th>' . esc_html__( 'Recipient', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th></tr></thead><tbody>';
             foreach ( $slice as $entry ) {
-                $time = date_i18n( 'Y-m-d H:i', $entry['time'] );
+                $time = wp_date( 'Y-m-d H:i', $entry['time'], wp_timezone() );
                 echo '<tr>'; // escape fields
                 echo '<td>' . esc_html( $time ) . '</td>';
                 echo '<td>' . esc_html( $entry['event_id'] ) . '</td>';

@@ -35,7 +35,7 @@ class TTA_Email_Reminders {
         }
 
         $start = explode( '|', $event['time'] ?? '' )[0] ?? '00:00';
-        $tz    = new DateTimeZone( 'America/New_York' );
+        $tz    = wp_timezone();
         $dt    = DateTime::createFromFormat( 'Y-m-d H:i', $event['date'] . ' ' . $start, $tz );
         if ( ! $dt ) {
             return;
