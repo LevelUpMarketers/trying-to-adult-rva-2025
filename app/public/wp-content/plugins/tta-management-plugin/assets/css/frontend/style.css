@@ -164,3 +164,69 @@
   .tta-info-title{display:inline;}
   .tta-toggle-cell.open .tta-inline-container{display:block;}
 }
+
+@media (max-width: 600px){
+
+  /*  All checkout page css  */
+
+  .tta-checkout-summary td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+      margin-bottom: 10px;
+  }
+
+  #tta-checkout-container .tta-checkout-summary tr {
+      margin-bottom: 60px;
+  }
+
+  #tta-checkout-container > table > tfoot {
+      display: block;
+      width: 100%;
+      margin-top: 70px;
+  }
+
+  #tta-checkout-container > table > tfoot > tr > th{
+      width: 100%;
+      display: block;
+      text-align: center;
+      margin-bottom: 10px;
+  }
+  #tta-checkout-container > table > tfoot > tr > td{
+      padding-left: 8px;
+      text-align: center;
+  }
+  .tta-checkout-grid .tta-checkout-left, .tta-checkout-grid .tta-checkout-right{
+    margin:0;
+  }
+  #tta-checkout-form > div.tta-checkout-grid > div.tta-checkout-left > div > div > div > label, #tta-checkout-form > div.tta-checkout-grid > div.tta-checkout-left > div > div > div > label input{
+    max-width: 100%;
+    width: 100%;
+  }
+  .tta-event-group .tta-attendee-row label {
+    max-width: 100%;
+    width: 100%;
+  }
+  .tta-checkout-right p, #tta-checkout-form .tta-checkout-grid input[type="text"], #tta-checkout-form .tta-checkout-grid input[type="email"], #tta-checkout-form .tta-checkout-grid select{
+    width: 100%;
+  }
+
+  .tta-place-order-button-p button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      margin-bottom: 20px;
+  }
+  .tta-place-order-button-p {
+      text-align: center;
+      min-height:120px;
+  }
+  #tta-checkout-response > ul{
+    list-style:none;
+  }
+
+
+  /*  All checkout page css  */
+
+}
