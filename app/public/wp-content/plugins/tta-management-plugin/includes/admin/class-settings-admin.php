@@ -61,8 +61,14 @@ class TTA_Settings_Admin {
                 $trans   = isset( $_POST['tta_authnet_transaction_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_transaction_key'] ) ) : '';
                 $send    = isset( $_POST['tta_sendgrid_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_sendgrid_api_key'] ) ) : '';
                 $sandbox = isset( $_POST['tta_authnet_sandbox'] ) ? (int) $_POST['tta_authnet_sandbox'] : 0;
-                update_option( 'tta_authnet_login_id', $login, false );
-                update_option( 'tta_authnet_transaction_key', $trans, false );
+
+                if ( $sandbox ) {
+                    update_option( 'tta_authnet_login_id_sandbox', $login, false );
+                    update_option( 'tta_authnet_transaction_key_sandbox', $trans, false );
+                } else {
+                    update_option( 'tta_authnet_login_id_live', $login, false );
+                    update_option( 'tta_authnet_transaction_key_live', $trans, false );
+                }
                 update_option( 'tta_sendgrid_api_key', $send, false );
                 update_option( 'tta_authnet_sandbox', $sandbox ? 1 : 0, false );
                 echo '<div class="updated"><p>' . esc_html__( 'API settings saved.', 'tta' ) . '</p></div>';
@@ -135,10 +141,14 @@ class TTA_Settings_Admin {
                 }
             }
 
-            $login   = get_option( 'tta_authnet_login_id', '' );
-            $trans   = get_option( 'tta_authnet_transaction_key', '' );
-            $send    = get_option( 'tta_sendgrid_api_key', '' );
-            $sandbox = (int) get_option( 'tta_authnet_sandbox', 0 );
+            $login_live    = get_option( 'tta_authnet_login_id_live', '' );
+            $trans_live    = get_option( 'tta_authnet_transaction_key_live', '' );
+            $login_sandbox = get_option( 'tta_authnet_login_id_sandbox', '' );
+            $trans_sandbox = get_option( 'tta_authnet_transaction_key_sandbox', '' );
+            $send          = get_option( 'tta_sendgrid_api_key', '' );
+            $sandbox       = (int) get_option( 'tta_authnet_sandbox', 0 );
+            $login         = $sandbox ? $login_sandbox : $login_live;
+            $trans         = $sandbox ? $trans_sandbox : $trans_live;
 
             echo '<form method="post" action="?page=tta-settings&tab=api">';
             wp_nonce_field( 'tta_save_api_settings_action', 'tta_save_api_settings_nonce' );

@@ -1518,6 +1518,26 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
 
 
 
+  // API Settings: switch authnet environment
+  var $envSelect = $('#tta_authnet_sandbox');
+  if ($envSelect.length && typeof TTA_Authnet !== 'undefined') {
+    var $login = $('#tta_authnet_login_id');
+    var $trans = $('#tta_authnet_transaction_key');
+
+    function ttaFillCreds(env) {
+      if (env === '1') {
+        $login.val(TTA_Authnet.sandbox_login || '');
+        $trans.val(TTA_Authnet.sandbox_key || '');
+      } else {
+        $login.val(TTA_Authnet.live_login || '');
+        $trans.val(TTA_Authnet.live_key || '');
+      }
+    }
+
+    ttaFillCreds($envSelect.val());
+    $envSelect.on('change', function(){ ttaFillCreds(this.value); });
+  }
+
   // Authorize.Net test suite button
   $(document).on('click', '#tta-authnet-test-button', function(e){
     e.preventDefault();

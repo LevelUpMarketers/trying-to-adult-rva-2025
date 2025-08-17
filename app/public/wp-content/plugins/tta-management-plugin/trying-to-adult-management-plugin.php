@@ -38,13 +38,16 @@ if ( ! defined( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS' ) ) {
     define( 'TTA_AUTHNET_IMPORT_MAX_REQUESTS', 200 );
 }
 
+require_once TTA_PLUGIN_DIR . 'includes/helpers.php';
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
 
 // Load Authorize.Net and SendGrid credentials from the database or environment variables.
-$tta_authnet_login       = get_option( 'tta_authnet_login_id' );
-$tta_authnet_transaction = get_option( 'tta_authnet_transaction_key' );
+$tta_authnet_sandbox     = get_option( 'tta_authnet_sandbox', false );
+$creds                   = tta_get_authnet_credentials( (bool) $tta_authnet_sandbox );
+$tta_authnet_login       = $creds['login_id'];
+$tta_authnet_transaction = $creds['transaction_key'];
 $tta_sendgrid_key        = get_option( 'tta_sendgrid_api_key' );
 
 if ( ! $tta_authnet_login && getenv( 'TTA_AUTHNET_LOGIN_ID' ) ) {
@@ -66,7 +69,6 @@ if ( $tta_authnet_transaction ) {
 if ( $tta_sendgrid_key && ! defined( 'TTA_SENDGRID_API_KEY' ) ) {
     define( 'TTA_SENDGRID_API_KEY', $tta_sendgrid_key );
 }
-$tta_authnet_sandbox = get_option( 'tta_authnet_sandbox', false );
 if ( ! defined( 'TTA_AUTHNET_SANDBOX' ) ) {
     define( 'TTA_AUTHNET_SANDBOX', (bool) $tta_authnet_sandbox );
 }
@@ -76,7 +78,8 @@ if ( is_admin() ) {
     add_action(
         'admin_notices',
         function () {
-            if ( current_user_can( 'manage_options' ) && ( ! get_option( 'tta_authnet_login_id' ) || ! get_option( 'tta_authnet_transaction_key' ) ) ) {
+            $c = tta_get_authnet_credentials();
+            if ( current_user_can( 'manage_options' ) && ( empty( $c['login_id'] ) || empty( $c['transaction_key'] ) ) ) {
                 echo '<div class="notice notice-error"><p>' .
                     esc_html__( 'Authorize.Net credentials are not configured. Enter them under TTA Settings → API Settings.', 'tta' ) .
                     '</p></div>';
@@ -134,8 +137,6 @@ spl_autoload_register( function ( $class ) {
 // ──────────────────────────────────────────────────────────────────────────
 // 1) Load our helper functions (including tta_get_us_states())
 // ──────────────────────────────────────────────────────────────────────────
-require_once TTA_PLUGIN_DIR . 'includes/helpers.php';
-
 // Core includes
 require_once TTA_PLUGIN_DIR . 'includes/class-db-setup.php';
 require_once TTA_PLUGIN_DIR . 'includes/frontend/class-event-page-manager.php';

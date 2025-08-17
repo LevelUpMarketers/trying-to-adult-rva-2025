@@ -27,7 +27,8 @@ class TTA_Assets {
      * @param string $hook_suffix The current admin page.
      */
     public static function enqueue_backend_assets( $hook_suffix ) {
-        if ( isset( $_GET['page'] ) && in_array( $_GET['page'], [ 'tta-events','tta-members','tta-tickets','tta-comms','tta-ads','tta-venues','tta-refund-requests' ], true ) ) {
+        $page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+        if ( in_array( $page, [ 'tta-events','tta-members','tta-tickets','tta-comms','tta-ads','tta-venues','tta-refund-requests','tta-settings' ], true ) ) {
 
             // 1) Make sure the full TinyMCE / Quicktags / editor CSS are loaded:
             if ( function_exists( 'wp_enqueue_editor' ) ) {
@@ -147,6 +148,19 @@ class TTA_Assets {
                     'sample_member'       => tta_get_sample_member(),
                 ]
             );
+
+            if ( 'tta-settings' === $page ) {
+                wp_localize_script(
+                    'tta-admin-js',
+                    'TTA_Authnet',
+                    [
+                        'live_login'    => get_option( 'tta_authnet_login_id_live', '' ),
+                        'live_key'      => get_option( 'tta_authnet_transaction_key_live', '' ),
+                        'sandbox_login' => get_option( 'tta_authnet_login_id_sandbox', '' ),
+                        'sandbox_key'   => get_option( 'tta_authnet_transaction_key_sandbox', '' ),
+                    ]
+                );
+            }
         }
     }
 
