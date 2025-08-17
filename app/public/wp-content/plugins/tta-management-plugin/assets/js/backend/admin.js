@@ -292,6 +292,21 @@ jQuery(function($){
         if(res.success){ row.remove(); }
       });
     });
+
+    function pad(num){ return (num < 10 ? '0' : '') + num; }
+    setInterval(function(){
+      $logs.find('.tta-countdown').each(function(){
+        var $el = $(this);
+        var remain = parseInt($el.data('remaining'), 10);
+        if (isNaN(remain)) { return; }
+        remain = Math.max(0, remain - 1);
+        $el.data('remaining', remain);
+        var hours = Math.floor(remain / 3600);
+        var minutes = Math.floor((remain % 3600) / 60);
+        var seconds = remain % 60;
+        $el.text(pad(hours) + ' H, ' + pad(minutes) + ' M, ' + pad(seconds) + ' S');
+      });
+    }, 1000);
   }
 
   var $history = $('#tta-email-history');

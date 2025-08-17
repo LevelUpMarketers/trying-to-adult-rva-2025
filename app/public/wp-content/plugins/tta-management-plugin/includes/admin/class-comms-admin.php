@@ -352,24 +352,16 @@ class TTA_Comms_Admin {
                 echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Time Until', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
                 $now = time();
                 foreach ( $info['jobs'] as $job ) {
-                    $time       = wp_date( 'Y-m-d H:i T', $job['timestamp'], wp_timezone() );
-                    $diff       = max( 0, $job['timestamp'] - $now );
-                    $days       = floor( $diff / DAY_IN_SECONDS );
-                    $hours      = floor( ( $diff % DAY_IN_SECONDS ) / HOUR_IN_SECONDS );
-                    $minutes    = floor( ( $diff % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
-                    $parts      = [];
-                    if ( $days > 0 ) {
-                        $parts[] = $days . 'd';
-                    }
-                    if ( $hours > 0 || $days > 0 ) {
-                        $parts[] = $hours . 'h';
-                    }
-                    $parts[] = $minutes . 'm';
-                    $remain    = implode( ' ', $parts );
+                    $time    = wp_date( 'm-d-Y g:iA', $job['timestamp'], wp_timezone() );
+                    $diff    = max( 0, $job['timestamp'] - $now );
+                    $hours   = floor( $diff / HOUR_IN_SECONDS );
+                    $minutes = floor( ( $diff % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+                    $seconds = $diff % MINUTE_IN_SECONDS;
+                    $remain  = sprintf( '%02d H, %02d M, %02d S', $hours, $minutes, $seconds );
                     echo '<tr>';
                     echo '<td>' . esc_html( $job['label'] ) . '</td>';
                     echo '<td>' . esc_html( $time ) . '</td>';
-                    echo '<td>' . esc_html( $remain ) . '</td>';
+                    echo '<td class="tta-countdown" data-remaining="' . esc_attr( $diff ) . '">' . esc_html( $remain ) . '</td>';
                     echo '<td>';
                     echo '<button class="button tta-email-log-list" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'See Email List', 'tta' ) . '</button> ';
                     echo '<button class="button tta-email-log-delete" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'Delete', 'tta' ) . '</button>';
