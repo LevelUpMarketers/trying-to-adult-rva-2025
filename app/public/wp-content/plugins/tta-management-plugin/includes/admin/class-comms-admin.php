@@ -324,7 +324,7 @@ class TTA_Comms_Admin {
             echo '</form></div></td></tr>';
         }
 
-        echo '</tbody></table></div>';
+        echo '</tbody></table>';
     }
 
     /** Render scheduled email jobs. */
@@ -348,13 +348,22 @@ class TTA_Comms_Admin {
                 echo '<td class="tta-toggle-cell"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ) . '" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>';
                 echo '</tr>';
                 echo '<tr class="tta-email-log-details tta-inline-row" style="display:none;">';
-                echo '<td colspan="2"><div class="tta-inline-container" style="display:none;">';
-                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
+                echo '<td colspan="2"><div class="tta-inline-container">';
+                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Time Until', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
+                $tz  = wp_timezone();
+                $now = wp_date( 'U', TTA_Email_Reminders::current_time(), $tz );
                 foreach ( $info['jobs'] as $job ) {
-                    $time = date_i18n( 'Y-m-d H:i', $job['timestamp'] );
+                    $send_ts = wp_date( 'U', $job['timestamp'], $tz );
+                    $time    = wp_date( 'm-d-Y g:iA', $job['timestamp'], $tz );
+                    $diff    = max( 0, $send_ts - $now );
+                    $hours   = floor( $diff / HOUR_IN_SECONDS );
+                    $minutes = floor( ( $diff % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+                    $seconds = $diff % MINUTE_IN_SECONDS;
+                    $remain  = sprintf( '%02d H, %02d M, %02d S', $hours, $minutes, $seconds );
                     echo '<tr>';
                     echo '<td>' . esc_html( $job['label'] ) . '</td>';
                     echo '<td>' . esc_html( $time ) . '</td>';
+                    echo '<td class="tta-countdown" data-remaining="' . esc_attr( $diff ) . '">' . esc_html( $remain ) . '</td>';
                     echo '<td>';
                     echo '<button class="button tta-email-log-list" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'See Email List', 'tta' ) . '</button> ';
                     echo '<button class="button tta-email-log-delete" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'Delete', 'tta' ) . '</button>';
@@ -397,7 +406,7 @@ class TTA_Comms_Admin {
         } else {
             echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time', 'tta' ) . '</th><th>' . esc_html__( 'Event ID', 'tta' ) . '</th><th>' . esc_html__( 'Template', 'tta' ) . '</th><th>' . esc_html__( 'Recipient', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th></tr></thead><tbody>';
             foreach ( $slice as $entry ) {
-                $time = date_i18n( 'Y-m-d H:i', $entry['time'] );
+                $time = wp_date( 'Y-m-d H:i', $entry['time'], wp_timezone() );
                 echo '<tr>'; // escape fields
                 echo '<td>' . esc_html( $time ) . '</td>';
                 echo '<td>' . esc_html( $entry['event_id'] ) . '</td>';

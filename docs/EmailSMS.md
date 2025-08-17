@@ -3,7 +3,7 @@
 The plugin sends automated notifications to members. Administrators can manage these messages from **TTA Email & SMS** in the WordPress admin. The page contains three tabs:
 
 1. **Email Templates** – existing template editor described below.
-2. **Email Logs** – lists scheduled reminder and thank‑you emails grouped by event. Each job exposes its current recipient list via AJAX and can be deleted before it runs.
+2. **Email Logs** – lists scheduled reminder and thank‑you emails grouped by event. Reminder jobs are automatically queued whenever an event is created or its start time changes and are scheduled using the site's timezone setting. To guard against misconfigured server clocks, the plugin fetches the current Eastern time from `worldtimeapi.org` and caches the offset for five minutes. Each entry shows the send time in `MM-DD-YYYY HH:MMAM/PM` format along with a live `HH H, MM M, SS S` countdown that now calculates using the site's timezone for accurate remaining time, exposes its current recipient list via AJAX, and can be deleted before it runs.
 3. **Email History** – a running log of all attempted emails including recipient address and delivery result. A **Clear Log** button removes all entries.
 
 Templates are listed in a table similar to the Manage Events page. Click a row to expand an inline form containing the fields for that communication. Each form has its own **Save Changes** button and progress spinner.

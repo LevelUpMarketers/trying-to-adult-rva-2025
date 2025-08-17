@@ -14,6 +14,47 @@ class TTA_Email_Reminders {
     }
 
     /**
+     * Retrieve cached offset between server time and real Eastern time.
+     *
+     * @return int Offset in seconds.
+     */
+    protected static function get_time_offset() {
+        $offset = get_transient( 'tta_time_offset' );
+        if ( false === $offset ) {
+            $offset  = 0;
+            $resp    = wp_remote_get( 'https://worldtimeapi.org/api/timezone/America/New_York' );
+            if ( ! is_wp_error( $resp ) ) {
+                $body      = json_decode( wp_remote_retrieve_body( $resp ), true );
+                $api_time  = intval( $body['unixtime'] ?? 0 );
+                if ( $api_time > 0 ) {
+                    $offset = $api_time - time();
+                }
+            }
+            set_transient( 'tta_time_offset', $offset, 5 * MINUTE_IN_SECONDS );
+        }
+        return intval( $offset );
+    }
+
+    /**
+     * Current real-world timestamp for Eastern time.
+     *
+     * @return int
+     */
+    public static function current_time() {
+        return time() + self::get_time_offset();
+    }
+
+    /**
+     * Convert a real timestamp to server time for scheduling.
+     *
+     * @param int $timestamp Real timestamp.
+     * @return int
+     */
+    protected static function to_server_time( $timestamp ) {
+        return $timestamp - self::get_time_offset();
+    }
+
+    /**
      * Schedule reminder emails for an event.
      *
      * @param int $event_id Event ID.
@@ -35,7 +76,7 @@ class TTA_Email_Reminders {
         }
 
         $start = explode( '|', $event['time'] ?? '' )[0] ?? '00:00';
-        $tz    = new DateTimeZone( 'America/New_York' );
+        $tz    = wp_timezone();
         $dt    = DateTime::createFromFormat( 'Y-m-d H:i', $event['date'] . ' ' . $start, $tz );
         if ( ! $dt ) {
             return;
@@ -60,7 +101,7 @@ class TTA_Email_Reminders {
         if ( ! $event_id ) {
             return;
         }
-        $timestamp = time() + DAY_IN_SECONDS;
+        $timestamp = self::to_server_time( self::current_time() + DAY_IN_SECONDS );
         if ( wp_next_scheduled( 'tta_post_event_thanks_email', [ $event_id ] ) ) {
             return;
         }
@@ -99,14 +140,15 @@ class TTA_Email_Reminders {
      * @return array
      */
     public static function get_scheduled_emails() {
-        $cron  = _get_cron_array();
-        $hooks = [
+        $cron   = _get_cron_array();
+        $hooks  = [
             'tta_attendee_reminder_email',
             'tta_host_reminder_email',
             'tta_volunteer_reminder_email',
             'tta_post_event_thanks_email',
         ];
         $scheduled = [];
+        $offset    = self::get_time_offset();
         foreach ( $cron as $timestamp => $events ) {
             foreach ( $events as $hook => $jobs ) {
                 if ( ! in_array( $hook, $hooks, true ) ) {
@@ -142,7 +184,7 @@ class TTA_Email_Reminders {
                     $scheduled[ $event_id ]['jobs'][] = [
                         'hook'      => $hook,
                         'template'  => $template,
-                        'timestamp' => $timestamp,
+                        'timestamp' => $timestamp + $offset,
                         'label'     => $label,
                     ];
                 }
@@ -155,6 +197,7 @@ class TTA_Email_Reminders {
      * Schedule a single cron event if future and not already scheduled.
      */
     protected static function schedule_single( $timestamp, $hook, array $args ) {
+        $timestamp = self::to_server_time( $timestamp );
         if ( $timestamp <= time() ) {
             return;
         }

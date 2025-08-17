@@ -57,12 +57,20 @@ class TTA_Settings_Admin {
         } elseif ( 'api' === $active_tab ) {
             $import_results = [];
             if ( isset( $_POST['tta_save_api_settings'] ) && check_admin_referer( 'tta_save_api_settings_action', 'tta_save_api_settings_nonce' ) ) {
-                $login = isset( $_POST['tta_authnet_login_id'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_login_id'] ) ) : '';
-                $trans = isset( $_POST['tta_authnet_transaction_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_transaction_key'] ) ) : '';
-                $send  = isset( $_POST['tta_sendgrid_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_sendgrid_api_key'] ) ) : '';
-                update_option( 'tta_authnet_login_id', $login, false );
-                update_option( 'tta_authnet_transaction_key', $trans, false );
+                $login   = isset( $_POST['tta_authnet_login_id'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_login_id'] ) ) : '';
+                $trans   = isset( $_POST['tta_authnet_transaction_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_authnet_transaction_key'] ) ) : '';
+                $send    = isset( $_POST['tta_sendgrid_api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_sendgrid_api_key'] ) ) : '';
+                $sandbox = isset( $_POST['tta_authnet_sandbox'] ) ? (int) $_POST['tta_authnet_sandbox'] : 0;
+
+                if ( $sandbox ) {
+                    update_option( 'tta_authnet_login_id_sandbox', $login, false );
+                    update_option( 'tta_authnet_transaction_key_sandbox', $trans, false );
+                } else {
+                    update_option( 'tta_authnet_login_id_live', $login, false );
+                    update_option( 'tta_authnet_transaction_key_live', $trans, false );
+                }
                 update_option( 'tta_sendgrid_api_key', $send, false );
+                update_option( 'tta_authnet_sandbox', $sandbox ? 1 : 0, false );
                 echo '<div class="updated"><p>' . esc_html__( 'API settings saved.', 'tta' ) . '</p></div>';
             }
 
@@ -133,13 +141,19 @@ class TTA_Settings_Admin {
                 }
             }
 
-            $login = get_option( 'tta_authnet_login_id', '' );
-            $trans = get_option( 'tta_authnet_transaction_key', '' );
-            $send  = get_option( 'tta_sendgrid_api_key', '' );
+            $login_live    = get_option( 'tta_authnet_login_id_live', '' );
+            $trans_live    = get_option( 'tta_authnet_transaction_key_live', '' );
+            $login_sandbox = get_option( 'tta_authnet_login_id_sandbox', '' );
+            $trans_sandbox = get_option( 'tta_authnet_transaction_key_sandbox', '' );
+            $send          = get_option( 'tta_sendgrid_api_key', '' );
+            $sandbox       = (int) get_option( 'tta_authnet_sandbox', 0 );
+            $login         = $sandbox ? $login_sandbox : $login_live;
+            $trans         = $sandbox ? $trans_sandbox : $trans_live;
 
             echo '<form method="post" action="?page=tta-settings&tab=api">';
             wp_nonce_field( 'tta_save_api_settings_action', 'tta_save_api_settings_nonce' );
             echo '<table class="form-table"><tbody>';
+            echo '<tr><th scope="row"><label for="tta_authnet_sandbox">' . esc_html__( 'Authorize.Net Environment', 'tta' ) . '</label></th><td><select id="tta_authnet_sandbox" name="tta_authnet_sandbox"><option value="0"' . selected( $sandbox, 0, false ) . '>' . esc_html__( 'Live', 'tta' ) . '</option><option value="1"' . selected( $sandbox, 1, false ) . '>' . esc_html__( 'Sandbox', 'tta' ) . '</option></select></td></tr>';
             echo '<tr><th scope="row"><label for="tta_authnet_login_id">' . esc_html__( 'Authorize.Net Login ID', 'tta' ) . '</label></th><td><input type="password" id="tta_authnet_login_id" name="tta_authnet_login_id" value="' . esc_attr( $login ) . '" /> <button type="button" class="button tta-reveal" data-target="tta_authnet_login_id">' . esc_html__( 'Reveal', 'tta' ) . '</button></td></tr>';
             echo '<tr><th scope="row"><label for="tta_authnet_transaction_key">' . esc_html__( 'Authorize.Net Transaction Key', 'tta' ) . '</label></th><td><input type="password" id="tta_authnet_transaction_key" name="tta_authnet_transaction_key" value="' . esc_attr( $trans ) . '" /> <button type="button" class="button tta-reveal" data-target="tta_authnet_transaction_key">' . esc_html__( 'Reveal', 'tta' ) . '</button></td></tr>';
             echo '<tr><th scope="row"><label for="tta_sendgrid_api_key">' . esc_html__( 'SendGrid API Key', 'tta' ) . '</label></th><td><input type="password" id="tta_sendgrid_api_key" name="tta_sendgrid_api_key" value="' . esc_attr( $send ) . '" /> <button type="button" class="button tta-reveal" data-target="tta_sendgrid_api_key">' . esc_html__( 'Reveal', 'tta' ) . '</button></td></tr>';

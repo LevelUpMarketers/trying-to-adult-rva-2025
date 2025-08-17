@@ -30,6 +30,19 @@ class DummyWpdb {
             $id    = intval($m[2]);
             return $this->data[$table][$id] ?? null;
         }
+        if (preg_match('/FROM (\S+) WHERE ute_id =\s*\'?([^\' ]+)\'?/', $query, $m)) {
+            $table = $m[1];
+            $ute   = $m[2];
+            if (isset($this->data[$table])) {
+                foreach ($this->data[$table] as $id => $row) {
+                    if (($row['ute_id'] ?? '') === $ute) {
+                        $row['id'] = $id;
+                        return $row;
+                    }
+                }
+            }
+            return null;
+        }
         return null;
     }
 
@@ -52,6 +65,11 @@ class DummyWpdb {
     }
 
     public function get_var($query) {
+        if (preg_match('/SELECT ute_id FROM (\S+) WHERE id = (\d+)/', $query, $m)) {
+            $table = $m[1];
+            $id    = intval($m[2]);
+            return $this->data[$table][$id]['ute_id'] ?? null;
+        }
         if (preg_match('/FROM (\S+) WHERE ticket_id = (\d+)/', $query, $m)) {
             $table = $m[1];
             $tid   = intval($m[2]);
@@ -147,9 +165,27 @@ class EventTest extends TestCase {
         if (!function_exists('add_filter')) { function add_filter($t,$c,$p=10,$a=1){} }
         if (!function_exists('sanitize_textarea_field')) { function sanitize_textarea_field($v){ return is_string($v)?trim($v):$v; } }
 
+        $GLOBALS['scheduled'] = [];
+        if (!function_exists('wp_schedule_single_event')) {
+            function wp_schedule_single_event($ts, $hook, $args = []) {
+                $GLOBALS['scheduled'][] = [$ts, $hook, $args];
+            }
+        }
+        if (!function_exists('wp_next_scheduled')) {
+            function wp_next_scheduled($hook, $args = []) {
+                return false;
+            }
+        }
+        if (!function_exists('get_transient')) { function get_transient($k){ return false; } }
+        if (!function_exists('set_transient')) { function set_transient($k,$v,$ttl=0){ return true; } }
+        if (!function_exists('delete_transient')) { function delete_transient($k){ return true; } }
+        if (!defined('DAY_IN_SECONDS')) { define('DAY_IN_SECONDS', 86400); }
+        if (!defined('HOUR_IN_SECONDS')) { define('HOUR_IN_SECONDS', 3600); }
+
         require_once __DIR__ . '/../includes/helpers.php';
         require_once __DIR__ . '/../includes/ajax/handlers/class-ajax-events.php';
         require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        require_once __DIR__ . '/../includes/email/class-email-reminders.php';
 
         global $wpdb;
         $this->wpdb = $wpdb = new DummyWpdb();
@@ -157,6 +193,7 @@ class EventTest extends TestCase {
 
     protected function tearDown(): void {
         $_POST = [];
+        $GLOBALS['scheduled'] = [];
     }
 
     private function basePost() {
@@ -237,5 +274,16 @@ class EventTest extends TestCase {
         TTA_Ajax_Events::save_event();
         $result = $GLOBALS['_last_json'];
         $this->assertFalse($result['success']);
+    }
+
+    public function test_save_event_schedules_emails() {
+        $_POST = $this->basePost();
+        $_POST['date'] = '2030-01-01';
+        TTA_Ajax_Events::save_event();
+        $this->assertCount(6, $GLOBALS['scheduled']);
+        $hooks = array_column($GLOBALS['scheduled'], 1);
+        $this->assertContains('tta_attendee_reminder_email', $hooks);
+        $this->assertContains('tta_host_reminder_email', $hooks);
+        $this->assertContains('tta_volunteer_reminder_email', $hooks);
     }
 }
