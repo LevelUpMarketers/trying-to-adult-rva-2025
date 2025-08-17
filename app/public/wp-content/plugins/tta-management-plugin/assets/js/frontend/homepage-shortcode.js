@@ -40,7 +40,7 @@
             setTimeout(cycle, 5000);
         }
 
-        var $cd = $('.tta-countdown');
+        var $cd = $('.tta-next-event__countdown .tta-countdown');
         if ($cd.length) {
             var target = parseInt($cd.data('time'), 10) * 1000;
             function plural(v, s, p){ return v + ' ' + (v === 1 ? s : p); }
