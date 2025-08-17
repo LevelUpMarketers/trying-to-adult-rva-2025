@@ -324,7 +324,7 @@ class TTA_Comms_Admin {
             echo '</form></div></td></tr>';
         }
 
-        echo '</tbody></table></div>';
+        echo '</tbody></table>';
     }
 
     /** Render scheduled email jobs. */
