@@ -67,6 +67,17 @@ class EmailReminderScheduleTest extends TestCase {
         if ( ! function_exists( 'wp_timezone' ) ) {
             function wp_timezone() { return new DateTimeZone( 'America/New_York' ); }
         }
+        if ( ! function_exists( 'get_transient' ) ) {
+            function get_transient( $key ) {
+                return $GLOBALS['transients'][ $key ] ?? false;
+            }
+        }
+        if ( ! function_exists( 'set_transient' ) ) {
+            function set_transient( $key, $value, $expiration ) {
+                $GLOBALS['transients'][ $key ] = $value;
+            }
+        }
+        $GLOBALS['transients'] = [ 'tta_time_offset' => 0 ];
     }
 
     protected function tearDown(): void {
@@ -97,6 +108,22 @@ class EmailReminderScheduleTest extends TestCase {
         $this->assertNotNull( $timestamp );
         $expected = ( new DateTime( '2030-08-14 18:00', wp_timezone() ) )->setTimezone( new DateTimeZone( 'UTC' ) )->getTimestamp();
         $this->assertSame( $expected, $timestamp );
+    }
+
+    public function test_schedule_adjusts_for_server_offset() {
+        $GLOBALS['transients'] = [ 'tta_time_offset' => -4 * HOUR_IN_SECONDS ];
+        require_once __DIR__ . '/../includes/email/class-email-reminders.php';
+        TTA_Email_Reminders::schedule_event_emails( 1 );
+        $timestamp = null;
+        foreach ( $GLOBALS['scheduled'] as $event ) {
+            if ( 'tta_attendee_reminder_email' === $event[1] && 'reminder_24hr' === $event[2][1] ) {
+                $timestamp = $event[0];
+                break;
+            }
+        }
+        $this->assertNotNull( $timestamp );
+        $real = ( new DateTime( '2030-08-14 18:00', wp_timezone() ) )->setTimezone( new DateTimeZone( 'UTC' ) )->getTimestamp();
+        $this->assertSame( $real + 4 * HOUR_IN_SECONDS, $timestamp );
     }
 
     public function test_schedule_post_event_thanks_creates_event() {
