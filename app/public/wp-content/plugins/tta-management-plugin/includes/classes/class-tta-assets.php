@@ -371,6 +371,13 @@ class TTA_Assets {
 
         // 4) Become a Member page assets
         if ( function_exists( 'is_page_template' ) && is_page_template( 'become-member-page-template.php' ) ) {
+            wp_enqueue_style(
+                'tta-become-member-css',
+                TTA_PLUGIN_URL . 'assets/css/frontend/become-member.css',
+                [ 'tta-frontend-css' ],
+                TTA_PLUGIN_VERSION
+            );
+
             wp_enqueue_script(
                 'tta-cart-js',
                 TTA_PLUGIN_URL . 'assets/js/frontend/tta-cart.js',
@@ -384,6 +391,7 @@ class TTA_Assets {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
                 ]
             );
         }
