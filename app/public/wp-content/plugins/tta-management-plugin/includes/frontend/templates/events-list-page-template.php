@@ -129,7 +129,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                     <p><?php esc_html_e( 'You have no upcoming events.', 'tta' ); ?></p>
                 <?php endif; ?>
             <?php else : ?>
-                <p><?php esc_html_e( 'Log in to see your upcoming events.', 'tta' ); ?></p>
+                <p><?php echo wp_kses_post( sprintf( __( 'Log in to see your upcoming events. Not a member yet? <a href="%s">Click here to join now!</a>', 'tta' ), esc_url( home_url( '/become-a-member' ) ) ) ); ?></p>
                 <div class="login-wrap">
                     <?php wp_login_form( [ 'echo' => true ] ); ?>
                 </div>
