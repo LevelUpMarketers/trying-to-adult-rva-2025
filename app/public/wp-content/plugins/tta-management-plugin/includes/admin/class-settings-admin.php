@@ -76,18 +76,25 @@ class TTA_Settings_Admin {
 
             $convert_results = [];
             if ( isset( $_POST['tta_convert_subscription'] ) && check_admin_referer( 'tta_convert_subscription_action', 'tta_convert_subscription_nonce' ) ) {
-                $transaction_id = isset( $_POST['tta_transaction_id'] ) ? sanitize_text_field( wp_unslash( $_POST['tta_transaction_id'] ) ) : '';
+                $transaction_ids_raw = isset( $_POST['tta_transaction_ids'] ) ? sanitize_textarea_field( wp_unslash( $_POST['tta_transaction_ids'] ) ) : '';
+                $transaction_ids     = array_filter( array_map( 'trim', preg_split( '/\s+/', $transaction_ids_raw ) ) );
 
-                if ( '' === $transaction_id ) {
+                if ( empty( $transaction_ids ) ) {
                     echo '<div class="error"><p>' . esc_html__( 'No transaction ID provided.', 'tta' ) . '</p></div>';
                 } else {
-                    $api      = new TTA_AuthorizeNet_API();
-                    $details  = $api->get_transaction_details( $transaction_id );
+                    $api = new TTA_AuthorizeNet_API();
 
-                    if ( empty( $details['success'] ) ) {
-                        $error = isset( $details['error'] ) ? $details['error'] : __( 'Transaction lookup failed', 'tta' );
-                        echo '<div class="error"><p>' . esc_html( $error ) . '</p></div>';
-                    } else {
+                    foreach ( $transaction_ids as $transaction_id ) {
+                        $transaction_id = sanitize_text_field( $transaction_id );
+                        $details        = $api->get_transaction_details( $transaction_id );
+
+                        if ( empty( $details['success'] ) ) {
+                            $error            = isset( $details['error'] ) ? $details['error'] : __( 'Transaction lookup failed', 'tta' );
+                            $convert_results[] = sprintf( 'Transaction %s: %s', $transaction_id, $error );
+                            echo '<div class="error"><p>' . esc_html( $error . ' (' . $transaction_id . ')' ) . '</p></div>';
+                            continue;
+                        }
+
                         $amount = (float) $details['amount'];
                         $email  = sanitize_email( $details['email'] );
 
@@ -113,30 +120,32 @@ class TTA_Settings_Admin {
                         $result = $api->create_subscription_from_transaction( $transaction_id, $amount, $tag ?: 'Membership Subscription', $tag );
 
                         if ( empty( $result['success'] ) ) {
-                            $error = isset( $result['error'] ) ? $result['error'] : __( 'Subscription creation failed', 'tta' );
-                            echo '<div class="error"><p>' . esc_html( $error ) . '</p></div>';
-                        } else {
-                            $subscription_id = $result['subscription_id'];
-
-                            if ( $email ) {
-                                global $wpdb;
-                                $members_table = $wpdb->prefix . 'tta_members';
-                                $member_id     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$members_table} WHERE email = %s", $email ) );
-                                if ( $member_id ) {
-                                    $data = [
-                                        'subscription_id'     => $subscription_id,
-                                        'subscription_status' => 'active',
-                                    ];
-                                    if ( $level ) {
-                                        $data['membership_level'] = $level;
-                                    }
-                                    $wpdb->update( $members_table, $data, [ 'id' => $member_id ] );
-                                }
-                            }
-
-                            $convert_results[] = sprintf( 'Email: %s | Transaction: %s | Subscription: %s', $email ?: '[none]', $transaction_id, $subscription_id );
-                            echo '<div class="updated"><p>' . esc_html__( 'Subscription created.', 'tta' ) . '</p></div>';
+                            $error            = isset( $result['error'] ) ? $result['error'] : __( 'Subscription creation failed', 'tta' );
+                            $convert_results[] = sprintf( 'Transaction %s: %s', $transaction_id, $error );
+                            echo '<div class="error"><p>' . esc_html( $error . ' (' . $transaction_id . ')' ) . '</p></div>';
+                            continue;
                         }
+
+                        $subscription_id = $result['subscription_id'];
+
+                        if ( $email ) {
+                            global $wpdb;
+                            $members_table = $wpdb->prefix . 'tta_members';
+                            $member_id     = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$members_table} WHERE email = %s", $email ) );
+                            if ( $member_id ) {
+                                $data = [
+                                    'subscription_id'     => $subscription_id,
+                                    'subscription_status' => 'active',
+                                ];
+                                if ( $level ) {
+                                    $data['membership_level'] = $level;
+                                }
+                                $wpdb->update( $members_table, $data, [ 'id' => $member_id ] );
+                            }
+                        }
+
+                        $convert_results[] = sprintf( 'Email: %s | Transaction: %s | Subscription: %s', $email ?: '[none]', $transaction_id, $subscription_id );
+                        echo '<div class="updated"><p>' . esc_html__( 'Subscription created.', 'tta' ) . '</p></div>';
                     }
                 }
             }
@@ -164,7 +173,7 @@ class TTA_Settings_Admin {
             echo '<hr><h2>' . esc_html__( 'Convert Transaction to Subscription', 'tta' ) . '</h2>';
             echo '<form method="post" action="?page=tta-settings&tab=api">';
             wp_nonce_field( 'tta_convert_subscription_action', 'tta_convert_subscription_nonce' );
-            echo '<p><label for="tta_transaction_id">' . esc_html__( 'Transaction ID', 'tta' ) . '</label> <input type="text" id="tta_transaction_id" name="tta_transaction_id" /></p>';
+            echo '<p><label for="tta_transaction_ids">' . esc_html__( 'Transaction IDs', 'tta' ) . '</label><br /><textarea id="tta_transaction_ids" name="tta_transaction_ids" rows="8" cols="40"></textarea><br /><span class="description">' . esc_html__( 'Enter one transaction ID per line.', 'tta' ) . '</span></p>';
             echo '<p><input type="submit" name="tta_convert_subscription" class="button button-secondary" value="' . esc_attr__( 'Convert to Subscription', 'tta' ) . '"></p>';
             echo '</form>';
 
