@@ -844,8 +844,9 @@ function tta_set_attendance_status( $attendee_id, $status ) {
     }
 
     if ( 'no_show' === $status && 'no_show' !== $current && $user_id ) {
-        $no_shows = tta_get_no_show_event_count_by_email( $email );
-        if ( $no_shows >= 3 && ! tta_user_is_banned( $user_id ) ) {
+        $no_shows        = tta_get_no_show_event_count_by_email( $email );
+        $previous_no_show = max( 0, $no_shows - 1 );
+        if ( $no_shows >= 3 && $previous_no_show < 3 ) {
             $members_table = $wpdb->prefix . 'tta_members';
             $wpdb->update( $members_table, [ 'banned_until' => TTA_BAN_UNTIL_REENTRY ], [ 'wpuserid' => $user_id ], [ '%s' ], [ '%d' ] );
             TTA_Cache::delete( 'banned_until_' . $user_id );
