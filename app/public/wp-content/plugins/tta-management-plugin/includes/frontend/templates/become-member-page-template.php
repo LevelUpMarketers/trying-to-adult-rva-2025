@@ -14,11 +14,22 @@ get_header();
 $header_shortcode = '[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">BECOME A MEMBER</p>[/vc_column_text][/vc_column][/vc_row]';
 echo do_shortcode( $header_shortcode );
 ?>
+<<<<<<< Updated upstream
+<div class="tta-become-member-wrap">
+  <h1><?php esc_html_e( 'Become a Trying to Adult Member', 'tta' ); ?></h1>
+  <p><?php esc_html_e( 'Join our community and unlock special perks at local events.', 'tta' ); ?></p>
+=======
 <section id="tta-member-intro" class="tta-section tta-member-intro">
   <div id="tta-member-intro-inner" class="tta-member-intro-inner">
     <div class="tta-member-intro-text">
       <h1><?php esc_html_e( 'Become a Trying to Adult Member', 'tta' ); ?></h1>
-      <p><?php esc_html_e( 'Join our community and unlock special perks at local events.', 'tta' ); ?></p>
+      <p><?php esc_html_e( 'Ready to turn "we should hang out" into actual plans?', 'tta' ); ?></p>
+
+<p><?php esc_html_e( 'Membership makes it easier - and cheaper - to say yes to social plans throughout the month.', 'tta' ); ?></p>
+
+<p><?php esc_html_e( 'Non-members pay $5 for Classic events and $7 for Special events. Standard Members ($10/mo) get free access passes to 3+ Classic events each month, while Premium Members ($17/mo) get free access to 3+ Classic and 3+ Special events - so your membership pays for itself fast.', 'tta' ); ?></p>
+
+<p><?php esc_html_e( 'Pick your tier, lock in your discounts, and start building your RVA circle today.', 'tta' ); ?></p>
     </div>
     <div id="tta-member-intro-gallery" class="tta-member-intro-gallery">
       <?php
@@ -39,6 +50,7 @@ echo do_shortcode( $header_shortcode );
   </div>
 </section>
 <div id="tta-become-member-wrap" class="tta-become-member-wrap">
+>>>>>>> Stashed changes
 
 <?php
   $tiers = array(
@@ -113,11 +125,7 @@ echo do_shortcode( $header_shortcode );
       <?php endforeach; ?>
       <tr class="tta-membership-actions">
         <td></td>
-        <td>
-          <button type="button" class="tta-button tta-button-primary tta-join-now">
-            <?php esc_html_e( 'Join Now', 'tta' ); ?>
-          </button>
-        </td>
+        <td></td>
         <td>
           <button type="button" id="tta-basic-signup" class="tta-button tta-button-primary">
             <?php esc_html_e( 'Sign Up', 'tta' ); ?>
@@ -144,11 +152,7 @@ echo do_shortcode( $header_shortcode );
             </li>
           <?php endforeach; ?>
         </ul>
-        <?php if ( 'non_member' === $tier_key ) : ?>
-          <button type="button" class="tta-button tta-button-primary tta-join-now">
-            <?php esc_html_e( 'Join Now', 'tta' ); ?>
-          </button>
-        <?php elseif ( 'basic' === $tier_key ) : ?>
+        <?php if ( 'basic' === $tier_key ) : ?>
           <button type="button" id="tta-basic-signup" class="tta-button tta-button-primary">
             <?php esc_html_e( 'Sign Up', 'tta' ); ?>
           </button>
@@ -160,45 +164,6 @@ echo do_shortcode( $header_shortcode );
       </div>
     <?php endforeach; ?>
   </div>
-
-  <form id="tta-register-form" style="display:none;">
-    <p>
-      <label><?php esc_html_e( 'First Name', 'tta' ); ?><br />
-        <input type="text" name="first_name" required />
-      </label>
-    </p>
-    <p>
-      <label><?php esc_html_e( 'Last Name', 'tta' ); ?><br />
-        <input type="text" name="last_name" required />
-      </label>
-    </p>
-    <p>
-      <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
-        <input type="email" name="email" required />
-      </label>
-    </p>
-    <p>
-      <label><?php esc_html_e( 'Verify Email', 'tta' ); ?><br />
-        <input type="email" name="email_verify" required />
-      </label>
-    </p>
-    <p>
-      <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
-        <input type="password" name="password" required />
-      </label>
-    </p>
-    <p>
-      <label><?php esc_html_e( 'Verify Password', 'tta' ); ?><br />
-        <input type="password" name="password_verify" required />
-      </label>
-    </p>
-    <p>
-      <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
-      <a href="#" class="tta-button-link tta-cancel-register"><?php esc_html_e( 'Cancel Account Creation', 'tta' ); ?></a>
-      <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
-    </p>
-    <span id="tta-register-response" class="tta-admin-progress-response-p"></span>
-  </form>
 </div>
 <?php
 get_footer();

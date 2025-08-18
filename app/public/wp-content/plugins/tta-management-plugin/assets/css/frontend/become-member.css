@@ -6,6 +6,8 @@
   margin: 0 auto;
   padding-bottom: 200px;
   padding-top: 100px;
+  padding-left:80px;
+  padding-right:80px;
 }
 
 .tta-membership-table {
@@ -71,7 +73,7 @@
 
 /* Become a Member intro section */
 .tta-member-intro {
-  padding: 0 28px;
+  padding: 80px;
 }
 
 .tta-member-intro-inner {
@@ -100,6 +102,13 @@
   border-radius: 4px;
 }
 
+.tta-membership-table th {
+    font-weight: 600;
+    color: #3a7096;
+    font-size: 30px;
+    font-family: "Teko", sans-serif;
+}
+
 .tta-member-intro-gallery img.active {
   opacity: 1;
 }
@@ -110,7 +119,14 @@
 }
 
 .tta-member-intro h1 {
-  font-size: 2.5rem;
+  font-size: 4VW;
+  color: #3a7096;
+  margin-top: 0;
+  position: relative;
+  bottom: 0px;
+  font-family: "Teko", sans-serif;
+  FONT-WEIGHT: BOLD;
+  line-height: 1;
 }
 
 .tta-member-intro p {
