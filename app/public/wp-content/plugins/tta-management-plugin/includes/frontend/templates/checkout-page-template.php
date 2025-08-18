@@ -15,6 +15,9 @@ $checkout_error = '';
 if ( isset( $_GET['reentry'] ) ) {
     $cart->empty_cart();
     $_SESSION['tta_membership_purchase'] = 'reentry';
+} elseif ( isset( $_SESSION['tta_membership_purchase'] ) && 'reentry' === $_SESSION['tta_membership_purchase'] && 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+    // Clear any lingering re-entry membership flag when accessing checkout normally.
+    unset( $_SESSION['tta_membership_purchase'] );
 }
 
 if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] ) ) {
@@ -207,7 +210,7 @@ if ( $checkout_done ) {
                         '<p>%s</p>',
                         wp_kses_post(
                             sprintf(
-                                __( 'Thanks for purchasing your Re-Entry Ticket! An email will be sent to %s with your purchase details. You\'re now able to purchase event tickets. Thanks again, and welcome back!', 'tta' ),
+                                __( 'Thanks for purchasing your Re-Entry Ticket! You can once again register for events. An email will be sent to %s for your records. Thanks again, and welcome back!', 'tta' ),
                                 esc_html( $user->user_email )
                             )
                         )
