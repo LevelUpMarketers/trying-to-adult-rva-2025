@@ -24,7 +24,7 @@ class TTA_Alert_Bar {
         $ban_info = tta_get_ban_message( get_current_user_id() );
         $data = [
             'is_banned'     => tta_user_is_banned( get_current_user_id() ),
-            'reentry_url'   => add_query_arg( 'reentry', '1', home_url( '/checkout' ) ),
+            'reentry_url'   => add_query_arg( 'auto', 'reentry', home_url( '/checkout' ) ),
             'checkout_url'  => home_url( '/checkout' ),
             'banned_message'=> $ban_info['message'] ?? '',
             'show_button'   => ! empty( $ban_info['button'] ),

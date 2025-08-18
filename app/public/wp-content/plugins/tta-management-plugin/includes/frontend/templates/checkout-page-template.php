@@ -12,10 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Initialize cart early for sessions
 $cart          = new TTA_Cart();
 $checkout_error = '';
-if ( isset( $_GET['reentry'] ) ) {
+if ( isset( $_GET['auto'] ) && 'reentry' === $_GET['auto'] && is_user_logged_in() ) {
     $cart->empty_cart();
     $_SESSION['tta_membership_purchase'] = 'reentry';
-} elseif ( isset( $_SESSION['tta_membership_purchase'] ) && 'reentry' === $_SESSION['tta_membership_purchase'] && 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
+} elseif ( isset( $_SESSION['tta_membership_purchase'] ) && 'reentry' === $_SESSION['tta_membership_purchase'] && 'POST' !== $_SERVER['REQUEST_METHOD'] && ( ! isset( $_GET['auto'] ) || 'reentry' !== $_GET['auto'] ) ) {
     // Clear any lingering re-entry membership flag when accessing checkout normally.
     unset( $_SESSION['tta_membership_purchase'] );
 }

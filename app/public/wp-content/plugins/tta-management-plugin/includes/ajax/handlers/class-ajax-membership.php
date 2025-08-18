@@ -24,7 +24,7 @@ class TTA_Ajax_Membership {
             $ban = tta_get_ban_message( $context['wp_user_id'] );
             $msg = $ban['message'];
             if ( ! empty( $ban['button'] ) ) {
-                $url = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+                $url = add_query_arg( 'auto', 'reentry', home_url( '/checkout' ) );
                 $msg .= ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
             }
             wp_send_json_error( [ 'message' => $msg ] );

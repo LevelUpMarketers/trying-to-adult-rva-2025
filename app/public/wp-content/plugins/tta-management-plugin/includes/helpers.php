@@ -851,8 +851,7 @@ function tta_set_attendance_status( $attendee_id, $status ) {
             TTA_Cache::delete( 'banned_until_' . $user_id );
             TTA_Cache::delete( 'banned_members' );
             tta_clear_reinstatement_cron( $user_id );
-            $checkout = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
-            tta_send_no_show_ban_email( $user_id, $checkout );
+            tta_send_no_show_ban_email( $user_id );
         }
     }
 }
@@ -1716,10 +1715,9 @@ function tta_send_banned_reinstatement_email( $wp_user_id ) {
 /**
  * Send the no-show limit ban notification email to a user.
  *
- * @param int    $wp_user_id   WordPress user ID.
- * @param string $checkout_url Checkout URL for purchasing a re-entry ticket.
+ * @param int $wp_user_id WordPress user ID.
  */
-function tta_send_no_show_ban_email( $wp_user_id, $checkout_url ) {
+function tta_send_no_show_ban_email( $wp_user_id ) {
     $templates = tta_get_comm_templates();
     if ( empty( $templates['no_show_limit'] ) ) {
         return;
@@ -1728,7 +1726,7 @@ function tta_send_no_show_ban_email( $wp_user_id, $checkout_url ) {
     $context = tta_get_user_context_by_id( $wp_user_id );
     $tokens  = [
         '{first_name}'   => $context['first_name'] ?? '',
-        '{reentry_link}' => esc_url( $checkout_url ),
+        '{reentry_link}' => esc_url( home_url( '/checkout?auto=reentry' ) ),
     ];
     $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
     $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
