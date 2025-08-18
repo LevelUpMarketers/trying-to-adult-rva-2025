@@ -141,7 +141,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
             echo '<p>' . esc_html__( 'This member has never purchased a membership.', 'tta' ) . '</p>';
         }
     } else {
-        $price = tta_get_membership_price( $level );
+        $price = $react_amount;
         echo '<p><strong>' . esc_html( tta_get_membership_label( $level ) ) . '</strong> - $' . number_format( $price, 2 ) . ' ' . esc_html__( 'Per Month', 'tta' ) . '</p>';
         $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status );
         echo '<p>' . esc_html__( 'Status:', 'tta' ) . ' <span>' . esc_html( $display_status ) . '</span></p>';
@@ -488,7 +488,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     <p>
       <label>
         <?php esc_html_e( 'Price Per Month', 'tta' ); ?><br />
-        <input type="number" step="0.01" name="price" required />
+        <input type="number" step="0.01" name="price" value="<?php echo esc_attr( $react_amount ); ?>" required />
       </label>
     </p>
     <p class="submit">

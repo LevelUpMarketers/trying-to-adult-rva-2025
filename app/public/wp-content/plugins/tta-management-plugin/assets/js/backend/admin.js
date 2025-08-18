@@ -1298,7 +1298,12 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     }
   }
 
-  $('form select[name="level"]').each(function(){ syncLevelPrice($(this)); });
+  $('form select[name="level"]').each(function(){
+    var $priceInput = $(this).closest('form').find('input[name="price"], input[name="amount"]');
+    if(!$priceInput.val()){
+      syncLevelPrice($(this));
+    }
+  });
   $(document).on('change','form select[name="level"]',function(){ syncLevelPrice($(this)); });
 
   // Track the last focused input for token insertion
