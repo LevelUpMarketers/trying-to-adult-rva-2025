@@ -11,6 +11,7 @@ The **Become a Member** template introduces a front‑end landing page for membe
 - Includes signup buttons for Standard and Premium tiers embedded within the table. Clicking a button sends an AJAX request that stores the selected membership level in the session and redirects visitors to the cart page.
 - Offers a **Join Now** button in the Non-member column that reveals an inline registration form for creating a free account.
 - The page enqueues `tta-cart.js` so the signup buttons behave like adding tickets to the cart and redirect immediately. The cart will show the chosen membership as a line item so visitors can check out normally.
+- A dedicated stylesheet (`assets/css/frontend/become-member.css`) targets the page's intro layout, membership table, and mobile cards and is only loaded for this template.
 - Visitors can complete checkout with just a membership selected—no tickets are required.
 - Only one membership can exist in the cart at a time. Logged-in users who already have a Standard membership cannot add another Standard plan. Premium members cannot add any membership product.
 - When only a membership is present in the cart, the subtotal and total rows show the price "Per Month" and table columns remain aligned.

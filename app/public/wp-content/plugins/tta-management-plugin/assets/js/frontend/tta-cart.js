@@ -300,7 +300,7 @@ jQuery(function($){
     });
   });
 
-  var $carousel = $('.tta-intro-img');
+  var $carousel = $('.tta-member-intro-gallery');
   var $imgs = $carousel.find('img');
   if ($imgs.length > 1) {
     var idx = 0;

@@ -371,6 +371,13 @@ class TTA_Assets {
 
         // 4) Become a Member page assets
         if ( function_exists( 'is_page_template' ) && is_page_template( 'become-member-page-template.php' ) ) {
+            wp_enqueue_style(
+                'tta-become-member-css',
+                TTA_PLUGIN_URL . 'assets/css/frontend/become-member.css',
+                [ 'tta-frontend-css' ],
+                TTA_PLUGIN_VERSION
+            );
+
             wp_enqueue_script(
                 'tta-cart-js',
                 TTA_PLUGIN_URL . 'assets/js/frontend/tta-cart.js',
