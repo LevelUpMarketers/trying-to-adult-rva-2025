@@ -102,6 +102,14 @@ empty or omitted the full URL is printed.
 {member_type}
 ```
 
+### Ban & Re-Entry
+
+```
+{reentry_link}
+```
+
+`{reentry_link}` outputs a clickable link to the checkout page. When the member is logged in, following the link automatically places the Re-entry Ticket in their cart.
+
 ### Event Attendee Information
 
 ```
