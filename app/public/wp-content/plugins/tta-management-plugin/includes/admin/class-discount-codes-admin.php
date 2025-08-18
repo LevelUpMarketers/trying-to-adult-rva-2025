@@ -22,7 +22,7 @@ class TTA_Discount_Codes_Admin {
             // This icon visually communicates that the screen is for managing codes
             // that apply discounts during checkout.
             'dashicons-tag',
-            14
+            9.9
         );
     }
 

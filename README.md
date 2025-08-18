@@ -40,6 +40,7 @@ messages will not be sent.
 - [Member Dashboard](docs/MemberDashboard.md)
 - [Member History Admin](docs/MemberHistoryAdmin.md)
 - [Admin List Sorting Options](docs/AdminListSorting.md)
+- [Admin Menu Ordering](docs/AdminMenu.md)
 - [Event Metrics Export](docs/EventMetricsExport.md)
 - [Member Metrics Export](docs/MemberMetricsExport.md)
 - [TTA Refund Requests Admin](docs/RefundRequestsAdmin.md)
