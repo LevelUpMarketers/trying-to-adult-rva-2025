@@ -665,6 +665,7 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
         $r['phone']         = sanitize_text_field( $r['phone'] );
         $r['status']        = sanitize_text_field( $r['status'] );
         $r['attended_count'] = tta_get_attended_event_count_by_email( $r['email'] );
+        $r['no_show_count']  = tta_get_no_show_event_count_by_email( $r['email'] );
         $note = trim( $r['assistance_note'] ?? '' );
         $r['assistance_note'] = $note !== '' ? sanitize_textarea_field( $note ) : '-';
         $out[] = $r;
@@ -790,6 +791,27 @@ function tta_get_ticket_attendees( $ticket_id ) {
 }
 
 /**
+ * Get the WordPress user ID for an attendee.
+ *
+ * @param int $attendee_id Attendee ID.
+ * @return int WP user ID or 0 if not found.
+ */
+function tta_get_attendee_user_id( $attendee_id ) {
+    global $wpdb;
+    $att_table = $wpdb->prefix . 'tta_attendees';
+    $tx_table  = $wpdb->prefix . 'tta_transactions';
+    if ( ! method_exists( $wpdb, 'get_var' ) ) {
+        return 0;
+    }
+    return (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT t.wpuserid FROM {$att_table} a JOIN {$tx_table} t ON a.transaction_id = t.id WHERE a.id = %d",
+            intval( $attendee_id )
+        )
+    );
+}
+
+/**
  * Update an attendee's status.
  *
  * @param int    $attendee_id Attendee ID.
@@ -798,9 +820,40 @@ function tta_get_ticket_attendees( $ticket_id ) {
 function tta_set_attendance_status( $attendee_id, $status ) {
     global $wpdb;
     $att_table = $wpdb->prefix . 'tta_attendees';
-    $status = in_array( $status, [ 'checked_in', 'no_show', 'pending' ], true ) ? $status : 'pending';
+    $status    = in_array( $status, [ 'checked_in', 'no_show', 'pending' ], true ) ? $status : 'pending';
+
+    $row   = $wpdb->get_row( $wpdb->prepare( "SELECT email FROM {$att_table} WHERE id = %d", $attendee_id ), ARRAY_A );
+    $email = $row ? strtolower( sanitize_email( $row['email'] ) ) : '';
+
+    $current = tta_get_attendance_status( $attendee_id );
+    if ( $current === $status ) {
+        return;
+    }
+
     $wpdb->update( $att_table, [ 'status' => $status ], [ 'id' => intval( $attendee_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'attendance_status_' . intval( $attendee_id ) );
+    if ( $email ) {
+        TTA_Cache::delete( 'attended_count_' . md5( $email ) );
+        TTA_Cache::delete( 'no_show_count_' . md5( $email ) );
+    }
+
+    $user_id = tta_get_attendee_user_id( $attendee_id );
+    if ( $user_id ) {
+        TTA_Cache::delete( 'attendance_summary_' . $user_id );
+        TTA_Cache::delete( 'past_events_' . $user_id );
+    }
+
+    if ( 'no_show' === $status && 'no_show' !== $current && $user_id ) {
+        $no_shows = tta_get_no_show_event_count_by_email( $email );
+        if ( $no_shows >= 3 && ! tta_user_is_banned( $user_id ) ) {
+            $members_table = $wpdb->prefix . 'tta_members';
+            $wpdb->update( $members_table, [ 'banned_until' => TTA_BAN_UNTIL_REENTRY ], [ 'wpuserid' => $user_id ], [ '%s' ], [ '%d' ] );
+            TTA_Cache::delete( 'banned_until_' . $user_id );
+            TTA_Cache::delete( 'banned_members' );
+            tta_clear_reinstatement_cron( $user_id );
+            tta_send_no_show_ban_email( $user_id );
+        }
+    }
 }
 
 /**
@@ -817,6 +870,9 @@ function tta_get_attendance_status( $attendee_id ) {
         return $cached;
     }
     global $wpdb;
+    if ( ! method_exists( $wpdb, 'get_var' ) ) {
+        return 'pending';
+    }
     $att_table   = $wpdb->prefix . 'tta_attendees';
     $att_archive = $wpdb->prefix . 'tta_attendees_archive';
     $status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$att_table} WHERE id = %d", $attendee_id ) );
@@ -1552,6 +1608,18 @@ function tta_user_is_banned( $wp_user_id ) {
 }
 
 /**
+ * Clear any scheduled reinstatement cron for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_clear_reinstatement_cron( $wp_user_id ) {
+    $ts = wp_next_scheduled( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    if ( false !== $ts ) {
+        wp_unschedule_event( $ts, 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    }
+}
+
+/**
  * Remove a user's banned status.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -1561,10 +1629,32 @@ function tta_unban_user( $wp_user_id ) {
     $table = $wpdb->prefix . 'tta_members';
     $wpdb->update( $table, [ 'banned_until' => null ], [ 'wpuserid' => intval( $wp_user_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'banned_until_' . intval( $wp_user_id ) );
-    wp_clear_scheduled_hook( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    TTA_Cache::delete( 'banned_members' );
+    tta_clear_reinstatement_cron( $wp_user_id );
 }
 
 add_action( 'tta_reinstate_member', 'tta_unban_user', 10, 1 );
+
+/**
+ * Retrieve all currently banned members.
+ *
+ * @return array[] List of members with keys wpuserid, first_name, last_name, banned_until.
+ */
+function tta_get_banned_members() {
+    $cache_key = 'banned_members';
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'tta_members';
+    $rows  = $wpdb->get_results( "SELECT wpuserid, first_name, last_name, banned_until FROM {$table} WHERE banned_until IS NOT NULL", ARRAY_A );
+
+    TTA_Cache::set( $cache_key, $rows, $rows ? 60 : 30 );
+
+    return $rows ?: [];
+}
 
 /**
  * Build a ban message and button flag for a user.
@@ -1610,6 +1700,33 @@ function tta_send_banned_reinstatement_email( $wp_user_id ) {
     $tokens  = [
         '{first_name}' => $context['first_name'] ?? '',
         '{email}'      => $context['user_email'] ?? '',
+    ];
+    $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
+    $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+    $body     = nl2br( $body_txt );
+    $to       = sanitize_email( $context['user_email'] );
+    if ( $to ) {
+        wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
+    }
+}
+
+/**
+ * Send the no-show limit ban notification email to a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_send_no_show_ban_email( $wp_user_id ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['no_show_limit'] ) ) {
+        return;
+    }
+    $tpl     = $templates['no_show_limit'];
+    $context = tta_get_user_context_by_id( $wp_user_id );
+    $tokens  = [
+        '{first_name}'   => $context['first_name'] ?? '',
+        '{reentry_link}' => esc_url( home_url( '/checkout?auto=reentry' ) ),
     ];
     $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
     $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
@@ -3527,6 +3644,42 @@ function tta_get_attended_event_count_by_email( $email ) {
 }
 
 /**
+ * Get how many events an attendee has been marked as a no-show for.
+ *
+ * @param string $email Attendee email address.
+ * @return int Number of no-shows.
+ */
+function tta_get_no_show_event_count_by_email( $email ) {
+    $email = strtolower( sanitize_email( $email ) );
+    if ( '' === $email ) {
+        return 0;
+    }
+
+    $cache_key = 'no_show_count_' . md5( $email );
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    global $wpdb;
+    $att_table = $wpdb->prefix . 'tta_attendees';
+    $archive   = $wpdb->prefix . 'tta_attendees_archive';
+
+    $count = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$att_table} WHERE LOWER(email) = %s AND status = 'no_show'",
+        $email
+    ) );
+
+    $count += (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$archive} WHERE LOWER(email) = %s AND status = 'no_show'",
+        $email
+    ) );
+
+    TTA_Cache::set( $cache_key, $count, 300 );
+    return $count;
+}
+
+/**
  * Cancel an attendee without Ajax context.
  *
  * @param int  $attendee_id     Attendee ID.
@@ -4622,6 +4775,87 @@ function tta_render_attendee_fields( TTA_Cart $cart, $disabled = false ) {
         echo '</div>';
     }
     echo '</div>';
+    return trim( ob_get_clean() );
+}
+
+/**
+ * Render the login/register accordion used on public pages when a member
+ * must authenticate before continuing.
+ *
+ * @param string $redirect URL to redirect to after a successful login.
+ * @return string         HTML markup for the login/register section.
+ */
+function tta_render_login_register_section( $redirect ) {
+    $form_html = wp_login_form(
+        [
+            'echo'     => false,
+            'redirect' => esc_url_raw( $redirect ),
+        ]
+    );
+
+    $lost_pw_url = wp_lostpassword_url( $redirect );
+
+    ob_start();
+    ?>
+    <section id="tta-login-message" class="tta-message-center tta-login-accordion">
+      <h2><?php esc_html_e( 'Log in or Register Here', 'tta' ); ?></h2>
+      <div class="tta-accordion">
+        <p>
+          <?php
+            printf(
+                /* translators: 1: action buttons */
+                esc_html__( 'Ticket discounts may be available! Log in below to check. Don\'t have an account? Create one below or become a Member today!%1$s', 'tta' ),
+                '<div><a href="#tta-login-message" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="' . esc_url( home_url( '/become-a-member' ) ) . '" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>'
+            );
+          ?>
+        </p>
+        <div class="tta-accordion-content expanded">
+          <div id="tta-login-wrap">
+            <?php echo $form_html; ?>
+            <p class="login-lost-password"><a href="<?php echo esc_url( $lost_pw_url ); ?>"><?php esc_html_e( 'Forgot your password?', 'tta' ); ?></a></p>
+          </div>
+          <form id="tta-register-form" style="display:none;">
+            <p>
+              <label><?php esc_html_e( 'First Name', 'tta' ); ?><br />
+                <input type="text" name="first_name" required />
+              </label>
+            </p>
+            <p>
+              <label><?php esc_html_e( 'Last Name', 'tta' ); ?><br />
+                <input type="text" name="last_name" required />
+              </label>
+            </p>
+            <p>
+              <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
+                <input type="email" name="email" required />
+              </label>
+            </p>
+            <p>
+              <label><?php esc_html_e( 'Verify Email', 'tta' ); ?><br />
+                <input type="email" name="email_verify" required />
+              </label>
+            </p>
+            <p>
+              <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
+                <input type="password" name="password" required />
+              </label>
+            </p>
+            <p>
+              <label><?php esc_html_e( 'Verify Password', 'tta' ); ?><br />
+                <input type="password" name="password_verify" required />
+              </label>
+            </p>
+            <p>
+              <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
+              <a href="#tta-login-message" class="tta-button-link tta-cancel-register"><?php esc_html_e( 'Cancel Account Creation', 'tta' ); ?></a>
+              <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+            </p>
+            <span id="tta-register-response" class="tta-admin-progress-response-p"></span>
+          </form>
+        </div>
+      </div>
+    </section>
+    <?php
     return trim( ob_get_clean() );
 }
 

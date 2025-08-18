@@ -136,7 +136,7 @@ class TTA_Member_Dashboard {
                 $ban = tta_get_ban_message( intval( $member['wpuserid'] ) );
                 echo wp_kses_post( $ban['message'] );
                 if ( ! empty( $ban['button'] ) ) {
-                    $url = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+                    $url = add_query_arg( 'auto', 'reentry', home_url( '/checkout' ) );
                     echo ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
                 }
                 ?>

@@ -87,7 +87,6 @@ class TTA_Refund_Processor {
         $events = [];
 
         foreach ( $items as $it ) {
-            $tid       = intval( $it['ticket_id'] );
             $event_ute = $it['event_ute_id'] ?? '';
             if ( $event_ute ) {
                 $events[ $event_ute ] = true;

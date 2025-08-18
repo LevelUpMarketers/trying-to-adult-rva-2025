@@ -60,12 +60,17 @@ jQuery(function($){
   $(document).on('click', '.tta-mark-attendance', function(e){
     e.preventDefault();
     var $btn = $(this), id = $btn.data('attendee-id'), status = $btn.data('status');
+    if(status === 'no_show'){
+      var msg = 'Are you sure you want to mark this person as a no-show? If this is their third no-show, this member will be automatically banned until they purchase a Re-entry Ticket. They will be emailed with further instructions if you proceed.';
+      if(!window.confirm(msg)) return;
+    }
     $.post(TTA_Checkin.ajax_url, { action:'tta_set_attendance', nonce:TTA_Checkin.set_nonce, attendee_id:id, status:status }, function(res){
       if(!res.success) return;
       var label = $btn.closest('tr').find('.status-label');
       var text  = status.replace('_',' ');
       text = text.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
       label.text(text);
+      $btn.closest('td').find('.tta-mark-attendance').prop('disabled', true).addClass('disabled');
     }, 'json');
   });
 });
