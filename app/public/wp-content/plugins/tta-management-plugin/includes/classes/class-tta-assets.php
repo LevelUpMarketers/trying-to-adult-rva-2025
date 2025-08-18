@@ -384,6 +384,7 @@ class TTA_Assets {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
                 ]
             );
         }

@@ -52,7 +52,7 @@
 
 /* Become a Member page */
 .tta-become-member-wrap {
-  max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   padding-bottom:200px;
   padding-top:100px;
@@ -113,6 +113,47 @@
   padding: 5px 0;
 }
 
+/* Become a Member intro section */
+.tta-section.tta-intro {
+  padding: 0 28px;
+}
+.tta-intro-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+.tta-intro-img {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  margin-left:50px;
+}
+.tta-intro-img img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease, transform 1s ease;
+  border-radius: 4px;
+}
+.tta-intro-img img.active {
+  opacity: 1;
+}
+.tta-intro-img img.exit {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.tta-intro h1 {
+  font-size: 2.5rem;
+}
+.tta-intro p {
+  font-size: 18px;
+}
+
 @media (max-width: 768px) {
   .tta-membership-table {
     display: none;
@@ -120,6 +161,16 @@
 
   .tta-membership-mobile {
     display: block;
+  }
+
+  .tta-intro-inner {
+    grid-template-columns: 1fr;
+  }
+  .tta-intro-img {
+    margin-left: 0;
+  }
+  .tta-section.tta-intro {
+    padding: 0;
   }
 }
 
