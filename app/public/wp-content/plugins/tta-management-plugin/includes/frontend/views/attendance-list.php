@@ -43,8 +43,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
       <td><span class="tta-info-title"><?php esc_html_e( 'Needs Assistance:', 'tta' ); ?></span><?php echo isset( $a['assistance_note'] ) ? esc_html( $a['assistance_note'] ) : '-'; ?></td>
       <td><span class="tta-info-title"><?php esc_html_e( 'Status:', 'tta' ); ?></span><span class="status-label"><?php echo esc_html( ucwords( str_replace('_',' ', $a['status'] ) ) ); ?></span></td>
       <td>
-        <button class="button tta-mark-attendance" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="checked_in"><?php esc_html_e( 'Check In', 'tta' ); ?></button>
-        <button class="button tta-mark-attendance" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="no_show"><?php esc_html_e( 'No-Show', 'tta' ); ?></button>
+        <?php $disabled = in_array( $a['status'], [ 'checked_in', 'no_show' ], true ) ? 'disabled' : ''; ?>
+        <button class="button tta-mark-attendance<?php echo $disabled ? ' disabled' : ''; ?>" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="checked_in" <?php echo $disabled; ?>><?php esc_html_e( 'Check In', 'tta' ); ?></button>
+        <button class="button tta-mark-attendance<?php echo $disabled ? ' disabled' : ''; ?>" data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>" data-status="no_show" <?php echo $disabled; ?>><?php esc_html_e( 'No-Show', 'tta' ); ?></button>
       </td>
     </tr>
   <?php endforeach; else : ?>

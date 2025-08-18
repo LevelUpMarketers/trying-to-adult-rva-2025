@@ -822,6 +822,9 @@ function tta_set_attendance_status( $attendee_id, $status ) {
     $att_table = $wpdb->prefix . 'tta_attendees';
     $status    = in_array( $status, [ 'checked_in', 'no_show', 'pending' ], true ) ? $status : 'pending';
 
+    $row   = $wpdb->get_row( $wpdb->prepare( "SELECT email FROM {$att_table} WHERE id = %d", $attendee_id ), ARRAY_A );
+    $email = $row ? strtolower( sanitize_email( $row['email'] ) ) : '';
+
     $current = tta_get_attendance_status( $attendee_id );
     if ( $current === $status ) {
         return;
@@ -829,22 +832,28 @@ function tta_set_attendance_status( $attendee_id, $status ) {
 
     $wpdb->update( $att_table, [ 'status' => $status ], [ 'id' => intval( $attendee_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'attendance_status_' . intval( $attendee_id ) );
+    if ( $email ) {
+        TTA_Cache::delete( 'attended_count_' . md5( $email ) );
+        TTA_Cache::delete( 'no_show_count_' . md5( $email ) );
+    }
 
-    if ( 'no_show' === $status && 'no_show' !== $current ) {
-        $user_id = tta_get_attendee_user_id( $attendee_id );
-        if ( $user_id ) {
-            TTA_Cache::delete( 'attendance_summary_' . $user_id );
-            $summary = tta_get_member_attendance_summary( $user_id );
-            if ( $summary['no_show'] >= 3 && ! tta_user_is_banned( $user_id ) ) {
-                $members_table = $wpdb->prefix . 'tta_members';
-                $wpdb->update( $members_table, [ 'banned_until' => TTA_BAN_UNTIL_REENTRY ], [ 'wpuserid' => $user_id ], [ '%s' ], [ '%d' ] );
-                TTA_Cache::delete( 'banned_until_' . $user_id );
-                TTA_Cache::delete( 'banned_members' );
-                tta_clear_reinstatement_cron( $user_id );
-                $checkout = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
-                $login    = wp_login_url( $checkout );
-                tta_send_no_show_ban_email( $user_id, $login );
-            }
+    $user_id = tta_get_attendee_user_id( $attendee_id );
+    if ( $user_id ) {
+        TTA_Cache::delete( 'attendance_summary_' . $user_id );
+        TTA_Cache::delete( 'past_events_' . $user_id );
+    }
+
+    if ( 'no_show' === $status && 'no_show' !== $current && $user_id ) {
+        $summary = tta_get_member_attendance_summary( $user_id );
+        if ( $summary['no_show'] >= 3 && ! tta_user_is_banned( $user_id ) ) {
+            $members_table = $wpdb->prefix . 'tta_members';
+            $wpdb->update( $members_table, [ 'banned_until' => TTA_BAN_UNTIL_REENTRY ], [ 'wpuserid' => $user_id ], [ '%s' ], [ '%d' ] );
+            TTA_Cache::delete( 'banned_until_' . $user_id );
+            TTA_Cache::delete( 'banned_members' );
+            tta_clear_reinstatement_cron( $user_id );
+            $checkout = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+            $login    = wp_login_url( $checkout );
+            tta_send_no_show_ban_email( $user_id, $login );
         }
     }
 }
