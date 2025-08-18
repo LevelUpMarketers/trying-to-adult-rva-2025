@@ -1561,10 +1561,32 @@ function tta_unban_user( $wp_user_id ) {
     $table = $wpdb->prefix . 'tta_members';
     $wpdb->update( $table, [ 'banned_until' => null ], [ 'wpuserid' => intval( $wp_user_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'banned_until_' . intval( $wp_user_id ) );
+    TTA_Cache::delete( 'banned_members' );
     wp_clear_scheduled_hook( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
 }
 
 add_action( 'tta_reinstate_member', 'tta_unban_user', 10, 1 );
+
+/**
+ * Retrieve all currently banned members.
+ *
+ * @return array[] List of members with keys wpuserid, first_name, last_name, banned_until.
+ */
+function tta_get_banned_members() {
+    $cache_key = 'banned_members';
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'tta_members';
+    $rows  = $wpdb->get_results( "SELECT wpuserid, first_name, last_name, banned_until FROM {$table} WHERE banned_until IS NOT NULL", ARRAY_A );
+
+    TTA_Cache::set( $cache_key, $rows, $rows ? 60 : 30 );
+
+    return $rows ?: [];
+}
 
 /**
  * Build a ban message and button flag for a user.

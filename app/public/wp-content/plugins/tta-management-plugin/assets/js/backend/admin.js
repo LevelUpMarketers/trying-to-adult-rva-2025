@@ -309,6 +309,44 @@ jQuery(function($){
     }, 1000);
   }
 
+  // Banned Members tab
+  var $banned = $('#tta-banned-members');
+  if ($banned.length) {
+    $banned.on('click', '.tta-banned-member', function(){
+      $(this).next('.tta-banned-details').toggle();
+      $(this).find('.tta-toggle-arrow').toggleClass('open');
+    });
+
+    $banned.on('click', '.tta-banned-reinstate', function(e){
+      e.preventDefault();
+      if(!confirm('Reinstate this member?')) return;
+      var $btn=$(this);
+      $.post(TTA_Ajax.ajax_url, {
+        action:'tta_reinstate_member',
+        nonce:TTA_Ajax.banned_members_nonce,
+        wp_user_id:$btn.data('user')
+      }, function(res){
+        if(res.success){
+          var $details=$btn.closest('tr.tta-banned-details');
+          $details.prev('.tta-banned-member').remove();
+          $details.remove();
+        }
+      });
+    });
+
+    function pad(num){ return (num < 10 ? '0' : '') + num; }
+    setInterval(function(){
+      $banned.find('.tta-countdown').each(function(){
+        var $el=$(this); var remain=parseInt($el.data('remaining'),10);
+        if(isNaN(remain)) return;
+        remain=Math.max(0,remain-1);
+        $el.data('remaining',remain);
+        var hours=Math.floor(remain/3600), minutes=Math.floor((remain%3600)/60), seconds=remain%60;
+        $el.text(pad(hours)+' H, '+pad(minutes)+' M, '+pad(seconds)+' S');
+      });
+    },1000);
+  }
+
   var $history = $('#tta-email-history');
   if ($history.length) {
     $history.on('click', '#tta-email-clear-log', function(e){
