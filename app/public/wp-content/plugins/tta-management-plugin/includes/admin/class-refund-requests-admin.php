@@ -18,7 +18,7 @@ class TTA_Refund_Requests_Admin {
             'tta-refund-requests',
             [ $this, 'render_page' ],
             'dashicons-money-alt',
-            10
+            9.5
         );
     }
 

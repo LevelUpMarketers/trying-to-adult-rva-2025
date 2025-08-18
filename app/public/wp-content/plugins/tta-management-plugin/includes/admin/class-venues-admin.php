@@ -4,7 +4,7 @@ class TTA_Venues_Admin {
     public static function get_instance(){ static $inst; return $inst ?: $inst = new self(); }
     private function __construct(){ add_action('admin_menu',[ $this,'register_menu' ] ); }
     public function register_menu(){
-        add_menu_page('TTA Venues','TTA Venues','manage_options','tta-venues',[ $this,'render_page' ],'dashicons-location-alt',13);
+        add_menu_page('TTA Venues','TTA Venues','manage_options','tta-venues',[ $this,'render_page' ],'dashicons-location-alt',9.8);
     }
     public function render_page(){
         $tabs = [ 'create'=>'Add Venue','manage'=>'Manage Venues' ];

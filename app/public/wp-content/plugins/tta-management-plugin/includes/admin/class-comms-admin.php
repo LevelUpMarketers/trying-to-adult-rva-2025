@@ -13,7 +13,7 @@ class TTA_Comms_Admin {
             'tta-comms',
             [ $this, 'render_page' ],
             'dashicons-email-alt',
-            7
+            9.2
         );
     }
 

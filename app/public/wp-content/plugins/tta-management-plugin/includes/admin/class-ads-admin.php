@@ -21,7 +21,7 @@ class TTA_Ads_Admin {
             'tta-ads',
             [ $this, 'render_page' ],
             'dashicons-megaphone',
-            5
+            9
         );
     }
 
