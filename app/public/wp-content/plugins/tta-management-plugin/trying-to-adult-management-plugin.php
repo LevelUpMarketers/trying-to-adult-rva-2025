@@ -210,6 +210,9 @@ class TTA_Plugin {
             TTA_Comms_Admin::get_instance();
             TTA_Ads_Admin::get_instance();
             TTA_Refund_Requests_Admin::get_instance();
+
+            add_filter( 'custom_menu_order', '__return_true' );
+            add_filter( 'menu_order', 'tta_group_admin_menu' );
         } else {
             // Frontend shortcodes
             TTA_Events_Shortcode::get_instance();
@@ -232,5 +235,43 @@ class TTA_Plugin {
         // Clear plugin caches after a successful checkout
         add_action( 'tta_checkout_complete', [ 'TTA_Cache', 'flush' ] );
     }
+}
+
+/**
+ * Group all TTA admin pages together above the Media menu item.
+ *
+ * @param string[] $menu_order Original admin menu order.
+ * @return string[] Modified menu order with TTA items grouped.
+ */
+function tta_group_admin_menu( $menu_order ) {
+    if ( ! is_array( $menu_order ) ) {
+        return $menu_order;
+    }
+
+    $tta_items = [
+        'toplevel_page_tta-ads',
+        'toplevel_page_tta-bi-dashboard',
+        'toplevel_page_tta-comms',
+        'toplevel_page_tta-events',
+        'toplevel_page_tta-members',
+        'toplevel_page_tta-refund-requests',
+        'toplevel_page_tta-settings',
+        'toplevel_page_tta-tickets',
+        'toplevel_page_tta-venues',
+        'toplevel_page_tta-discount-codes',
+    ];
+
+    $new_order = [];
+    foreach ( $menu_order as $item ) {
+        if ( 'upload.php' === $item ) {
+            $new_order = array_merge( $new_order, $tta_items );
+        }
+
+        if ( ! in_array( $item, $tta_items, true ) ) {
+            $new_order[] = $item;
+        }
+    }
+
+    return $new_order;
 }
 ?>
