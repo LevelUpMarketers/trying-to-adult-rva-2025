@@ -21,15 +21,17 @@ class TTA_Alert_Bar {
             true
         );
 
+        $ban_info = tta_get_ban_message( get_current_user_id() );
         $data = [
-            'is_banned'      => tta_user_is_banned( get_current_user_id() ),
-            'reentry_url'    => add_query_arg( 'reentry', '1', home_url( '/checkout' ) ),
-            'checkout_url'   => home_url( '/checkout' ),
-            'banned_message' => __( 'You are banned due to excessive event no-shows or other reasons and must purchase a re-entry ticket to attend events again.', 'tta' ),
-            'reentry_label'  => __( 'Purchase Re-entry Ticket', 'tta' ),
-            'cart_message'   => __( 'Tickets reserved for', 'tta' ),
-            'checkout_label' => __( 'Go to Checkout', 'tta' ),
-            'cart_expires'   => 0,
+            'is_banned'     => tta_user_is_banned( get_current_user_id() ),
+            'reentry_url'   => add_query_arg( 'reentry', '1', home_url( '/checkout' ) ),
+            'checkout_url'  => home_url( '/checkout' ),
+            'banned_message'=> $ban_info['message'] ?? '',
+            'show_button'   => ! empty( $ban_info['button'] ),
+            'reentry_label' => __( 'Purchase Re-entry Ticket', 'tta' ),
+            'cart_message'  => __( 'Tickets reserved for', 'tta' ),
+            'checkout_label'=> __( 'Go to Checkout', 'tta' ),
+            'cart_expires'  => 0,
         ];
 
         if ( empty( $data['is_banned'] ) ) {

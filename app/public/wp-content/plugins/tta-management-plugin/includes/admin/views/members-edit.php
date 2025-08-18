@@ -541,16 +541,22 @@ wp_enqueue_media();
                     <?php
                     $ban_opt = 'none';
                     if ( $member['banned_until'] ) {
-                        $diff = strtotime( $member['banned_until'] ) - time();
-                        if ( $diff > 0 ) {
-                            if ( $diff >= 2419200 ) {
-                                $ban_opt = 'indefinite';
-                            } elseif ( $diff >= 1814400 ) {
-                                $ban_opt = '3week';
-                            } elseif ( $diff >= 1209600 ) {
-                                $ban_opt = '2week';
-                            } elseif ( $diff >= 604800 ) {
-                                $ban_opt = '1week';
+                        if ( TTA_BAN_UNTIL_REENTRY === $member['banned_until'] ) {
+                            $ban_opt = 'reentry';
+                        } elseif ( TTA_BAN_UNTIL_INDEFINITE === $member['banned_until'] ) {
+                            $ban_opt = 'indefinite';
+                        } else {
+                            $diff = strtotime( $member['banned_until'] ) - time();
+                            if ( $diff > 0 ) {
+                                if ( $diff >= 2419200 ) {
+                                    $ban_opt = '4week';
+                                } elseif ( $diff >= 1814400 ) {
+                                    $ban_opt = '3week';
+                                } elseif ( $diff >= 1209600 ) {
+                                    $ban_opt = '2week';
+                                } elseif ( $diff >= 604800 ) {
+                                    $ban_opt = '1week';
+                                }
                             }
                         }
                     }
@@ -558,6 +564,7 @@ wp_enqueue_media();
                     <select name="ban_status" id="ban_status">
                         <option value="none" <?php selected( $ban_opt, 'none' ); ?>>Not Banned</option>
                         <option value="indefinite" <?php selected( $ban_opt, 'indefinite' ); ?>>Banned Indefinitely</option>
+                        <option value="reentry" <?php selected( $ban_opt, 'reentry' ); ?>>Banned Until Purchasing Re-Entry Product</option>
                         <option value="1week" <?php selected( $ban_opt, '1week' ); ?>>1-Week Ban</option>
                         <option value="2week" <?php selected( $ban_opt, '2week' ); ?>>2-Week Ban</option>
                         <option value="3week" <?php selected( $ban_opt, '3week' ); ?>>3-Week Ban</option>

@@ -1512,6 +1512,31 @@ function tta_get_user_banned_until( $wp_user_id ) {
 }
 
 /**
+ * Get ban status info for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array { type:string, weeks:int }
+ */
+function tta_get_user_ban_status( $wp_user_id ) {
+    $until = tta_get_user_banned_until( $wp_user_id );
+    if ( ! $until ) {
+        return [ 'type' => 'none', 'weeks' => 0 ];
+    }
+    if ( TTA_BAN_UNTIL_INDEFINITE === $until ) {
+        return [ 'type' => 'indefinite', 'weeks' => 0 ];
+    }
+    if ( TTA_BAN_UNTIL_REENTRY === $until ) {
+        return [ 'type' => 'reentry', 'weeks' => 0 ];
+    }
+    $ts = strtotime( $until );
+    if ( ! $ts || $ts <= time() ) {
+        return [ 'type' => 'none', 'weeks' => 0 ];
+    }
+    $weeks = (int) ceil( ( $ts - time() ) / WEEK_IN_SECONDS );
+    return [ 'type' => 'timed', 'weeks' => max( 1, $weeks ) ];
+}
+
+/**
  * Determine if a user is currently banned.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -1536,6 +1561,65 @@ function tta_unban_user( $wp_user_id ) {
     $table = $wpdb->prefix . 'tta_members';
     $wpdb->update( $table, [ 'banned_until' => null ], [ 'wpuserid' => intval( $wp_user_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'banned_until_' . intval( $wp_user_id ) );
+    wp_clear_scheduled_hook( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+}
+
+add_action( 'tta_reinstate_member', 'tta_unban_user', 10, 1 );
+
+/**
+ * Build a ban message and button flag for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ * @return array { message:string, button:bool }
+ */
+function tta_get_ban_message( $wp_user_id ) {
+    $status = tta_get_user_ban_status( $wp_user_id );
+    switch ( $status['type'] ) {
+        case 'indefinite':
+            return [
+                'message' => __( 'You are currently banned from purchasing tickets. Please use the <a href="/contact">contact form on our contact page</a> if you feel you\'ve been accidentally banned or would like to contest this.', 'tta' ),
+                'button'  => false,
+            ];
+        case 'reentry':
+            return [
+                'message' => __( 'You are banned due to excessive event no-shows or other reasons and must purchase a re-entry ticket to attend events again.', 'tta' ),
+                'button'  => true,
+            ];
+        case 'timed':
+            $w = intval( $status['weeks'] );
+            return [
+                'message' => sprintf( __( 'You are banned for %d week(s) due to excessive event no-shows or other reasons. After %d week(s), you will be automatically reinstated.  You may purchase a Re-entry Ticket to become reinstated early.', 'tta' ), $w, $w ),
+                'button'  => true,
+            ];
+    }
+    return [ 'message' => '', 'button' => false ];
+}
+
+/**
+ * Send the banned reinstatement email to a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_send_banned_reinstatement_email( $wp_user_id ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['banned_reinstatement'] ) ) {
+        return;
+    }
+    $tpl     = $templates['banned_reinstatement'];
+    $context = tta_get_user_context_by_id( $wp_user_id );
+    $tokens  = [
+        '{first_name}' => $context['first_name'] ?? '',
+        '{email}'      => $context['user_email'] ?? '',
+    ];
+    $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
+    $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+    $body     = nl2br( $body_txt );
+    $to       = sanitize_email( $context['user_email'] );
+    if ( $to ) {
+        wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
+    }
 }
 
 /**
