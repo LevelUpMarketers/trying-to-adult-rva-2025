@@ -448,4 +448,89 @@ jQuery(function($){
       }, delay);
     });
   });
+
+  // Login/register handling for guests
+  $('.tta-login-message').on('click', '.tta-show-register', function(e){
+    e.preventDefault();
+    var $section = $(this).closest('.tta-login-message');
+    var $link = $(this);
+    $link.addClass('tta-button-disabled').attr('aria-disabled', 'true').attr('tabindex', '-1');
+    $section.find('.tta-login-wrap').fadeOut(200, function(){
+      $section.find('.tta-register-form').fadeIn(200);
+    });
+  });
+
+  $('.tta-login-message').on('click', '.tta-cancel-register', function(e){
+    e.preventDefault();
+    var $section = $(this).closest('.tta-login-message');
+    $section.find('.tta-register-form').fadeOut(200, function(){
+      $section.find('.tta-login-wrap').fadeIn(200);
+    });
+    var $link = $section.find('.tta-show-register');
+    $link.removeClass('tta-button-disabled').removeAttr('aria-disabled tabindex');
+  });
+
+  $('.tta-login-message').on('submit', '.tta-register-form', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var $form = $(this),
+        $section = $form.closest('.tta-login-message'),
+        $btn  = $form.find('button'),
+        $spin = $form.find('.tta-admin-progress-spinner-svg'),
+        $resp = $section.find('.tta-register-response'),
+        email = $form.find('[name="email"]').val(),
+        emailVerify = $form.find('[name="email_verify"]').val(),
+        pass  = $form.find('[name="password"]').val(),
+        passVerify = $form.find('[name="password_verify"]').val();
+
+    $resp.removeClass('updated error').text('');
+
+    if(email !== emailVerify){
+      $resp.addClass('error').text(TTA_MemberDashboard.email_mismatch_msg);
+      return;
+    }
+    if(pass !== passVerify){
+      $resp.addClass('error').text(TTA_MemberDashboard.password_mismatch_msg);
+      return;
+    }
+    if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pass)){
+      $resp.addClass('error').text(TTA_MemberDashboard.password_requirements_msg);
+      return;
+    }
+
+    $btn.prop('disabled', true);
+    $spin.show().css({opacity:0}).fadeTo(200,1);
+
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_register',
+      nonce: TTA_MemberDashboard.front_nonce,
+      first_name: $form.find('[name="first_name"]').val(),
+      last_name:  $form.find('[name="last_name"]').val(),
+      email:      email,
+      email_verify: emailVerify,
+      password:   pass,
+      password_verify: passVerify
+    }, function(res){
+      $spin.fadeOut(200);
+      if(res.success){
+        var count = 5;
+        (function update(){
+          $resp.removeClass('error').addClass('updated')
+               .text(TTA_MemberDashboard.account_created_msg.replace('%d', count));
+          if(count-- > 0){
+            setTimeout(update, 1000);
+          } else {
+            window.location.reload();
+          }
+        })();
+      } else {
+        $btn.prop('disabled', false);
+        $resp.addClass('error').text(res.data.message || TTA_MemberDashboard.request_failed_msg);
+      }
+    }, 'json').fail(function(){
+      $spin.fadeOut(200);
+      $btn.prop('disabled', false);
+      $resp.addClass('error').text(TTA_MemberDashboard.request_failed_msg);
+    });
+  });
 });
