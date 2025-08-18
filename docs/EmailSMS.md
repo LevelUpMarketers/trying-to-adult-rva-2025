@@ -105,10 +105,10 @@ empty or omitted the full URL is printed.
 ### Ban & Re-Entry
 
 ```
-[Re-entry Ticket]({reentry_link})
+{reentry_link}
 ```
 
-Use `[Re-entry Ticket]({reentry_link})` to insert a link to `/checkout?auto=reentry`. When the member is logged in, following the link clears any existing items and automatically adds the Re-entry Ticket to their cart. Unauthenticated visitors simply land on the checkout page.
+Insert `{reentry_link}` to output `/checkout?auto=reentry`. Wrap it in Markdown—`[Re-entry Ticket]({reentry_link})`—to create a clickable link that, when the member is logged in, clears any existing items and automatically adds the Re-entry Ticket to their cart. Unauthenticated visitors simply land on the checkout page.
 
 ### Event Attendee Information
 

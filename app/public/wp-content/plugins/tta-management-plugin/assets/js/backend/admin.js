@@ -1467,6 +1467,7 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{phone}': mem.phone || '555-555-5555',
         '{membership_level}': mem.membership_level || 'basic',
         '{member_type}': mem.member_type || 'member',
+        '{reentry_link}': '/checkout?auto=reentry',
         '{attendee_first_name}': mem.first_name || 'First',
         '{attendee_last_name}': mem.last_name || 'Last',
         '{attendee_email}': mem.email || 'attendee@example.com',
