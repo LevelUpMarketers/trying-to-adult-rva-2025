@@ -283,8 +283,7 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_past_url}">{dashboard_past_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_billing_url}">{dashboard_billing_url}</button></div>';
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Re-entry links for banned members.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Ban & Re-Entry', 'tta' ) . '</strong><br>';
-            echo '<button type="button" class="button tta-insert-token" data-token="{reentry_link}">{reentry_link}</button></div>';
-
+            echo '<button type="button" class="button tta-insert-token" data-token="{reentry_link}">{reentry_link}</button></div>'
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Per-ticket attendee details.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Event Attendee Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee_first_name}">{attendee_first_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee_last_name}">{attendee_last_name}</button> ';
