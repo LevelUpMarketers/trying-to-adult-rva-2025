@@ -1728,7 +1728,7 @@ function tta_send_no_show_ban_email( $wp_user_id, $checkout_url ) {
     $context = tta_get_user_context_by_id( $wp_user_id );
     $tokens  = [
         '{first_name}'   => $context['first_name'] ?? '',
-        '{reentry_link}' => '[' . esc_html__( 'Re-entry Ticket', 'tta' ) . '](' . esc_url( $checkout_url ) . ')',
+        '{reentry_link}' => esc_url( $checkout_url ),
     ];
     $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
     $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
