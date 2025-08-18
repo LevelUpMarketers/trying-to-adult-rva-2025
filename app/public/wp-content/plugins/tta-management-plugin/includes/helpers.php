@@ -665,6 +665,7 @@ function tta_get_event_attendees_with_status( $event_ute_id ) {
         $r['phone']         = sanitize_text_field( $r['phone'] );
         $r['status']        = sanitize_text_field( $r['status'] );
         $r['attended_count'] = tta_get_attended_event_count_by_email( $r['email'] );
+        $r['no_show_count']  = tta_get_no_show_event_count_by_email( $r['email'] );
         $note = trim( $r['assistance_note'] ?? '' );
         $r['assistance_note'] = $note !== '' ? sanitize_textarea_field( $note ) : '-';
         $out[] = $r;
@@ -3629,6 +3630,42 @@ function tta_get_attended_event_count_by_email( $email ) {
 
     $count += (int) $wpdb->get_var( $wpdb->prepare(
         "SELECT COUNT(*) FROM {$archive} WHERE LOWER(email) = %s AND status = 'checked_in'",
+        $email
+    ) );
+
+    TTA_Cache::set( $cache_key, $count, 300 );
+    return $count;
+}
+
+/**
+ * Get how many events an attendee has been marked as a no-show for.
+ *
+ * @param string $email Attendee email address.
+ * @return int Number of no-shows.
+ */
+function tta_get_no_show_event_count_by_email( $email ) {
+    $email = strtolower( sanitize_email( $email ) );
+    if ( '' === $email ) {
+        return 0;
+    }
+
+    $cache_key = 'no_show_count_' . md5( $email );
+    $cached    = TTA_Cache::get( $cache_key );
+    if ( false !== $cached ) {
+        return intval( $cached );
+    }
+
+    global $wpdb;
+    $att_table = $wpdb->prefix . 'tta_attendees';
+    $archive   = $wpdb->prefix . 'tta_attendees_archive';
+
+    $count = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$att_table} WHERE LOWER(email) = %s AND status = 'no_show'",
+        $email
+    ) );
+
+    $count += (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$archive} WHERE LOWER(email) = %s AND status = 'no_show'",
         $email
     ) );
 

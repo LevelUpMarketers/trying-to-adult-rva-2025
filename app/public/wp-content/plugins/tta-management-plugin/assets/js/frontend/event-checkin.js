@@ -70,6 +70,7 @@ jQuery(function($){
       var text  = status.replace('_',' ');
       text = text.replace(/\b\w/g, function(c){ return c.toUpperCase(); });
       label.text(text);
+      $btn.prop('disabled', true).addClass('disabled');
     }, 'json');
   });
 });

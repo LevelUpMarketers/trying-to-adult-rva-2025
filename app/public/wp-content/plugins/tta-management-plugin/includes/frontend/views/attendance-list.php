@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
     <tr>
       <th><?php esc_html_e( 'Attendee', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Email', 'tta' ); ?></th>
-      <th><?php esc_html_e( 'Events Attended', 'tta' ); ?></th>
+      <th><?php esc_html_e( 'Event Attendance & No-Shows', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Needs Assistance', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Status', 'tta' ); ?></th>
       <th><?php esc_html_e( 'Actions', 'tta' ); ?></th>
@@ -39,7 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
     <tr data-attendee-id="<?php echo esc_attr( $a['id'] ); ?>">
       <td><span class="tta-info-title"><?php esc_html_e( 'Name:', 'tta' ); ?></span><?php echo esc_html( $a['first_name'] . ' ' . $a['last_name'] ); ?></td>
       <td><span class="tta-info-title"><?php esc_html_e( 'Email:', 'tta' ); ?></span><?php echo esc_html( $a['email'] ); ?></td>
-      <td><span class="tta-info-title"><?php esc_html_e( 'Events Attended:', 'tta' ); ?></span><?php echo intval( $a['attended_count'] ); ?></td>
+      <td><span class="tta-info-title"><?php esc_html_e( 'Event Attendance & No-Shows:', 'tta' ); ?></span><?php echo intval( $a['attended_count'] ); ?> <?php esc_html_e( 'Events Attended', 'tta' ); ?>, <?php echo intval( $a['no_show_count'] ); ?> <?php esc_html_e( 'No-Shows', 'tta' ); ?></td>
       <td><span class="tta-info-title"><?php esc_html_e( 'Needs Assistance:', 'tta' ); ?></span><?php echo isset( $a['assistance_note'] ) ? esc_html( $a['assistance_note'] ) : '-'; ?></td>
       <td><span class="tta-info-title"><?php esc_html_e( 'Status:', 'tta' ); ?></span><span class="status-label"><?php echo esc_html( ucwords( str_replace('_',' ', $a['status'] ) ) ); ?></span></td>
       <td>
