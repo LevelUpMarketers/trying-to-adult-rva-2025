@@ -808,6 +808,7 @@ input[disabled]::before {
 
   .tta-events-ad{
     text-align:left;
+    padding: 20px;
   }
 
   .tta-event-columns {
