@@ -18,14 +18,15 @@ $lost_pw_url = wp_lostpassword_url( home_url( '/member-dashboard/?tab=' . $tab_s
   <section class="tta-message-center tta-login-accordion tta-login-message">
     <h2><?php esc_html_e( 'Log in or Register Here', 'tta' ); ?></h2>
     <div class="tta-accordion">
-      <p>
-        <?php
-        printf(
-            esc_html__( 'Ticket discounts may be available! Log in below to check. Don\'t have an account? Create one below or become a Member today!%s', 'tta' ),
-            '<div><a href="#" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="/become-a-member" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>'
-        );
-        ?>
-      </p>
+        <p>
+          <?php
+          printf(
+              /* translators: 1: action buttons */
+              esc_html__( 'Join today to create your profile, view your upcoming & past events, and more! Create a free account below or become a Member today!%1$s', 'tta' ),
+              '<div><a href="#" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="/become-a-member" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>'
+          );
+          ?>
+        </p>
       <div class="tta-accordion-content expanded">
         <div class="tta-login-wrap">
           <?php echo $form_html; ?>

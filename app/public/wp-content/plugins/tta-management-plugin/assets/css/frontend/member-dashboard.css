@@ -25,6 +25,14 @@
   padding: 20px 0 0;
   background: #faf8e5;
 }
+.tta-login-accordion .tta-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #0073aa;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+}
 .tta-button-link {
   background: none;
   border: none;
