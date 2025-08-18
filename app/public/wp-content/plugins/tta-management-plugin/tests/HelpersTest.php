@@ -429,6 +429,12 @@ class HelpersTest extends TestCase {
             public function update($table, $data, $where, $formats, $where_f) {
                 $this->updated = [$table, $data, $where];
             }
+            public function get_row($query, $output = ARRAY_A) {
+                return ['email' => 'test@example.com'];
+            }
+            public function prepare($query, ...$args) {
+                return $query;
+            }
         };
         require_once __DIR__ . '/../includes/helpers.php';
         tta_set_attendance_status(5, 'checked_in');
