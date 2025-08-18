@@ -462,7 +462,10 @@ jQuery(function($){
       var $container = $new.find('.tta-inline-container');
       $container.html(res.data.html).slideDown(200);
       $container.find('select[name="level"]').each(function(){
-        syncLevelPrice($(this));
+        var $priceInput = $(this).closest('form').find('input[name="price"], input[name="amount"]');
+        if(!$priceInput.val()){
+          syncLevelPrice($(this));
+        }
       });
     }, 'json').fail(function(){ $spinner.fadeTo(200,0,function(){ $(this).hide(); }); });
   });
