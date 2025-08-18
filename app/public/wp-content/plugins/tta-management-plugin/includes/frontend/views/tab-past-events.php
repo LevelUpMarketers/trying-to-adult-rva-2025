@@ -108,8 +108,8 @@
               <?php endforeach; ?>
               </ul>
             </div>
-          </div>
           <?php endforeach; ?>
+        </div>
       <?php endforeach; ?>
   <?php else : ?>
       <p><?php esc_html_e( 'No past events found.', 'tta' ); ?></p>

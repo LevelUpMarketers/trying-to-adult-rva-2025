@@ -1,6 +1,7 @@
 # Member Dashboard
 
 The Member Dashboard is accessible at `/member-dashboard/` via the shortcode `[tta_member_dashboard]`.
+When a visitor is not logged in, the dashboard still displays all tabs but each one contains a login form with an option to register or become a member.
 It presents five tabs: **Profile Info**, **Your Upcoming Events**, **Your Waitlist Events**, **Your Past Events**, and **Billing & Membership Info**. Tooltip icons now appear before each field label for quicker context. The tooltip text is displayed instantly on hover using visibility toggles instead of opacity fades. The dashboard's JavaScript and CSS are enqueued whenever the page is viewed so tab switching works even when not logged in.
 
 On screens narrower than 1200px the dashboard switches to a mobile-friendly layout. The sidebar tabs become full-width accordion headers; tapping a header expands its section while collapsing the others. Each tab’s form and fields remain intact inside its accordion panel.
@@ -47,6 +48,7 @@ Past events show the same details as upcoming events. To keep the database small
 
 - Each attendee entry also lists their final attendance status (Attended, No-Show, or Pending) along with any refund notes.
 - A summary box at the top displays how many events you've attended and no‑showed along with your total savings. The savings amount is wrapped in a `<span class="tta-savings-wow-span">` element so it can be styled prominently. The message varies by membership level—Basic members are prompted to upgrade, Premium members see a referral link, and Free members get an invitation to join.
+- Ticket details remain enclosed within each past event's container so stray markup doesn't spill outside the dashboard layout.
 
 ## Billing & Membership Info
 

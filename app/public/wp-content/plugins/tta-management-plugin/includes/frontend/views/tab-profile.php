@@ -456,7 +456,7 @@ $hide_attendance = intval( $member['hide_event_attendance'] );
       </tbody>
     </table>
 
-    <p class="tta-submit-wrap">
+    <div class="tta-submit-wrap">
       <button type="button" id="toggle-edit-mode" class="button">
         <?php esc_html_e( 'Edit Profile', 'tta' ); ?>
       </button>
@@ -468,10 +468,8 @@ $hide_attendance = intval( $member['hide_event_attendance'] );
              src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>"
              alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
       </span>
-      <span class="tta-admin-progress-response">
-        <p class="tta-admin-progress-response-p"></p>
-      </span>
-    </p>
+      <span class="tta-admin-progress-response-p"></span>
+    </div>
 
   </form>
 </div>

@@ -6,6 +6,42 @@
       display: block;
 }
 
+/* Login message styles */
+.tta-message-center {
+  background: #faf8e5;
+  border: 1px solid #f0e0b0;
+  border-radius: 4px;
+  padding: 15px 20px;
+  margin: 20px 0;
+}
+.tta-login-accordion .tta-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  transition: max-height 0.4s ease, padding 0.4s ease;
+}
+.tta-login-accordion .tta-accordion-content.expanded {
+  max-height: 400px;
+  padding: 20px 0 0;
+  background: #faf8e5;
+}
+.tta-login-accordion .tta-button {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #0073aa;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.tta-button-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #0073aa;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Show Profile tab on load */
 #tab-profile { display: block; }
 
@@ -335,7 +371,7 @@
   height: 35px;
 }
 
-#tta-update-card-form > p.tta-submit-wrap{
+#tta-update-card-form > .tta-submit-wrap{
   display:block;
 }
 

@@ -72,10 +72,15 @@ class TTA_Member_Dashboard {
                 'tta-member-dashboard-js',
                 'TTA_MemberDashboard',
                 [
-                    'ajax_url'     => admin_url( 'admin-ajax.php' ),
-                    'update_nonce' => wp_create_nonce( 'tta_member_front_update' ),
-                    'front_nonce'  => wp_create_nonce( 'tta_frontend_nonce' ),
-                    'plugin_url'   => TTA_PLUGIN_URL,
+                    'ajax_url'                 => admin_url( 'admin-ajax.php' ),
+                    'update_nonce'             => wp_create_nonce( 'tta_member_front_update' ),
+                    'front_nonce'              => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'plugin_url'               => TTA_PLUGIN_URL,
+                    'email_mismatch_msg'       => __( 'Email addresses do not match.', 'tta' ),
+                    'password_mismatch_msg'    => __( 'Passwords do not match.', 'tta' ),
+                    'password_requirements_msg'=> __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
+                    'request_failed_msg'       => __( 'Request failed.', 'tta' ),
+                    'account_created_msg'      => __( 'Account created! Reloading in %d…', 'tta' ),
                 ]
             );
         }
@@ -85,63 +90,61 @@ class TTA_Member_Dashboard {
      * Shortcode callback: renders the member dashboard.
      */
     public function render_dashboard_shortcode( $atts ) {
-        if ( ! is_user_logged_in() ) {
-            ob_start();
-            echo do_shortcode('[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">MEMBER DASHBOARD</p>[/vc_column_text][/vc_column][/vc_row]');
-            wp_login_form([
-                'redirect'       => get_permalink(),
-                'label_username' => __( 'Username or Email' ),
-                'label_password' => __( 'Password' ),
-                'remember'       => true,
-            ]);
-            return ob_get_clean();
-        }
+        $is_logged_in = is_user_logged_in();
+        $member       = null;
 
-        // Fetch member record
-        $wp_user_id    = get_current_user_id();
-        global $wpdb;
-        $members_table = $wpdb->prefix . 'tta_members';
+        if ( $is_logged_in ) {
+            // Fetch member record
+            $wp_user_id    = get_current_user_id();
+            global $wpdb;
+            $members_table = $wpdb->prefix . 'tta_members';
 
-        $member = $wpdb->get_row(
-            $wpdb->prepare( "SELECT * FROM {$members_table} WHERE wpuserid = %d LIMIT 1", $wp_user_id ),
-            ARRAY_A
-        );
-        if ( ! $member ) {
-            return '<p>' . esc_html__( 'No member record found.', 'tta' ) . '</p>';
-        }
+            $member = $wpdb->get_row(
+                $wpdb->prepare( "SELECT * FROM {$members_table} WHERE wpuserid = %d LIMIT 1", $wp_user_id ),
+                ARRAY_A
+            );
+            if ( ! $member ) {
+                return '<p>' . esc_html__( 'No member record found.', 'tta' ) . '</p>';
+            }
 
-        // Split address into parts
-        $street_address = '';
-        $address_2      = '';
-        $city           = '';
-        $state          = '';
-        $zip            = '';
-        if ( ! empty( $member['address'] ) ) {
-            $addr            = tta_parse_address( $member['address'] );
-            $street_address  = $addr['street'];
-            $address_2       = $addr['address2'];
-            $city            = $addr['city'];
-            $state           = $addr['state'];
-            $zip             = $addr['zip'];
+            // Split address into parts
+            $street_address = '';
+            $address_2      = '';
+            $city           = '';
+            $state          = '';
+            $zip            = '';
+            if ( ! empty( $member['address'] ) ) {
+                $addr            = tta_parse_address( $member['address'] );
+                $street_address  = $addr['street'];
+                $address_2       = $addr['address2'];
+                $city            = $addr['city'];
+                $state           = $addr['state'];
+                $zip             = $addr['zip'];
+            }
         }
 
         ob_start();
         echo do_shortcode('[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">MEMBER DASHBOARD</p>[/vc_column_text][/vc_column][/vc_row]');
         ?>
         <div class="tta-member-dashboard-wrap">
-          <h2><?php echo esc_html( 'Welcome, ' . $member['first_name'] . '!' ); ?></h2>
-          <p><?php echo esc_html( 'A Member since ' . date_i18n( 'F j, Y', strtotime( $member['joined_at'] ) ) ); ?></p>
-          <?php if ( ! empty( $member['banned_until'] ) && strtotime( $member['banned_until'] ) > time() ) : ?>
-            <div class="tta-banned-notice">
-              <?php
-              $ban = tta_get_ban_message( intval( $member['wpuserid'] ) );
-              echo wp_kses_post( $ban['message'] );
-              if ( ! empty( $ban['button'] ) ) {
-                  $url = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
-                  echo ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
-              }
-              ?>
-            </div>
+          <?php if ( $is_logged_in ) : ?>
+            <h2><?php echo esc_html( 'Welcome, ' . $member['first_name'] . '!' ); ?></h2>
+            <p><?php echo esc_html( 'A Member since ' . date_i18n( 'F j, Y', strtotime( $member['joined_at'] ) ) ); ?></p>
+            <?php if ( ! empty( $member['banned_until'] ) && strtotime( $member['banned_until'] ) > time() ) : ?>
+              <div class="tta-banned-notice">
+                <?php
+                $ban = tta_get_ban_message( intval( $member['wpuserid'] ) );
+                echo wp_kses_post( $ban['message'] );
+                if ( ! empty( $ban['button'] ) ) {
+                    $url = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+                    echo ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
+                }
+                ?>
+              </div>
+            <?php endif; ?>
+          <?php else : ?>
+            <h2><?php esc_html_e( 'Welcome!', 'tta' ); ?></h2>
+            <p><?php esc_html_e( 'Log in to view your member information.', 'tta' ); ?></p>
           <?php endif; ?>
 
           <div class="tta-member-dashboard">
@@ -156,16 +159,24 @@ class TTA_Member_Dashboard {
             </div>
 
             <div class="tta-dashboard-content">
-              
-              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-profile.php'; ?>
 
-              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-upcoming.php'; ?>
+              <?php if ( $is_logged_in ) : ?>
+                <?php include plugin_dir_path( __FILE__ ) . 'views/tab-profile.php'; ?>
 
-              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-waitlist.php'; ?>
+                <?php include plugin_dir_path( __FILE__ ) . 'views/tab-upcoming.php'; ?>
 
-              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-past-events.php'; ?>
+                <?php include plugin_dir_path( __FILE__ ) . 'views/tab-waitlist.php'; ?>
 
-              <?php include plugin_dir_path( __FILE__ ) . 'views/tab-billing.php'; ?>
+                <?php include plugin_dir_path( __FILE__ ) . 'views/tab-past-events.php'; ?>
+
+                <?php include plugin_dir_path( __FILE__ ) . 'views/tab-billing.php'; ?>
+              <?php else : ?>
+                <?php $tab_slug = 'profile';  include plugin_dir_path( __FILE__ ) . 'views/tab-login.php'; ?>
+                <?php $tab_slug = 'upcoming'; include plugin_dir_path( __FILE__ ) . 'views/tab-login.php'; ?>
+                <?php $tab_slug = 'waitlist'; include plugin_dir_path( __FILE__ ) . 'views/tab-login.php'; ?>
+                <?php $tab_slug = 'past';     include plugin_dir_path( __FILE__ ) . 'views/tab-login.php'; ?>
+                <?php $tab_slug = 'billing';  include plugin_dir_path( __FILE__ ) . 'views/tab-login.php'; ?>
+              <?php endif; ?>
 
             </div>
           </div>
@@ -173,6 +184,7 @@ class TTA_Member_Dashboard {
         <?php
         return ob_get_clean();
     }
+
 }
 
 TTA_Member_Dashboard::get_instance();

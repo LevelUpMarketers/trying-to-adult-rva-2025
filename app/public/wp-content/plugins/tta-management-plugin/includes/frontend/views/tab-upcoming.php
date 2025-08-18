@@ -119,7 +119,7 @@
                   <span class="tta-progress-spinner">
                     <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
                   </span>
-                  <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
+                  <span class="tta-admin-progress-response-p"></span>
                 </form>
               </div>
               <?php endif; ?>
@@ -134,7 +134,7 @@
             <span class="tta-progress-spinner">
               <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
             </span>
-            <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
+            <span class="tta-admin-progress-response-p"></span>
           </div>
         </div>
       <?php endforeach; ?>
