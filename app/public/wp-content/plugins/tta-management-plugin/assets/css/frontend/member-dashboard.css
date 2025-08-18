@@ -371,7 +371,7 @@
   height: 35px;
 }
 
-#tta-update-card-form > p.tta-submit-wrap{
+#tta-update-card-form > .tta-submit-wrap{
   display:block;
 }
 

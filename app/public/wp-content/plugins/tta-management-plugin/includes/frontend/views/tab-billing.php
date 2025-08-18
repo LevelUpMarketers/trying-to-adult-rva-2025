@@ -119,13 +119,13 @@
               <input type="text" name="bill_zip" value="<?php echo esc_attr( $zip ); ?>" required />
             </label>
           </p>
-          <p class="tta-submit-wrap">
+          <div class="tta-submit-wrap">
             <button type="submit" class="button"><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></button>
             <span class="tta-progress-spinner">
               <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
             </span>
-            <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
-          </p>
+            <span class="tta-admin-progress-response-p"></span>
+          </div>
         </form>
       <?php endif; ?>
   <?php else :
@@ -144,15 +144,15 @@
       <form id="tta-cancel-membership-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
         <?php wp_nonce_field( 'tta_member_front_update', 'nonce' ); ?>
         <input type="hidden" name="action" value="tta_cancel_membership" />
-        <p class="tta-submit-wrap">
+        <div class="tta-submit-wrap">
           <button type="submit" class="button">
             <?php esc_html_e( 'Cancel Membership', 'tta' ); ?>
           </button>
           <span class="tta-progress-spinner">
             <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
           </span>
-          <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
-        </p>
+          <span class="tta-admin-progress-response-p"></span>
+        </div>
       </form>
       <h4><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></h4>
       <form id="tta-update-card-form" method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="tta-update-card-form">
@@ -222,13 +222,13 @@
             <input type="text" name="bill_zip" value="<?php echo esc_attr( $zip ); ?>" required />
           </label>
         </p>
-        <p class="tta-submit-wrap">
+        <div class="tta-submit-wrap">
           <button type="submit" class="button"><?php esc_html_e( 'Update Payment Method', 'tta' ); ?></button>
           <span class="tta-progress-spinner">
             <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
           </span>
-          <span class="tta-admin-progress-response"><p class="tta-admin-progress-response-p"></p></span>
-        </p>
+          <span class="tta-admin-progress-response-p"></span>
+        </div>
       </form>
     <?php endif; ?>
   <?php endif; ?>
