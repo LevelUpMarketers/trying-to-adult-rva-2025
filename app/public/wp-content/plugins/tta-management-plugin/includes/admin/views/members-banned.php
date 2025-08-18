@@ -59,7 +59,7 @@ if ( empty( $members ) ) {
         }
 
         echo '<tr class="tta-banned-details tta-inline-row" style="display:none;"><td colspan="2"><div class="tta-inline-container">';
-        echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Banned On', 'tta' ) . '</th><th>' . esc_html__( 'No-Shows', 'tta' ) . '</th><th>' . esc_html__( 'Ban Type', 'tta' ) . '</th><th>' . esc_html__( 'Countdown', 'tta' ) . '</th><th>' . esc_html__( 'Cron Job', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
+        echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Banned On', 'tta' ) . '</th><th>' . esc_html__( 'No-Shows', 'tta' ) . '</th><th>' . esc_html__( 'Ban Type', 'tta' ) . '</th><th>' . esc_html__( 'Countdown', 'tta' ) . '</th><th>' . esc_html__( 'Reinstatement Scheduled For...', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
         echo '<tr>';
         echo '<td>' . esc_html( $banned_on ) . '</td>';
         echo '<td>' . esc_html( $no_show ) . '</td>';

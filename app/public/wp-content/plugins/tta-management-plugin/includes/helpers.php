@@ -790,6 +790,27 @@ function tta_get_ticket_attendees( $ticket_id ) {
 }
 
 /**
+ * Get the WordPress user ID for an attendee.
+ *
+ * @param int $attendee_id Attendee ID.
+ * @return int WP user ID or 0 if not found.
+ */
+function tta_get_attendee_user_id( $attendee_id ) {
+    global $wpdb;
+    $att_table = $wpdb->prefix . 'tta_attendees';
+    $tx_table  = $wpdb->prefix . 'tta_transactions';
+    if ( ! method_exists( $wpdb, 'get_var' ) ) {
+        return 0;
+    }
+    return (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT t.wpuserid FROM {$att_table} a JOIN {$tx_table} t ON a.transaction_id = t.id WHERE a.id = %d",
+            intval( $attendee_id )
+        )
+    );
+}
+
+/**
  * Update an attendee's status.
  *
  * @param int    $attendee_id Attendee ID.
@@ -798,9 +819,33 @@ function tta_get_ticket_attendees( $ticket_id ) {
 function tta_set_attendance_status( $attendee_id, $status ) {
     global $wpdb;
     $att_table = $wpdb->prefix . 'tta_attendees';
-    $status = in_array( $status, [ 'checked_in', 'no_show', 'pending' ], true ) ? $status : 'pending';
+    $status    = in_array( $status, [ 'checked_in', 'no_show', 'pending' ], true ) ? $status : 'pending';
+
+    $current = tta_get_attendance_status( $attendee_id );
+    if ( $current === $status ) {
+        return;
+    }
+
     $wpdb->update( $att_table, [ 'status' => $status ], [ 'id' => intval( $attendee_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'attendance_status_' . intval( $attendee_id ) );
+
+    if ( 'no_show' === $status && 'no_show' !== $current ) {
+        $user_id = tta_get_attendee_user_id( $attendee_id );
+        if ( $user_id ) {
+            TTA_Cache::delete( 'attendance_summary_' . $user_id );
+            $summary = tta_get_member_attendance_summary( $user_id );
+            if ( $summary['no_show'] >= 3 && ! tta_user_is_banned( $user_id ) ) {
+                $members_table = $wpdb->prefix . 'tta_members';
+                $wpdb->update( $members_table, [ 'banned_until' => TTA_BAN_UNTIL_REENTRY ], [ 'wpuserid' => $user_id ], [ '%s' ], [ '%d' ] );
+                TTA_Cache::delete( 'banned_until_' . $user_id );
+                TTA_Cache::delete( 'banned_members' );
+                tta_clear_reinstatement_cron( $user_id );
+                $checkout = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+                $login    = wp_login_url( $checkout );
+                tta_send_no_show_ban_email( $user_id, $login );
+            }
+        }
+    }
 }
 
 /**
@@ -817,6 +862,9 @@ function tta_get_attendance_status( $attendee_id ) {
         return $cached;
     }
     global $wpdb;
+    if ( ! method_exists( $wpdb, 'get_var' ) ) {
+        return 'pending';
+    }
     $att_table   = $wpdb->prefix . 'tta_attendees';
     $att_archive = $wpdb->prefix . 'tta_attendees_archive';
     $status = $wpdb->get_var( $wpdb->prepare( "SELECT status FROM {$att_table} WHERE id = %d", $attendee_id ) );
@@ -1552,6 +1600,18 @@ function tta_user_is_banned( $wp_user_id ) {
 }
 
 /**
+ * Clear any scheduled reinstatement cron for a user.
+ *
+ * @param int $wp_user_id WordPress user ID.
+ */
+function tta_clear_reinstatement_cron( $wp_user_id ) {
+    $ts = wp_next_scheduled( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    if ( false !== $ts ) {
+        wp_unschedule_event( $ts, 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    }
+}
+
+/**
  * Remove a user's banned status.
  *
  * @param int $wp_user_id WordPress user ID.
@@ -1562,7 +1622,7 @@ function tta_unban_user( $wp_user_id ) {
     $wpdb->update( $table, [ 'banned_until' => null ], [ 'wpuserid' => intval( $wp_user_id ) ], [ '%s' ], [ '%d' ] );
     TTA_Cache::delete( 'banned_until_' . intval( $wp_user_id ) );
     TTA_Cache::delete( 'banned_members' );
-    wp_clear_scheduled_hook( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+    tta_clear_reinstatement_cron( $wp_user_id );
 }
 
 add_action( 'tta_reinstate_member', 'tta_unban_user', 10, 1 );
@@ -1632,6 +1692,34 @@ function tta_send_banned_reinstatement_email( $wp_user_id ) {
     $tokens  = [
         '{first_name}' => $context['first_name'] ?? '',
         '{email}'      => $context['user_email'] ?? '',
+    ];
+    $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
+    $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
+    $body_raw = tta_expand_anchor_tokens( $tpl['email_body'], $tokens );
+    $body_txt = tta_convert_bold( tta_convert_links( strtr( $body_raw, $tokens ) ) );
+    $body     = nl2br( $body_txt );
+    $to       = sanitize_email( $context['user_email'] );
+    if ( $to ) {
+        wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ] );
+    }
+}
+
+/**
+ * Send the no-show limit ban notification email to a user.
+ *
+ * @param int    $wp_user_id   WordPress user ID.
+ * @param string $checkout_url Login/checkout URL for purchasing a re-entry ticket.
+ */
+function tta_send_no_show_ban_email( $wp_user_id, $checkout_url ) {
+    $templates = tta_get_comm_templates();
+    if ( empty( $templates['no_show_limit'] ) ) {
+        return;
+    }
+    $tpl     = $templates['no_show_limit'];
+    $context = tta_get_user_context_by_id( $wp_user_id );
+    $tokens  = [
+        '{first_name}'   => $context['first_name'] ?? '',
+        '{reentry_link}' => esc_url( $checkout_url ),
     ];
     $sub_raw = tta_expand_anchor_tokens( $tpl['email_subject'], $tokens );
     $subject = tta_strip_bold( strtr( $sub_raw, $tokens ) );
