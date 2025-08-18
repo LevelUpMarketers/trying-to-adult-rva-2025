@@ -134,6 +134,18 @@
   transform: translateY(-50%);
   margin-right: 6px;
 }
+.tta-button-primary {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #0073aa;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+.login-username label, .login-password label{
+  display:block;
+}
 
 @media (max-width: 600px) {
   .tta-discount-code-bold-title { font-weight: 600; color: #444; }
@@ -304,7 +316,11 @@ select[disabled]::before {
 @media (max-width: 782px) {
   .tta-cart-checkout-button { display:block; width:100%; box-sizing:border-box; text-align:center; }
 }
-
+.tta-button-primary{
+  min-width: 165px;
+  text-align: center;
+  margin-bottom: 10px;
+}
 /* Login/register accordion */
 .tta-message-center {
   background: #faf8e5;
@@ -322,9 +338,14 @@ select[disabled]::before {
 }
 
 .tta-login-accordion .tta-accordion-content.expanded {
-  max-height: 400px;
+  max-height: 600px;
+  max-width:500px;
   padding: 20px 0 0;
   background: #faf8e5;
+}
+#tta-register-form > p {
+    display: inline-block;
+    margin-right: 10px;
 }
 
 .tta-button-link {
