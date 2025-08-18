@@ -27,6 +27,9 @@ define( 'TTA_BASIC_SUBSCRIPTION_NAME', 'Trying to Adult Basic Membership' );
 define( 'TTA_PREMIUM_SUBSCRIPTION_NAME', 'Trying to Adult Premium Membership' );
 define( 'TTA_BASIC_SUBSCRIPTION_DESCRIPTION', 'Monthly Basic Membership subscription for Trying to Adult.' );
 define( 'TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION', 'Monthly Premium Membership subscription for Trying to Adult.' );
+// Ban sentinel datetimes
+define( 'TTA_BAN_UNTIL_INDEFINITE', '9999-12-31 23:59:59' );
+define( 'TTA_BAN_UNTIL_REENTRY', '9998-12-31 23:59:59' );
 
 if ( ! defined( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS' ) ) {
     define( 'TTA_AUTHNET_IMPORT_LOOKBACK_DAYS', 93 );

@@ -476,6 +476,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                         <select name="ban_status" id="ban_status">
                             <option value="none">Not Banned</option>
                             <option value="indefinite">Banned Indefinitely</option>
+                            <option value="reentry">Banned Until Purchasing Re-Entry Product</option>
                             <option value="1week">1-Week Ban</option>
                             <option value="2week">2-Week Ban</option>
                             <option value="3week">3-Week Ban</option>

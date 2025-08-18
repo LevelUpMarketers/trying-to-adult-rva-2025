@@ -203,7 +203,15 @@ if ( $checkout_done ) {
             <?php
             if ( $member_level ) {
                 if ( 'reentry' === $member_level ) {
-                    echo '<p>' . esc_html__( 'Thanks for purchasing a Re-Entry Ticket. Your account has been reinstated.', 'tta' ) . '</p>';
+                    printf(
+                        '<p>%s</p>',
+                        wp_kses_post(
+                            sprintf(
+                                __( 'Thanks for purchasing your Re-Entry Ticket! An email will be sent to %s with your purchase details. You\'re now able to purchase event tickets. Thanks again, and welcome back!', 'tta' ),
+                                esc_html( $user->user_email )
+                            )
+                        )
+                    );
                 } else {
                     $amount = 'premium' === $member_level ? TTA_PREMIUM_MEMBERSHIP_PRICE : TTA_BASIC_MEMBERSHIP_PRICE;
                     printf(

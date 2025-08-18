@@ -64,6 +64,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your refund request was approved and has been processed. We\'re sorry you couldn\'t make it, but we hope to see you at future events!', 'tta'),
                 'sms_text'    => '',
             ],
+            'banned_reinstatement' => [
+                'label'       => __( 'Banned Reinstatement', 'tta' ),
+                'type'        => 'External',
+                'category'    => 'Ban',
+                'description' => __( 'Sent when a member purchases a Re-Entry Ticket to lift a ban.', 'tta' ),
+                'email_subject' => __( 'Welcome back!', 'tta' ),
+                'email_body'  => __( 'Your account has been reinstated and you may now purchase event tickets.', 'tta' ),
+                'sms_text'    => '',
+            ],
             'event_sold_out' => [
                 'label'       => __('Event Sold Out', 'tta'),
                 'type'        => 'Internal',

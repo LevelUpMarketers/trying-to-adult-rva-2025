@@ -134,9 +134,12 @@ class TTA_Member_Dashboard {
           <?php if ( ! empty( $member['banned_until'] ) && strtotime( $member['banned_until'] ) > time() ) : ?>
             <div class="tta-banned-notice">
               <?php
-              $until_ts = strtotime( $member['banned_until'] );
-              $label    = $until_ts > strtotime( '2099-01-01' ) ? __( 'indefinitely', 'tta' ) : date_i18n( 'F j, Y', $until_ts );
-              printf( esc_html__( 'You are banned from making purchases until %s.', 'tta' ), esc_html( $label ) );
+              $ban = tta_get_ban_message( intval( $member['wpuserid'] ) );
+              echo wp_kses_post( $ban['message'] );
+              if ( ! empty( $ban['button'] ) ) {
+                  $url = add_query_arg( 'reentry', '1', home_url( '/checkout' ) );
+                  echo ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
+              }
               ?>
             </div>
           <?php endif; ?>

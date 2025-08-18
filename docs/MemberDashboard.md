@@ -7,7 +7,7 @@ On screens narrower than 1200px the dashboard switches to a mobile-friendly layo
 
 When rendered the shortcode inserts a WPBakery hero banner above the dashboard using `do_shortcode()`. The banner displays **Member Dashboard** across a full-width background image.
 
-If a member is banned the dashboard displays a prominent notice at the top explaining the ban duration and purchases are blocked until it expires.
+If a member is banned the dashboard displays a prominent notice at the top. Indefinite bans simply state that purchases are blocked and direct members to the contact page, re-entry bans note that a Re-Entry Ticket is required, and timed bans show the reinstatement date or remaining weeks.
 Non-admin users never see the WordPress dashboard. On login the page simply reloads, and any attempt to access `/wp-admin/` redirects back to the front end.
 
 

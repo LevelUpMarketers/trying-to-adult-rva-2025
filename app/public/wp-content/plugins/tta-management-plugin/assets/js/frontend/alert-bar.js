@@ -1,9 +1,12 @@
 jQuery(function($){
     var data = window.ttaAlertBarData || {};
     if(data.is_banned){
-        var $bar = $('<div id="tta-alert-bar" class="tta-alert-bar tta-alert-banned"><span class="tta-alert-message"></span><a class="tta-alert-button"></a></div>');
-        $bar.find('.tta-alert-message').text(data.banned_message || '');
-        $bar.find('.tta-alert-button').text(data.reentry_label || '').attr('href', data.reentry_url || '#');
+        var $bar = $('<div id="tta-alert-bar" class="tta-alert-bar tta-alert-banned"><span class="tta-alert-message"></span></div>');
+        $bar.find('.tta-alert-message').html(data.banned_message || '');
+        if(data.show_button){
+            var $btn = $('<a class="tta-alert-button"></a>').text(data.reentry_label||'').attr('href',data.reentry_url||'#');
+            $bar.append($btn);
+        }
         $('body').append($bar);
         return;
     }

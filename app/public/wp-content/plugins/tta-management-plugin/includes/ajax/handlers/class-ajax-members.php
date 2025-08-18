@@ -52,20 +52,28 @@ class TTA_Ajax_Members {
 
         $hide_att      = ! empty( $_POST['hide_event_attendance'] ) ? 1 : 0;
         $ban_status    = sanitize_text_field( $_POST['ban_status'] ?? 'none' );
+        $ban_weeks     = 0;
         switch ( $ban_status ) {
             case 'indefinite':
-                $banned_until = '9999-12-31 23:59:59';
+                $banned_until = TTA_BAN_UNTIL_INDEFINITE;
+                break;
+            case 'reentry':
+                $banned_until = TTA_BAN_UNTIL_REENTRY;
                 break;
             case '1week':
+                $ban_weeks   = 1;
                 $banned_until = date( 'Y-m-d H:i:s', time() + WEEK_IN_SECONDS );
                 break;
             case '2week':
+                $ban_weeks   = 2;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 2 * WEEK_IN_SECONDS );
                 break;
             case '3week':
+                $ban_weeks   = 3;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 3 * WEEK_IN_SECONDS );
                 break;
             case '4week':
+                $ban_weeks   = 4;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 4 * WEEK_IN_SECONDS );
                 break;
             default:
@@ -199,6 +207,11 @@ class TTA_Ajax_Members {
             update_user_meta( $wp_user_id, 'profileimgid', $aid );
         }
 
+        wp_clear_scheduled_hook( 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+        if ( $ban_weeks > 0 ) {
+            wp_schedule_single_event( strtotime( $banned_until ), 'tta_reinstate_member', [ intval( $wp_user_id ) ] );
+        }
+
         // Clear caches so attendee lists stay fresh
         TTA_Cache::flush();
 
@@ -290,20 +303,28 @@ class TTA_Ajax_Members {
 
         $hide_att         = ! empty( $_POST['hide_event_attendance'] ) ? 1 : 0;
         $ban_status       = sanitize_text_field( $_POST['ban_status'] ?? 'none' );
+        $ban_weeks        = 0;
         switch ( $ban_status ) {
             case 'indefinite':
-                $banned_until = '9999-12-31 23:59:59';
+                $banned_until = TTA_BAN_UNTIL_INDEFINITE;
+                break;
+            case 'reentry':
+                $banned_until = TTA_BAN_UNTIL_REENTRY;
                 break;
             case '1week':
+                $ban_weeks   = 1;
                 $banned_until = date( 'Y-m-d H:i:s', time() + WEEK_IN_SECONDS );
                 break;
             case '2week':
+                $ban_weeks   = 2;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 2 * WEEK_IN_SECONDS );
                 break;
             case '3week':
+                $ban_weeks   = 3;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 3 * WEEK_IN_SECONDS );
                 break;
             case '4week':
+                $ban_weeks   = 4;
                 $banned_until = date( 'Y-m-d H:i:s', time() + 4 * WEEK_IN_SECONDS );
                 break;
             default:
@@ -384,6 +405,19 @@ class TTA_Ajax_Members {
                     'ID'         => $wp_user_id,
                     'user_email' => $member_row['email'],
                 ]);
+            }
+
+            wp_clear_scheduled_hook( 'tta_reinstate_member', [ $wp_user_id ] );
+            if ( $ban_weeks > 0 ) {
+                wp_schedule_single_event( strtotime( $banned_until ), 'tta_reinstate_member', [ $wp_user_id ] );
+            }
+            if ( 'indefinite' === $ban_status ) {
+                $sub_id = tta_get_user_subscription_id( $wp_user_id );
+                if ( $sub_id ) {
+                    $api = new TTA_AuthorizeNet_API();
+                    $api->cancel_subscription( $sub_id );
+                    tta_update_user_subscription_status( $wp_user_id, 'cancelled' );
+                }
             }
         }
 
