@@ -231,6 +231,8 @@ for ($i = 1; $i <= 10; $i++) {
         'dob'                   => '1990-01-0' . (($i % 9) + 1),
         'member_type'           => 'member',
         'membership_level'      => ($i % 3 === 0) ? 'premium' : (($i % 2) ? 'basic' : 'free'),
+        'subscription_id'       => 'SUB1' . str_pad( $i + 8, 3, '0', STR_PAD_LEFT ),
+        'subscription_status'   => 'active',
         'facebook'              => 'https://facebook.com/member' . $i,
         'linkedin'              => 'https://linkedin.com/in/member' . $i,
         'instagram'             => 'https://instagram.com/member' . $i,
@@ -243,6 +245,7 @@ for ($i = 1; $i <= 10; $i++) {
         'opt_in_event_email'    => 1,
         'opt_in_event_sms'      => 0,
         'hide_event_attendance' => 0,
+        'banned_until'          => ($i % 4 === 0) ? date('Y-m-d H:i:s', strtotime('+30 days')) : null,
     ];
 }
 

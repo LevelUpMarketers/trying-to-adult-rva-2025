@@ -235,7 +235,7 @@ class TTA_Sample_Data {
                         'card_last4'     => sprintf( '%04d', rand( 1000, 9999 ) ),
                         'discount_code'  => '',
                         'discount_saved' => 0,
-                        'details'        => '',
+                        'details'        => wp_json_encode( $items ),
                     ];
                     $wpdb->insert( $tx_table, $txn_row );
                     $txn_id = $wpdb->insert_id;
@@ -295,45 +295,91 @@ class TTA_Sample_Data {
             }
         }
 
+        $members_table = $wpdb->prefix . 'tta_members';
+        $users_table   = $wpdb->users;
+
+        // Populate members table with existing WordPress users
+        $wpdb->query( "INSERT IGNORE INTO {$members_table} (wpuserid, first_name, last_name, email, joined_at)
+SELECT
+  ID AS wpuserid,
+  CASE
+    WHEN display_name LIKE '% %' THEN SUBSTRING_INDEX(display_name, ' ', 1)
+    ELSE display_name
+  END AS first_name,
+  CASE
+    WHEN display_name LIKE '% %' THEN SUBSTRING(display_name, LOCATE(' ', display_name) + 1)
+    ELSE ''
+  END AS last_name,
+  user_email AS email,
+  user_registered AS joined_at
+FROM {$users_table}" );
+
+        // Update membership levels and types for known accounts
+        $wpdb->query( "
+UPDATE {$members_table}
+SET
+  membership_level = CASE email
+    WHEN 'tilypoquh@mailinator.com' THEN 'basic'
+    WHEN 'sicuzymyt@mailinator.com' THEN 'premium'
+    WHEN 'tryingtoadultrva@gmail.com' THEN 'premium'
+    WHEN 'eippih@gmail.com' THEN 'premium'
+    WHEN 'foreunner1618@gmail.com' THEN 'premium'
+    WHEN 'mariah.payne831@gmail.com' THEN 'premium'
+    WHEN 'claineryan13@gmail.com' THEN 'premium'
+    WHEN 'dana.p.harrell@gmail.com' THEN 'premium'
+    ELSE membership_level
+  END,
+  member_type = CASE email
+    WHEN 'tilypoquh@mailinator.com' THEN 'member'
+    WHEN 'sicuzymyt@mailinator.com' THEN 'member'
+    WHEN 'tryingtoadultrva@gmail.com' THEN 'super_admin'
+    WHEN 'eippih@gmail.com' THEN 'super_admin'
+    WHEN 'foreunner1618@gmail.com' THEN 'admin'
+    WHEN 'mariah.payne831@gmail.com' THEN 'admin'
+    WHEN 'claineryan13@gmail.com' THEN 'volunteer'
+    WHEN 'dana.p.harrell@gmail.com' THEN 'volunteer'
+    ELSE member_type
+  END
+WHERE email IN (
+  'tilypoquh@mailinator.com',
+  'sicuzymyt@mailinator.com',
+  'tryingtoadultrva@gmail.com',
+  'eippih@gmail.com',
+  'foreunner1618@gmail.com',
+  'mariah.payne831@gmail.com',
+  'claineryan13@gmail.com',
+  'dana.p.harrell@gmail.com'
+)" );
+
         TTA_Cache::flush();
     }
 
     public static function clear() {
         global $wpdb;
-        $events_table    = $wpdb->prefix . 'tta_events';
-        $tickets_table   = $wpdb->prefix . 'tta_tickets';
-        $waitlist_table  = $wpdb->prefix . 'tta_waitlist';
-        $members_table   = $wpdb->prefix . 'tta_members';
-        $tx_table        = $wpdb->prefix . 'tta_transactions';
-        $attendees_table = $wpdb->prefix . 'tta_attendees';
-        $venues_table    = $wpdb->prefix . 'tta_venues';
-        $hist_table      = $wpdb->prefix . 'tta_memberhistory';
 
-        $page_ids = $wpdb->get_col( "SELECT page_id FROM {$events_table} WHERE ute_id LIKE 'sample_event_%'" );
+        $events_table  = $wpdb->prefix . 'tta_events';
+        $archive_table = $wpdb->prefix . 'tta_events_archive';
+
+        $page_ids = array_merge(
+            $wpdb->get_col( "SELECT page_id FROM {$events_table} WHERE page_id > 0" ),
+            $wpdb->get_col( "SELECT page_id FROM {$archive_table} WHERE page_id > 0" )
+        );
         foreach ( $page_ids as $pid ) {
             if ( $pid && function_exists( 'wp_delete_post' ) ) {
                 wp_delete_post( (int) $pid, true );
             }
         }
 
-        $wpdb->query( "DELETE FROM {$events_table} WHERE ute_id LIKE 'sample_event_%'" );
-        $wpdb->query( "DELETE FROM {$tickets_table} WHERE event_ute_id LIKE 'sample_event_%'" );
-        $wpdb->query( "DELETE FROM {$waitlist_table} WHERE event_ute_id LIKE 'sample_event_%'" );
-        $wpdb->query( "DELETE FROM {$attendees_table} WHERE transaction_id IN (SELECT id FROM {$tx_table} WHERE transaction_id LIKE 'sample_txn_%')" );
-        $wpdb->query( "DELETE FROM {$tx_table} WHERE transaction_id LIKE 'sample_txn_%'" );
-        $wpdb->query( "DELETE FROM {$hist_table} WHERE action_data LIKE '%sample_txn_%'" );
-        $wpdb->query( "DELETE FROM {$members_table} WHERE email LIKE 'sample_member_%@example.com'" );
-        foreach ( [
-            'Crawleys Diner',
-            'Rollerdome',
-            "King's Korner Catering and Restaurant",
-            'City Museum',
-            'Arts Studio',
-            'Sky Bar',
-            'Corner Pub',
-            'Sing Lounge'
-        ] as $vname ) {
-            $wpdb->delete( $venues_table, [ 'name' => $vname ] );
+        $tables = [
+            'events', 'events_archive', 'members', 'tickets', 'tickets_archive',
+            'waitlist', 'transactions', 'attendees', 'attendees_archive',
+            'memberhistory', 'venues', 'discount_codes', 'carts', 'cart_items'
+        ];
+        foreach ( $tables as $suffix ) {
+            $table = $wpdb->prefix . 'tta_' . $suffix;
+            $wpdb->query( "TRUNCATE TABLE {$table}" );
+            // Fallback for test doubles that track DELETE statements.
+            $wpdb->query( "DELETE FROM {$table}" );
         }
 
         if ( function_exists( 'get_user_by' ) && function_exists( 'wp_delete_user' ) ) {

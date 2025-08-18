@@ -12,6 +12,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Initialize cart early for sessions
 $cart          = new TTA_Cart();
 $checkout_error = '';
+if ( isset( $_GET['auto'] ) && 'reentry' === $_GET['auto'] && is_user_logged_in() ) {
+    $cart->empty_cart();
+    $_SESSION['tta_membership_purchase'] = 'reentry';
+} elseif ( isset( $_SESSION['tta_membership_purchase'] ) && 'reentry' === $_SESSION['tta_membership_purchase'] && 'POST' !== $_SERVER['REQUEST_METHOD'] && ( ! isset( $_GET['auto'] ) || 'reentry' !== $_GET['auto'] ) ) {
+    // Clear any lingering re-entry membership flag when accessing checkout normally.
+    unset( $_SESSION['tta_membership_purchase'] );
+}
 
 if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] ) ) {
     check_admin_referer( 'tta_checkout_action', 'tta_checkout_nonce' );
@@ -80,7 +87,7 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
                     $membership_total,
                     [
                         [
-                            'membership'  => ucfirst( $membership_level ) . ' Membership',
+                            'membership'  => tta_get_membership_label( $membership_level ),
                             'quantity'    => 1,
                             'price'       => $membership_total,
                             'final_price' => $membership_total,
@@ -92,28 +99,36 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
                     substr( preg_replace( '/\D/', '', $_POST['card_number'] ), -4 )
                 );
 
-                $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
-                $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
-                $sub = $api->create_subscription(
-                    $membership_total,
-                    preg_replace( '/\D/', '', $_POST['card_number'] ),
-                    $exp_date,
-                    tta_sanitize_text_field( $_POST['card_cvc'] ),
-                    $billing,
-                    $sub_name,
-                    $sub_desc,
-                    date( 'Y-m-d', strtotime( '+1 month' ) )
-                );
-                if ( $sub['success'] ) {
-                    tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'] );
-                    $_SESSION['tta_checkout_sub'] = [
-                        'subscription_id' => $sub['subscription_id'],
-                        'result_code'     => $sub['result_code'] ?? '',
-                        'message_code'    => $sub['message_code'] ?? '',
-                        'message_text'    => $sub['message_text'] ?? '',
-                    ];
+                if ( 'reentry' === $membership_level ) {
+                    tta_unban_user( get_current_user_id() );
                 } else {
-                    $checkout_error = $sub['error'];
+                    $existing_sub = tta_get_user_subscription_id( get_current_user_id() );
+                    if ( $existing_sub ) {
+                        $api->cancel_subscription( $existing_sub );
+                    }
+                    $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
+                    $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
+                    $sub = $api->create_subscription(
+                        $membership_total,
+                        preg_replace( '/\D/', '', $_POST['card_number'] ),
+                        $exp_date,
+                        tta_sanitize_text_field( $_POST['card_cvc'] ),
+                        $billing,
+                        $sub_name,
+                        $sub_desc,
+                        date( 'Y-m-d', strtotime( '+1 month' ) )
+                    );
+                    if ( $sub['success'] ) {
+                        tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'], 'active' );
+                        $_SESSION['tta_checkout_sub'] = [
+                            'subscription_id' => $sub['subscription_id'],
+                            'result_code'     => $sub['result_code'] ?? '',
+                            'message_code'    => $sub['message_code'] ?? '',
+                            'message_text'    => $sub['message_text'] ?? '',
+                        ];
+                    } else {
+                        $checkout_error = $sub['error'];
+                    }
                 }
             }
         }
@@ -166,8 +181,11 @@ if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['tta_do_checkout'] )
 
 $discount_codes   = $_SESSION['tta_discount_codes'] ?? [];
 $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
-$has_membership   = in_array( $membership_level, [ 'basic', 'premium' ], true );
+$has_membership   = in_array( $membership_level, [ 'basic', 'premium', 'reentry' ], true );
 get_header();
+
+$header_shortcode = '[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">CHECKOUT</p>[/vc_column_text][/vc_column][/vc_row]';
+echo do_shortcode( $header_shortcode );
 
  $items         = $cart->get_items();
  $checkout_done = isset( $_GET['checkout'] ) && 'done' === $_GET['checkout'];
@@ -187,36 +205,48 @@ if ( $checkout_done ) {
         <div class="tta-checkout-complete">
             <?php
             if ( $member_level ) {
-                $amount = 'premium' === $member_level ? TTA_PREMIUM_MEMBERSHIP_PRICE : TTA_BASIC_MEMBERSHIP_PRICE;
-                printf(
-                    '<p>%s</p>',
-                    wp_kses_post(
-                        sprintf(
-                            __( "Thanks for becoming a %s Member! There's nothing else for you to do - you'll be automatically billed $%s once monthly, and can cancel anytime on your %s. An email will be sent to %s with your Membership Details. Thanks again, and enjoy your Membership perks!", 'tta' ),
-                            ucfirst( $member_level ),
-                            number_format_i18n( $amount, 0 ),
-                            '<a href="https://trying-to-adult-rva-2025.local/member-dashboard/?tab=billing">' . esc_html__( 'Member Dashboard', 'tta' ) . '</a>',
-                            esc_html( $user->user_email )
-                        )
-                    )
-                );
-
-                if ( 'basic' === $member_level ) {
+                if ( 'reentry' === $member_level ) {
                     printf(
                         '<p>%s</p>',
                         wp_kses_post(
                             sprintf(
-                                __( "Did you know that there's even MORE perks and discounts to be had with a Premium Membership? %s", 'tta' ),
-                                '<a href="https://trying-to-adult-rva-2025.local/become-a-member/">' . esc_html__( 'Learn more here.', 'tta' ) . '</a>'
+                                __( 'Thanks for purchasing your Re-Entry Ticket! You can once again register for events. An email will be sent to %s for your records. Thanks again, and welcome back!', 'tta' ),
+                                esc_html( $user->user_email )
                             )
                         )
                     );
-                } elseif ( 'premium' === $member_level ) {
+                } else {
+                    $amount = 'premium' === $member_level ? TTA_PREMIUM_MEMBERSHIP_PRICE : TTA_BASIC_MEMBERSHIP_PRICE;
                     printf(
-                        '<p>%s <a href="mailto:sam@tryingtoadultrva.com">sam@tryingtoadultrva.com</a> %s</p>',
-                        esc_html__( 'Did you know? You can earn a free event and other perks by referring friends and family! Let us know who you\'ve referred at', 'tta' ),
-                        esc_html__( "and we'll reach out.", 'tta' )
+                        '<p>%s</p>',
+                        wp_kses_post(
+                            sprintf(
+                                __( "Thanks for becoming a %s Member! There's nothing else for you to do - you'll be automatically billed $%s once monthly, and can cancel anytime on your %s. An email will be sent to %s with your Membership Details. Thanks again, and enjoy your Membership perks!", 'tta' ),
+                                ucfirst( $member_level ),
+                                number_format_i18n( $amount, 0 ),
+                                '<a href="https://trying-to-adult-rva-2025.local/member-dashboard/?tab=billing">' . esc_html__( 'Member Dashboard', 'tta' ) . '</a>',
+                                esc_html( $user->user_email )
+                            )
+                        )
                     );
+
+                    if ( 'basic' === $member_level ) {
+                        printf(
+                            '<p>%s</p>',
+                            wp_kses_post(
+                                sprintf(
+                                    __( "Did you know that there's even MORE perks and discounts to be had with a Premium Membership? %s", 'tta' ),
+                                    '<a href="https://trying-to-adult-rva-2025.local/become-a-member/">' . esc_html__( 'Learn more here.', 'tta' ) . '</a>'
+                                )
+                            )
+                        );
+                    } elseif ( 'premium' === $member_level ) {
+                        printf(
+                            '<p>%s <a href="mailto:sam@tryingtoadultrva.com">sam@tryingtoadultrva.com</a> %s</p>',
+                            esc_html__( 'Did you know? You can earn a free event and other perks by referring friends and family! Let us know who you\'ve referred at', 'tta' ),
+                            esc_html__( "and we'll reach out.", 'tta' )
+                        );
+                    }
                 }
             }
 
@@ -248,7 +278,10 @@ if ( $checkout_done ) {
         </p>
     <?php elseif ( ! $items && ! $has_membership ) : ?>
         <p><?php esc_html_e( 'Your cart is empty.', 'tta' ); ?></p>
-    <?php else : ?>
+<?php else : ?>
+        <?php if ( ! $is_logged_in ) : ?>
+            <?php echo tta_render_login_register_section( home_url( '/checkout' ) ); ?>
+        <?php endif; ?>
         <form id="tta-checkout-form" method="post">
             <?php wp_nonce_field( 'tta_checkout_action', 'tta_checkout_nonce' ); ?>
             <?php echo tta_render_checkout_summary( $cart, $discount_codes ); ?>
@@ -264,67 +297,8 @@ if ( $checkout_done ) {
                     <?php
                     // Variables defined above
                     ?>
-                    <?php if ( ! $is_logged_in ) : ?>
-                    <div class="tta-billing-details-div-container">
-                        <h4><?php esc_html_e( 'Account Required', 'tta' ); ?></h4>
-                        <p class="tta-attendee-note" style="display:block;">
-                            <?php esc_html_e( 'Please log in or create a free account to continue.', 'tta' ); ?>
-                        </p>
-                        <form id="tta-login-form">
-                            <p>
-                                <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
-                                    <input type="email" name="log" required />
-                                </label>
-                            </p>
-                            <p>
-                                <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
-                                    <input type="password" name="pwd" required />
-                                </label>
-                            </p>
-                            <p>
-                                <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Log In', 'tta' ); ?></button>
-                                <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
-                            </p>
-                            <p class="tta-login-footer"><a href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php esc_html_e( 'Forgot your password?', 'tta' ); ?></a></p>
-                            <span id="tta-login-response" class="tta-admin-progress-response-p"></span>
-                        </form>
-                        <hr />
-                        <form id="tta-register-form">
-                            <p>
-                                <label><?php esc_html_e( 'First Name', 'tta' ); ?><br />
-                                    <input type="text" name="first_name" required />
-                                </label>
-                            </p>
-                            <p>
-                                <label><?php esc_html_e( 'Last Name', 'tta' ); ?><br />
-                                    <input type="text" name="last_name" required />
-                                </label>
-                            </p>
-                            <p>
-                                <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
-                                    <input type="email" name="email" required />
-                                </label>
-                            </p>
-                            <p>
-                                <label><?php esc_html_e( 'Verify Email', 'tta' ); ?><br />
-                                    <input type="email" name="email_verify" required />
-                                </label>
-                            </p>
-                            <p>
-                                <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
-                                    <input type="password" name="password" required />
-                                </label>
-                            </p>
-                            <p>
-                                <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
-                                <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
-                            </p>
-                            <span id="tta-register-response" class="tta-admin-progress-response-p"></span>
-                        </form>
-                    </div>
-                    <?php endif; ?>
                     <div class="tta-billing-details-div-container<?php echo $is_logged_in ? '' : ' tta-disabled'; ?>">
-                         <h4>Billing Address</h4>
+                        <h4>Billing Address</h4>
                     <p style="display:block;" class="tta-attendee-note">Please enter the Billing address of the payment method you'll be using.</p>
                         <p>
                             <label>

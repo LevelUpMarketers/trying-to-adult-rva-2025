@@ -26,18 +26,66 @@ jQuery(function($){
     $('#tab-' + tab).show();
   });
 
+  // Mobile accordion for narrow screens
+  function initAccordion(){
+    if (window.innerWidth >= 1200 || $('.tta-accordion-tab').length) return;
+    $('.tta-dashboard-tabs li').each(function(){
+      var tab = $(this).data('tab');
+      var label = $(this).text();
+      var $section = $('#tab-' + tab);
+      var $acc = $('<div>', { class: 'tta-accordion-tab', 'data-tab': tab }).text(label);
+      $section.before($acc);
+    });
+    $('.tta-dashboard-section').hide();
+    var current = $('.tta-dashboard-tabs li.active').data('tab') || 'profile';
+    $('.tta-accordion-tab[data-tab="' + current + '"]').addClass('active').next('.tta-dashboard-section').show();
+    $('.tta-accordion-tab').on('click', function(){
+      var tab = $(this).data('tab');
+      if ($(this).hasClass('active')) {
+        $(this).removeClass('active');
+        $('#tab-' + tab).slideUp(200);
+      } else {
+        $('.tta-accordion-tab').removeClass('active');
+        $('.tta-dashboard-section').slideUp(200);
+        $(this).addClass('active');
+        $('#tab-' + tab).slideDown(200);
+      }
+    });
+  }
+  function destroyAccordion(){
+    var current = $('.tta-accordion-tab.active').data('tab') || 'profile';
+    $('.tta-accordion-tab').remove();
+    $('.tta-dashboard-section').hide();
+    $('#tab-' + current).show();
+    $('.tta-dashboard-tabs li').removeClass('active').filter('[data-tab="' + current + '"]').addClass('active');
+  }
+  initAccordion();
+  $(window).on('resize', function(){
+    if (window.innerWidth < 1200) {
+      initAccordion();
+    } else if ($('.tta-accordion-tab').length) {
+      destroyAccordion();
+    }
+  });
+
   // Activate tab based on URL hash or ?tab=name parameter
   function activateTab(tab){
-    var $trigger = $('.tta-dashboard-tabs li[data-tab="' + tab + '"]');
-    if ($trigger.length) {
-      $trigger.trigger('click');
-      // scroll to the dashboard area after activating
-      var $wrap = $('.tta-member-dashboard-wrap');
-      var h = $('.site-header, .tta-header').first().outerHeight() || 0;
-      $('html, body').animate({
-        scrollTop: $wrap.offset().top - h - 100
-      }, 600);
+    if ($('.tta-accordion-tab').length) {
+      var $acc = $('.tta-accordion-tab[data-tab="' + tab + '"]');
+      if ($acc.length) {
+        $acc.trigger('click');
+      }
+    } else {
+      var $trigger = $('.tta-dashboard-tabs li[data-tab="' + tab + '"]');
+      if ($trigger.length) {
+        $trigger.trigger('click');
+      }
     }
+    var $wrap = $('.tta-member-dashboard-wrap');
+    var h = $('.site-header, .tta-header').first().outerHeight() || 0;
+    $('html, body').animate({
+      scrollTop: $wrap.offset().top - h - 100
+    }, 600);
   }
 
   var urlParams = new URLSearchParams(window.location.search);
@@ -83,6 +131,91 @@ jQuery(function($){
     if (v.length>6) v='('+v.slice(0,3)+') '+v.slice(3,6)+'-'+v.slice(6,10);
     else if (v.length>3) v='('+v.slice(0,3)+') '+v.slice(3);
     this.value = v;
+  });
+
+  // Login/register handling for guests
+  $('.tta-login-message').on('click', '.tta-show-register', function(e){
+    e.preventDefault();
+    var $section = $(this).closest('.tta-login-message');
+    var $link = $(this);
+    $link.addClass('tta-button-disabled').attr('aria-disabled', 'true').attr('tabindex', '-1');
+    $section.find('.tta-login-wrap').fadeOut(200, function(){
+      $section.find('.tta-register-form').fadeIn(200);
+    });
+  });
+
+  $('.tta-login-message').on('click', '.tta-cancel-register', function(e){
+    e.preventDefault();
+    var $section = $(this).closest('.tta-login-message');
+    $section.find('.tta-register-form').fadeOut(200, function(){
+      $section.find('.tta-login-wrap').fadeIn(200);
+    });
+    var $link = $section.find('.tta-show-register');
+    $link.removeClass('tta-button-disabled').removeAttr('aria-disabled tabindex');
+  });
+
+  $('.tta-login-message').on('submit', '.tta-register-form', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    var $form = $(this),
+        $section = $form.closest('.tta-login-message'),
+        $btn  = $form.find('button'),
+        $spin = $form.find('.tta-admin-progress-spinner-svg'),
+        $resp = $section.find('.tta-register-response'),
+        email = $form.find('[name="email"]').val(),
+        emailVerify = $form.find('[name="email_verify"]').val(),
+        pass  = $form.find('[name="password"]').val(),
+        passVerify = $form.find('[name="password_verify"]').val();
+
+    $resp.removeClass('updated error').text('');
+
+    if(email !== emailVerify){
+      $resp.addClass('error').text(TTA_MemberDashboard.email_mismatch_msg);
+      return;
+    }
+    if(pass !== passVerify){
+      $resp.addClass('error').text(TTA_MemberDashboard.password_mismatch_msg);
+      return;
+    }
+    if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(pass)){
+      $resp.addClass('error').text(TTA_MemberDashboard.password_requirements_msg);
+      return;
+    }
+
+    $btn.prop('disabled', true);
+    $spin.show().css({opacity:0}).fadeTo(200,1);
+
+    $.post(TTA_MemberDashboard.ajax_url, {
+      action: 'tta_register',
+      nonce: TTA_MemberDashboard.front_nonce,
+      first_name: $form.find('[name="first_name"]').val(),
+      last_name:  $form.find('[name="last_name"]').val(),
+      email:      email,
+      email_verify: emailVerify,
+      password:   pass,
+      password_verify: passVerify
+    }, function(res){
+      $spin.fadeOut(200);
+      if(res.success){
+        var count = 5;
+        (function update(){
+          $resp.removeClass('error').addClass('updated')
+               .text(TTA_MemberDashboard.account_created_msg.replace('%d', count));
+          if(count-- > 0){
+            setTimeout(update, 1000);
+          } else {
+            window.location.reload();
+          }
+        })();
+      } else {
+        $btn.prop('disabled', false);
+        $resp.addClass('error').text(res.data.message || TTA_MemberDashboard.request_failed_msg);
+      }
+    }, 'json').fail(function(){
+      $spin.fadeOut(200);
+      $btn.prop('disabled', false);
+      $resp.addClass('error').text(TTA_MemberDashboard.request_failed_msg);
+    });
   });
 
   if ( !$form.length ) return;
@@ -400,4 +533,5 @@ jQuery(function($){
       }, delay);
     });
   });
+
 });

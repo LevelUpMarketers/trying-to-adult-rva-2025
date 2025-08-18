@@ -38,7 +38,13 @@ class TTA_Ajax_Cart {
                 $membership_level = $lvl;
             }
             if ( tta_user_is_banned( get_current_user_id() ) ) {
-                wp_send_json_error( [ 'message' => __( 'You are currently banned from purchasing tickets.', 'tta' ) ] );
+                $ban = tta_get_ban_message( get_current_user_id() );
+                $msg = $ban['message'];
+                if ( ! empty( $ban['button'] ) ) {
+                    $url = add_query_arg( 'auto', 'reentry', home_url( '/checkout' ) );
+                    $msg .= ' <a class="tta-alert-button" href="' . esc_url( $url ) . '">' . esc_html__( 'Purchase Re-entry Ticket', 'tta' ) . '</a>';
+                }
+                wp_send_json_error( [ 'message' => $msg ] );
             }
         }
 

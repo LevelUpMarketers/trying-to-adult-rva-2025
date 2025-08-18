@@ -113,9 +113,7 @@ class TTA_Ajax_Attendance {
             $should_notify = ( $current <= 0 && $after > 0 );
 
             $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
-            if ( ! empty( $ticket['event_ute_id'] ) ) {
-                TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
-            }
+            tta_clear_ticket_cache( $ticket['event_ute_id'] ?? '', intval( $att['ticket_id'] ) );
         }
 
         TTA_Cache::flush();
@@ -188,6 +186,8 @@ class TTA_Ajax_Attendance {
                     'transaction_id' => $tx['transaction_id'],
                     'ticket_id'      => intval( $att['ticket_id'] ),
                     'reason'         => '',
+                    'mode'           => $mode,
+                    'pending_reason' => 'settlement',
                     'attendee'       => [
                         'id'         => $id,
                         'first_name' => $att['first_name'],
@@ -213,8 +213,12 @@ class TTA_Ajax_Attendance {
                 if ( 'cancel' === $mode ) {
                     tta_cancel_attendance_internal( $id, true, false );
                 }
+                TTA_Refund_Processor::schedule_unsettled_refund( $tx['transaction_id'], intval( $att['ticket_id'] ), $id, $amount );
 
-                wp_send_json_success( [ 'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ) ] );
+                wp_send_json_success( [
+                    'message' => __( 'Transaction has not settled yet. Refund will be attempted automatically.', 'tta' ),
+                    'pending' => true,
+                ] );
             }
 
             wp_send_json_error( [ 'message' => $res['error'] ] );
@@ -266,9 +270,7 @@ class TTA_Ajax_Attendance {
                 $should_notify = ( $current <= 0 && $after > 0 );
 
                 $wpdb->query( $wpdb->prepare( "UPDATE {$ticket_table} SET ticketlimit = ticketlimit + 1 WHERE id = %d", intval( $att['ticket_id'] ) ) );
-                if ( ! empty( $ticket['event_ute_id'] ) ) {
-                    TTA_Cache::delete( 'tickets_' . $ticket['event_ute_id'] );
-                }
+                tta_clear_ticket_cache( $ticket['event_ute_id'] ?? '', intval( $att['ticket_id'] ) );
             }
             if ( $should_notify ) {
                 tta_notify_waitlist_ticket_available( intval( $att['ticket_id'] ) );

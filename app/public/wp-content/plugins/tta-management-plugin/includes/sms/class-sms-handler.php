@@ -16,7 +16,12 @@ class TTA_SMS_Handler {
     }
 
     private function __construct() {
-        if ( defined( 'TTA_TWILIO_SID' ) && defined( 'TTA_TWILIO_TOKEN' ) && defined( 'TTA_TWILIO_FROM' ) ) {
+        if (
+            defined( 'TTA_TWILIO_SID' ) &&
+            defined( 'TTA_TWILIO_TOKEN' ) &&
+            defined( 'TTA_TWILIO_FROM' ) &&
+            class_exists( Client::class )
+        ) {
             $this->client = new Client( TTA_TWILIO_SID, TTA_TWILIO_TOKEN );
             $this->from   = TTA_TWILIO_FROM;
         }
@@ -79,7 +84,7 @@ class TTA_SMS_Handler {
 
             $tokens  = $this->build_tokens( $event, $context, $attendees );
             $msg_raw = tta_expand_anchor_tokens( $tpl['sms_text'], $tokens );
-            $message = strtr( $msg_raw, $tokens );
+            $message = tta_strip_bold( strtr( $msg_raw, $tokens ) );
 
             $numbers = [];
             $member_phone = $context['member']['phone'] ?? '';
@@ -120,7 +125,7 @@ class TTA_SMS_Handler {
 
         $tokens  = $this->build_tokens( $event, $context, $attendees, $refund );
         $msg_raw = tta_expand_anchor_tokens( $tpl['sms_text'], $tokens );
-        $message = strtr( $msg_raw, $tokens );
+        $message = tta_strip_bold( strtr( $msg_raw, $tokens ) );
 
         $numbers = array_unique( array_merge( [ $context['member']['phone'] ?? '' ], array_column( $attendees, 'phone' ) ) );
         foreach ( $numbers as $num ) {
@@ -145,7 +150,7 @@ class TTA_SMS_Handler {
         ];
 
         $msg_raw = tta_expand_anchor_tokens( $tpl['sms_text'], $tokens );
-        $message = strtr( $msg_raw, $tokens );
+        $message = tta_strip_bold( strtr( $msg_raw, $tokens ) );
         $phone   = sanitize_text_field( $entry['phone'] ?? '' );
         if ( $phone ) {
             $this->send_sms( $phone, $message );

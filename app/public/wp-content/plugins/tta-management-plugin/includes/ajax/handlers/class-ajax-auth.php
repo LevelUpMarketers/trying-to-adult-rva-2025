@@ -34,13 +34,20 @@ class TTA_Ajax_Auth {
         $email        = sanitize_email( $_POST['email']                ?? '' );
         $email_verify = sanitize_email( $_POST['email_verify']         ?? '' );
         $pass         = $_POST['password'] ?? '';
-        if ( ! $first || ! $last || ! $email || ! $email_verify || ! $pass ) {
+        $pass_verify  = $_POST['password_verify'] ?? '';
+        if ( ! $first || ! $last || ! $email || ! $email_verify || ! $pass || ! $pass_verify ) {
             wp_send_json_error( [ 'message' => __( 'All fields are required.', 'tta' ) ] );
         }
         if ( $email !== $email_verify ) {
             wp_send_json_error( [ 'message' => __( 'Emails do not match.', 'tta' ) ] );
         }
-        if ( email_exists( $email ) ) {
+        if ( $pass !== $pass_verify ) {
+            wp_send_json_error( [ 'message' => __( 'Passwords do not match.', 'tta' ) ] );
+        }
+        if ( ! preg_match( '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $pass ) ) {
+            wp_send_json_error( [ 'message' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ) ] );
+        }
+        if ( email_exists( $email ) || tta_get_member_row_by_email( $email ) ) {
             wp_send_json_error( [ 'message' => __( 'Email already in use.', 'tta' ) ] );
         }
         $username = sanitize_user( strstr( $email, '@', true ) );
@@ -69,9 +76,11 @@ class TTA_Ajax_Auth {
                 'last_name'        => $last,
                 'email'            => $email,
                 'joined_at'        => current_time( 'mysql' ),
+                'member_type'      => 'member',
                 'membership_level' => 'free',
+                'subscription_status' => null,
             ],
-            [ '%d', '%s', '%s', '%s', '%s', '%s' ]
+            [ '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ]
         );
 
         if ( false === $inserted ) {

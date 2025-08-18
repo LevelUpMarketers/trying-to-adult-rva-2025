@@ -46,22 +46,13 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your event is only 2 hours away! Below are the details.', 'tta'),
                 'sms_text'    => __('Only 2 hours to go! View your upcoming events at ', 'tta'),
             ],
-            'new_event' => [
-                'label'       => __('New Event Created', 'tta'),
-                'type'        => 'Internal',
-                'category'    => 'Admin Notice',
-                'description' => __('Notifies administrators when a new event is created.', 'tta'),
-                'email_subject' => __('New event created', 'tta'),
-                'email_body'  => __('A new event has been added to the calendar. Details are below.', 'tta'),
-                'sms_text'    => '',
-            ],
             'refund_requested' => [
                 'label'       => __('Refund Requested', 'tta'),
-                'type'        => 'Internal',
-                'category'    => 'Admin Notice',
-                'description' => __('Alert when a member requests a refund.', 'tta'),
+                'type'        => 'External',
+                'category'    => 'Refund',
+                'description' => __('Sent to a member when they request a refund.', 'tta'),
                 'email_subject' => __('Refund request received', 'tta'),
-                'email_body'  => __('A member has requested a refund for the event below.', 'tta'),
+                'email_body'  => __('We received your refund request for the event below. Our team will review and follow up soon.', 'tta'),
                 'sms_text'    => '',
             ],
             'refund_processed' => [
@@ -71,6 +62,24 @@ class TTA_Comms_Admin {
                 'description' => __('Notifies attendees when a refund request is approved and issued.', 'tta'),
                 'email_subject' => __('Your refund has been issued', 'tta'),
                 'email_body'  => __('Your refund request was approved and has been processed. We\'re sorry you couldn\'t make it, but we hope to see you at future events!', 'tta'),
+                'sms_text'    => '',
+            ],
+            'banned_reinstatement' => [
+                'label'       => __( 'Banned Reinstatement', 'tta' ),
+                'type'        => 'External',
+                'category'    => 'Ban',
+                'description' => __( 'Sent when a member purchases a Re-Entry Ticket to lift a ban.', 'tta' ),
+                'email_subject' => __( 'Welcome back!', 'tta' ),
+                'email_body'  => __( 'Your account has been reinstated and you may now purchase event tickets.', 'tta' ),
+                'sms_text'    => '',
+            ],
+            'no_show_limit' => [
+                'label'       => __( 'No-Show Limit & Banned Status Notification', 'tta' ),
+                'type'        => 'External',
+                'category'    => 'Ban',
+                'description' => __( 'Sent when a member accrues three no-shows and is banned until purchasing a Re-Entry Ticket.', 'tta' ),
+                'email_subject' => __( 'No-Show Limit Reached', 'tta' ),
+                'email_body'  => __( 'You have reached the no-show limit and are banned until you purchase a [Re-entry Ticket]({reentry_link}).', 'tta' ),
                 'sms_text'    => '',
             ],
             'event_sold_out' => [
@@ -127,6 +136,15 @@ class TTA_Comms_Admin {
                 'email_body'  => __('Your volunteer shift begins in two hours. Event details are below.', 'tta'),
                 'sms_text'    => '',
             ],
+            'post_event_review' => [
+                'label'       => __( 'Post-Event Thank You', 'tta' ),
+                'type'        => 'External',
+                'category'    => 'Post Event',
+                'description' => __( 'Sent to attendees who checked in after the event asking for a Google review.', 'tta' ),
+                'email_subject' => __( 'Thanks for attending!', 'tta' ),
+                'email_body'  => __( 'We hope you enjoyed the event. Please consider leaving a review: https://g.page/r/tryingtoadultrva/review', 'tta' ),
+                'sms_text'    => '',
+            ],
             'assistance_request' => [
                 'label'       => __('Assistance Request', 'tta'),
                 'type'        => 'Internal',
@@ -146,6 +164,21 @@ class TTA_Comms_Admin {
             return $defaults;
         }
 
+        if ( isset( $saved['refund_requested'] ) ) {
+            $needs_update = false;
+            if ( 'External' !== ( $saved['refund_requested']['type'] ?? '' ) ) {
+                $saved['refund_requested']['type'] = 'External';
+                $needs_update = true;
+            }
+            if ( 'Refund' !== ( $saved['refund_requested']['category'] ?? '' ) ) {
+                $saved['refund_requested']['category'] = 'Refund';
+                $needs_update = true;
+            }
+            if ( $needs_update ) {
+                update_option( 'tta_comms_templates', $saved, false );
+            }
+        }
+
         foreach ( $saved as $key => $vals ) {
             if ( isset( $defaults[ $key ] ) && is_array( $vals ) ) {
                 $defaults[ $key ] = array_merge( $defaults[ $key ], $vals );
@@ -155,6 +188,33 @@ class TTA_Comms_Admin {
     }
 
     public function render_page(){
+        $tabs = [
+            'templates' => __( 'Email Templates', 'tta' ),
+            'logs'      => __( 'Email Logs', 'tta' ),
+            'history'   => __( 'Email History', 'tta' ),
+        ];
+        $current = isset( $_GET['tab'] ) && array_key_exists( $_GET['tab'], $tabs ) ? $_GET['tab'] : 'templates';
+
+        echo '<h1>TTA Email & SMS</h1><h2 class="nav-tab-wrapper">';
+        foreach ( $tabs as $slug => $label ) {
+            $class = $current === $slug ? ' nav-tab-active' : '';
+            $url   = esc_url( add_query_arg( [ 'page' => 'tta-comms', 'tab' => $slug ], admin_url( 'admin.php' ) ) );
+            printf( '<a href="%s" class="nav-tab%s">%s</a>', $url, $class, esc_html( $label ) );
+        }
+        echo '</h2><div class="wrap">';
+
+        if ( 'logs' === $current ) {
+            $this->render_logs_tab();
+        } elseif ( 'history' === $current ) {
+            $this->render_history_tab();
+        } else {
+            $this->render_templates_tab();
+        }
+
+        echo '</div>';
+    }
+
+    protected function render_templates_tab(){
         $templates = $this->get_templates();
 
         if ( isset( $_POST['template_key'] ) && isset( $_POST['tta_comms_save_nonce'] ) && check_admin_referer( 'tta_comms_save_action', 'tta_comms_save_nonce' ) ) {
@@ -166,7 +226,6 @@ class TTA_Comms_Admin {
             echo '<div class="updated"><p>'.esc_html__( 'Template saved.', 'tta' ).'</p></div>';
         }
 
-        echo '<div class="wrap"><h1>'.esc_html__( 'Email & SMS', 'tta' ).'</h1>';
         echo '<table class="widefat striped"><thead><tr>';
         echo '<th>'.esc_html__( 'Communication Name', 'tta' ).'</th>';
         echo '<th>'.esc_html__( 'Communication Type', 'tta' ).'</th>';
@@ -200,6 +259,7 @@ class TTA_Comms_Admin {
             echo '<span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the event.', 'tta' ) . '"></span><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_name}">{event_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_address}">{event_address}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{event_address_link}">{event_address_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_link}">{event_link}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_date}">{event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{event_time}">{event_time}</button> ';
@@ -222,6 +282,8 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_waitlist_url}">{dashboard_waitlist_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_past_url}">{dashboard_past_url}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{dashboard_billing_url}">{dashboard_billing_url}</button></div>';
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Re-entry links for banned members.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Ban & Re-Entry', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{reentry_link}">{reentry_link}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Per-ticket attendee details.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Event Attendee Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee_first_name}">{attendee_first_name}</button> ';
@@ -239,7 +301,13 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_first_name}">{attendee4_first_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_last_name}">{attendee4_last_name}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_email}">{attendee4_email}</button> ';
-            echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_phone}">{attendee4_phone}</button></div>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{attendee4_phone}">{attendee4_phone}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button></div>';
+
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Event hosts and volunteers.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Event Contacts', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{event_host}">{event_host}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{event_volunteer}">{event_volunteer}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{host_notes}">{host_notes}</button></div>';
 
             echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details about the refunded ticket.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Refund Information', 'tta' ) . '</strong><br>';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_first_name}">{refund_first_name}</button> ';
@@ -251,7 +319,19 @@ class TTA_Comms_Admin {
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_date}">{refund_event_date}</button> ';
             echo '<button type="button" class="button tta-insert-token" data-token="{refund_event_time}">{refund_event_time}</button></div>';
 
-            echo '<button type="button" class="button tta-insert-br">Line Break</button>';
+            echo '<div class="tta-token-section"><span class="tta-tooltip-icon" data-tooltip="' . esc_attr__( 'Details from an assistance request.', 'tta' ) . '"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/question.svg' ) . '" alt="?"></span><strong>' . esc_html__( 'Assistance Message', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_message}">{assistance_message}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_first_name}">{assistance_first_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_last_name}">{assistance_last_name}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_email}">{assistance_email}</button> ';
+            echo '<button type="button" class="button tta-insert-token" data-token="{assistance_phone}">{assistance_phone}</button></div>';
+
+            echo '<div class="tta-token-section"><strong>' . esc_html__( 'Formatting & Styling', 'tta' ) . '</strong><br>';
+            echo '<button type="button" class="button tta-link-text">' . esc_html__( 'Link This Text', 'tta' ) . '</button> ';
+            echo '<button type="button" class="button tta-insert-br">' . esc_html__( 'Line Break', 'tta' ) . '</button> ';
+            echo '<button type="button" class="button tta-bold-text">' . esc_html__( 'Bold', 'tta' ) . '</button> ';
+            echo '<button type="button" class="button tta-italic-text">' . esc_html__( 'Italic', 'tta' ) . '</button></div>';
+
             echo '</td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'Email Preview', 'tta' ) . '</th><td><div class="tta-email-preview"><strong class="tta-email-preview-subject"></strong><p class="tta-email-preview-body"></p></div></td></tr>';
             echo '<tr><th scope="row">' . esc_html__( 'SMS Preview', 'tta' ) . '</th><td><div class="tta-sms-preview"></div></td></tr>';
@@ -264,7 +344,114 @@ class TTA_Comms_Admin {
             echo '</form></div></td></tr>';
         }
 
-        echo '</tbody></table></div>';
+        echo '</tbody></table>';
+    }
+
+    /** Render scheduled email jobs. */
+    protected function render_logs_tab() {
+        $scheduled = TTA_Email_Reminders::get_scheduled_emails();
+        $per_page  = 20;
+        $paged     = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $event_ids = array_keys( $scheduled );
+        $total     = count( $event_ids );
+        $slice     = array_slice( $event_ids, ( $paged - 1 ) * $per_page, $per_page );
+
+        echo '<div id="tta-email-logs">';
+        if ( empty( $slice ) ) {
+            echo '<p>' . esc_html__( 'No scheduled emails.', 'tta' ) . '</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Event', 'tta' ) . '</th><th></th></tr></thead><tbody>';
+            foreach ( $slice as $event_id ) {
+                $info = $scheduled[ $event_id ];
+                echo '<tr class="tta-email-log-event" data-event="' . esc_attr( $event_id ) . '">';
+                echo '<td>' . esc_html( $info['name'] ) . '</td>';
+                echo '<td class="tta-toggle-cell"><img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/admin/arrow.svg' ) . '" class="tta-toggle-arrow" width="10" height="10" alt="Toggle"></td>';
+                echo '</tr>';
+                echo '<tr class="tta-email-log-details tta-inline-row" style="display:none;">';
+                echo '<td colspan="2"><div class="tta-inline-container">';
+                echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Time Until', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
+                $tz  = wp_timezone();
+                $now = TTA_Email_Reminders::current_time();
+                foreach ( $info['jobs'] as $job ) {
+                    $send_ts = $job['timestamp'];
+                    $time    = wp_date( 'm-d-Y g:iA', $send_ts, $tz );
+                    $diff    = max( 0, $send_ts - $now );
+                    $hours   = floor( $diff / HOUR_IN_SECONDS );
+                    $minutes = floor( ( $diff % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+                    $seconds = $diff % MINUTE_IN_SECONDS;
+                    $remain  = sprintf( '%02d H, %02d M, %02d S', $hours, $minutes, $seconds );
+                    echo '<tr>';
+                    echo '<td>' . esc_html( $job['label'] ) . '</td>';
+                    echo '<td>' . esc_html( $time ) . '</td>';
+                    echo '<td class="tta-countdown" data-remaining="' . esc_attr( $diff ) . '">' . esc_html( $remain ) . '</td>';
+                    echo '<td>';
+                    echo '<button class="button tta-email-log-list" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'See Email List', 'tta' ) . '</button> ';
+                    echo '<button class="button tta-email-log-delete" data-event="' . esc_attr( $event_id ) . '" data-hook="' . esc_attr( $job['hook'] ) . '" data-template="' . esc_attr( $job['template'] ) . '">' . esc_html__( 'Delete', 'tta' ) . '</button>';
+                    echo '</td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table></div></td></tr>';
+            }
+            echo '</tbody></table>';
+
+            $base = add_query_arg( [ 'page' => 'tta-comms', 'tab' => 'logs', 'paged' => '%#%' ], admin_url( 'admin.php' ) );
+            echo '<div class="tablenav"><div class="tablenav-pages">';
+            echo paginate_links( [
+                'base'      => $base,
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => ceil( $total / $per_page ),
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+                'end_size'  => 1,
+                'mid_size'  => 2,
+            ] );
+            echo '</div></div>';
+        }
+        echo '</div>';
+    }
+
+    /** Render email history log. */
+    protected function render_history_tab() {
+        $log      = TTA_Email_Reminders::get_email_log();
+        $per_page = 20;
+        $paged    = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        $total    = count( $log );
+        $slice    = array_slice( array_reverse( $log ), ( $paged - 1 ) * $per_page, $per_page );
+
+        echo '<div id="tta-email-history">';
+        echo '<p><button id="tta-email-clear-log" class="button">' . esc_html__( 'Clear Log', 'tta' ) . '</button></p>';
+        if ( empty( $slice ) ) {
+            echo '<p>' . esc_html__( 'No emails logged.', 'tta' ) . '</p>';
+        } else {
+            echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Time', 'tta' ) . '</th><th>' . esc_html__( 'Event ID', 'tta' ) . '</th><th>' . esc_html__( 'Template', 'tta' ) . '</th><th>' . esc_html__( 'Recipient', 'tta' ) . '</th><th>' . esc_html__( 'Status', 'tta' ) . '</th></tr></thead><tbody>';
+            foreach ( $slice as $entry ) {
+                $time = wp_date( 'Y-m-d H:i', $entry['time'], wp_timezone() );
+                echo '<tr>'; // escape fields
+                echo '<td>' . esc_html( $time ) . '</td>';
+                echo '<td>' . esc_html( $entry['event_id'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['template'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['recipient'] ) . '</td>';
+                echo '<td>' . esc_html( $entry['status'] ) . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+
+            $base = add_query_arg( [ 'page' => 'tta-comms', 'tab' => 'history', 'paged' => '%#%' ], admin_url( 'admin.php' ) );
+            echo '<div class="tablenav"><div class="tablenav-pages">';
+            echo paginate_links( [
+                'base'      => $base,
+                'format'    => '',
+                'current'   => $paged,
+                'total'     => ceil( $total / $per_page ),
+                'prev_text' => '&laquo;',
+                'next_text' => '&raquo;',
+                'end_size'  => 1,
+                'mid_size'  => 2,
+            ] );
+            echo '</div></div>';
+        }
+        echo '</div>';
     }
 }
 

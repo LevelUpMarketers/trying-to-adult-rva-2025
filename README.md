@@ -1,17 +1,8 @@
 # Trying To Adult Management Plugin
 
-This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin` within this repository. For development you may place the API credentials in an `authnet-config.php` file at the plugin root or set them as environment variables before WordPress loads:
+This plugin integrates with Authorize.Net for payment processing. The plugin's files live in `app/public/wp-content/plugins/tta-management-plugin`. Authorize.Net and SendGrid API keys are configured in the WordPress dashboard under **TTA Settings → API Settings**. The values are stored in the database using WordPress options and can alternatively be supplied via environment variables (`TTA_AUTHNET_LOGIN_ID`, `TTA_AUTHNET_TRANSACTION_KEY`, `TTA_SENDGRID_API_KEY`). The API Settings tab also lets administrators upload a two‑column CSV (`email`,`membership`) to list recent Authorize.Net transactions for each address. For every row the plugin searches the last three months of settled batches and outputs each matching transaction's ID, amount, date, status, invoice number, and description. Results are capped at the most recent twenty transactions to avoid timeouts. The lookup is read‑only and the optional **Dry run** checkbox simply performs the search without side effects.
 
-```
-define('TTA_AUTHNET_LOGIN_ID', 'your_login_id');
-define('TTA_AUTHNET_TRANSACTION_KEY', 'your_transaction_key');
-# Optional: set to 'false' for production
-define('TTA_AUTHNET_SANDBOX', true);
-```
-If these constants are not defined, checkout will fail and an admin notice will be displayed. When deploying to production, move the credentials out of the plugin directory.
-
-SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can
-create a `twilio-config.php` file or set environment variables:
+SMS notifications use Twilio. Similar to the Authorize.Net credentials, you can create a `twilio-config.php` file or set environment variables:
 
 ```
 define('TTA_TWILIO_SID', 'your_account_sid');
@@ -33,10 +24,12 @@ messages will not be sent.
 - [Cart and Checkout Flow](docs/CartFlow.md)
 - [Object Caching](docs/ObjectCaching.md)
   - Plugin caches can now be cleared reliably even on hosts with persistent object caching.
+- [Alert Bar](docs/AlertBar.md)
 - [Input Sanitization Helpers](docs/InputSanitization.md)
 - [Authorize.Net Error Codes](docs/AuthorizeNetErrors.md)
 - [Address Helper Functions](docs/AddressHelpers.md)
 - [Event Page Context](docs/EventPage.md)
+- [Homepage Shortcode](docs/HomepageShortcode.md)
 - [Event Hosts & Volunteers](docs/EventPage.md#event-hosts-and-volunteers)
 - [Event Creation Admin](docs/EventCreationAdmin.md)
 - [Event Type Options](docs/EventTypes.md)

@@ -207,8 +207,9 @@ class TTA_Ajax_Membership_Admin {
             wp_send_json_error( [ 'message' => __( 'Invalid level or price.', 'tta' ) ] );
         }
 
-        $api = new TTA_AuthorizeNet_API();
-        $res = $api->update_subscription_amount( $member['subscription_id'], $amount );
+        $api      = new TTA_AuthorizeNet_API();
+        $sub_name = ( 'premium' === $level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
+        $res      = $api->update_subscription_amount( $member['subscription_id'], $amount, $sub_name );
         if ( ! $res['success'] ) {
             wp_send_json_error( [ 'message' => $res['error'] ] );
         }

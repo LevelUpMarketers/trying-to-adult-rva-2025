@@ -182,6 +182,7 @@ $tooltip_message = '';
 $disable_controls = false;
 $waitlist_disabled = ! $is_logged_in;
 $waitlist_tooltip  = __( 'You must be logged in to join the waitlist.', 'tta' );
+$waitlist_ticket_ids = [];
 $show_upgrade_btn  = false;
 $upgrade_label     = '';
 
@@ -324,6 +325,8 @@ if ( $is_archived ) {
     $waitlist_disabled = true;
     $waitlist_tooltip  = __( 'The waitlist is closed for this event.', 'tta' );
 }
+
+$has_active_reservations = tta_event_has_active_cart_reservations( $event['ute_id'] );
 
 if ( $is_logged_in ) {
 
@@ -729,9 +732,7 @@ echo '<script type="application/ld+json">' . wp_json_encode( $schema, JSON_UNESC
               printf(
                 /* translators: 1: opening login button, 2: closing login button, 3: opening registration link, 4: closing registration link */
                 esc_html__( 'Ticket discounts may be available! Log in below to check. Don\'t have an account? Create one below or become a Member today!%1$s', 'tta' ),
-                '<div><a href="#tta-login-message" class="tta-button tta-button-primary">
-          Create Account</a><a href="/become-a-member" class="tta-button tta-button-primary">
-          Become a Member</a></div>',
+                '<div><a href="#tta-login-message" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="/become-a-member" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>',
               );
               ?>
             </p>
@@ -754,23 +755,48 @@ $lost_pw_html = sprintf(
 );
 
 // 3. Output form + link
-echo $form_html . $lost_pw_html;
+echo '<div id="tta-login-wrap">' . $form_html . $lost_pw_html . '</div>';
 
+?>
 
-
-
-
-
-
-
-
-
-
-
-
-
-             
-              ?>
+              <form id="tta-register-form" style="display:none;">
+                <p>
+                  <label><?php esc_html_e( 'First Name', 'tta' ); ?><br />
+                    <input type="text" name="first_name" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Last Name', 'tta' ); ?><br />
+                    <input type="text" name="last_name" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Email', 'tta' ); ?><br />
+                    <input type="email" name="email" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Verify Email', 'tta' ); ?><br />
+                    <input type="email" name="email_verify" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Password', 'tta' ); ?><br />
+                    <input type="password" name="password" required />
+                  </label>
+                </p>
+                <p>
+                  <label><?php esc_html_e( 'Verify Password', 'tta' ); ?><br />
+                    <input type="password" name="password_verify" required />
+                  </label>
+                </p>
+                <p>
+                  <button type="submit" class="tta-button tta-button-primary"><?php esc_html_e( 'Create Account', 'tta' ); ?></button>
+                  <a href="#tta-login-message" class="tta-button-link tta-cancel-register"><?php esc_html_e( 'Cancel Account Creation', 'tta' ); ?></a>
+                  <img class="tta-admin-progress-spinner-svg" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/admin/loading.svg' ); ?>" alt="<?php esc_attr_e( 'Loading…', 'tta' ); ?>" />
+                </p>
+                <span id="tta-register-response" class="tta-admin-progress-response-p"></span>
+              </form>
             </div>
           </div>
         </section>
@@ -850,7 +876,7 @@ echo $form_html . $lost_pw_html;
                 </div>
                 <div class="tta-ticket-notice" aria-live="polite"></div>
               </div>
-              <?php if ( $is_sold_out && $has_waitlist ) : ?>
+              <?php if ( $is_sold_out && $has_waitlist && ! $has_active_reservations ) : ?>
               <?php
                 $ticket_waitlist_disabled = $waitlist_disabled;
                 $ticket_waitlist_tooltip  = $waitlist_tooltip;
@@ -1273,13 +1299,43 @@ echo $form_html . $lost_pw_html;
     </aside>
 
     <aside class="tta-event-right">
-      <div class="tta-events-ad">
+    <div class="tta-events-ad">
+        <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt=""><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h2>
+        <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re grateful for local partners & businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
         <?php $ad = tta_get_random_ad(); ?>
         <?php if ( $ad ) : ?>
           <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
-          <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>"><?php endif; ?>
+          <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php endif; ?>
           <?php echo $img ? $img : '<img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ) . '" alt="">'; ?>
           <?php if ( $ad['url'] ) : ?></a><?php endif; ?>
+          <div class="tta-events-ad__info">
+            <?php if ( ! empty( $ad['business_name'] ) ) : ?>
+              <div class="tta-events-ad__info-item">
+                <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/store.svg' ); ?>" alt="<?php esc_attr_e( 'Business', 'tta' ); ?>">
+                <div class="tta-event-details-icon-after">
+                  <?php if ( ! empty( $ad['url'] ) ) : ?>
+                    <a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_name'] ); ?></a>
+                  <?php else : ?>
+                    <?php echo esc_html( $ad['business_name'] ); ?>
+                  <?php endif; ?>
+                </div>
+              </div>
+            <?php endif; ?>
+            <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
+              <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
+              <div class="tta-events-ad__info-item">
+                <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone-outline.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
+                <div class="tta-event-details-icon-after"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
+              </div>
+            <?php endif; ?>
+            <?php if ( ! empty( $ad['business_address'] ) ) : ?>
+              <?php $map = 'https://www.google.com/maps/search/?api=1&query=' . urlencode( $ad['business_address'] ); ?>
+              <div class="tta-events-ad__info-item">
+                <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt="<?php esc_attr_e( 'Address', 'tta' ); ?>">
+                <div class="tta-event-details-icon-after"><a href="<?php echo esc_url( $map ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_address'] ); ?></a></div>
+              </div>
+            <?php endif; ?>
+          </div>
         <?php else : ?>
           <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="Ad" />
         <?php endif; ?>

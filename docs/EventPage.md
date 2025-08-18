@@ -5,9 +5,15 @@ This document summarizes helper functions and template behavior related to user 
 ## Layout Overview
 
 The template uses a three‑column layout—sidebar, main content, and an ad
-column—all wrapped in a single `.tta-event-columns` container. The random ad
-image sits in the narrow **right** column while the event details sidebar is on
-the left and the main content occupies the center.
+column—all wrapped in a single `.tta-event-columns` container. The narrow
+**right** column opens with a **Meet Our Local Partners** heading and a short
+message thanking supporting businesses before showing a random ad image.
+When provided in the admin, the business name, phone, and address appear below
+the image with icons. The name links to the ad URL, the phone triggers a call,
+and the address opens a Google Maps search.
+On screens wider than 768px this ad column sticks in view while scrolling but stays within its parent container. The StickySidebar library keeps the panel anchored until the bottom of its parent is reached. An extra 148px top offset keeps the ad clear of the site menu.
+The event details sidebar remains on the left and the main content occupies the
+center.
 
 ## Current User Context Helper
 
@@ -27,7 +33,11 @@ Returned array keys:
 
 ## Message Center
 
-The Event Page template includes a **Message Center** block under the “About This Event” section. When a visitor is not logged in a small callout invites them to authenticate. The block begins with a **Log in or Register Here** heading followed by a login form that is visible by default. Clicking **Log in here** toggles the embedded form with the same accordion animation used elsewhere on the page. The form submits via `wp_login_form()` and redirects back to the event page on success. A link to the standard registration page is also provided.
+The Event Page template includes a **Message Center** block under the “About This Event” section. When a visitor is not logged in a small callout invites them to authenticate. The block begins with a **Log in or Register Here** heading followed by a login form that is visible by default. Clicking **Log in here** toggles the embedded form with the same accordion animation used elsewhere on the page.
+
+Guests can now create a free account directly within this block. Selecting **Create Account** fades out the login form and reveals a registration form requesting first name, last name, email (entered twice for verification), and password (also entered twice). The original **Create Account** button is disabled while this form is visible. A **Cancel Account Creation** link beside the submit button returns visitors to the login form and re‑enables the button. A progress spinner and response area provide feedback. The form checks that the email and password fields match and ensures no existing WordPress user or member already uses the email address. On success, a confirmation message displays a five‑second countdown before the page reloads and automatically logs the new member in.
+
+The response element reserves space so feedback messages do not shift nearby controls. Passwords must be at least eight characters and include uppercase and lowercase letters plus a number; violations display inline guidance before the form submits.
 
 ## Event Type and Ticket Context
 
@@ -35,7 +45,7 @@ The **Event Details** sidebar now lists the event type (Open Event, Basic Member
 
 ## Waitlist Popup
 
-When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
+When all tickets are sold out but a waitlist is available, the **Join The Waitlist** button appears in the hero area and above the ticket section. The control only shows once the final regular ticket has been purchased and no active cart reservations remain, so members aren’t prompted to join the waitlist while a ticket is merely being held in someone’s cart. Clicking it opens a modal form with first name, last name, email and phone fields plus two consent checkboxes that are pre-selected. Logged‑in members see their info pre-filled. A spinner shows while the form submits and the confirmation message is delayed so the entire process takes at least three seconds. The × close button is black by default and turns white on hover. The modal can be closed by that button or by clicking outside the popup.
 
 Logged-in visitors who are already on a ticket's waitlist see the Join button for that ticket disabled with a tooltip and a new **Leave the Waitlist** button beside it. Clicking that second button removes their waitlist entry via AJAX and reloads the page. Waitlists are tracked separately for each ticket so attendees can join or leave specific ticket types.
 If the Join button is disabled because the visitor doesn't meet the membership requirement, an **Upgrade** link appears beside it so they can easily upgrade before joining.

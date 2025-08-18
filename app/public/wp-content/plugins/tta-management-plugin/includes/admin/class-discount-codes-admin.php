@@ -18,8 +18,10 @@ class TTA_Discount_Codes_Admin {
             'manage_options',
             'tta-discount-codes',
             [ $this, 'render_page' ],
-            // Use the tickets dashicon so the menu matches other TTA pages.
-            'dashicons-tickets-alt',
+            // Use the price tag icon so the menu item matches other dashboard entries.
+            // This icon visually communicates that the screen is for managing codes
+            // that apply discounts during checkout.
+            'dashicons-tag',
             14
         );
     }

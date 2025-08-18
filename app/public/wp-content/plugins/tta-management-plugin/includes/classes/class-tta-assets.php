@@ -27,7 +27,8 @@ class TTA_Assets {
      * @param string $hook_suffix The current admin page.
      */
     public static function enqueue_backend_assets( $hook_suffix ) {
-        if ( isset( $_GET['page'] ) && in_array( $_GET['page'], [ 'tta-events','tta-members','tta-tickets','tta-comms','tta-ads','tta-venues','tta-refund-requests' ], true ) ) {
+        $page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
+        if ( in_array( $page, [ 'tta-events','tta-members','tta-tickets','tta-comms','tta-ads','tta-venues','tta-refund-requests','tta-settings' ], true ) ) {
 
             // 1) Make sure the full TinyMCE / Quicktags / editor CSS are loaded:
             if ( function_exists( 'wp_enqueue_editor' ) ) {
@@ -119,11 +120,16 @@ class TTA_Assets {
                     'save_ticket_nonce'   => wp_create_nonce( 'tta_ticket_save_action' ),
                     'get_venue_nonce'     => wp_create_nonce( 'tta_venue_get_action' ),
                     'save_venue_nonce'    => wp_create_nonce( 'tta_venue_save_action' ),
+                    'get_ad_nonce'        => wp_create_nonce( 'tta_ad_get_action' ),
+                    'save_ad_nonce'       => wp_create_nonce( 'tta_ad_save_action' ),
                     'save_comm_nonce'     => wp_create_nonce( 'tta_comms_save_action' ),
                     'membership_admin_nonce' => wp_create_nonce( 'tta_membership_admin_action' ),
                     'attendee_admin_nonce' => wp_create_nonce( 'tta_attendee_admin_action' ),
                     'waitlist_admin_nonce' => wp_create_nonce( 'tta_waitlist_admin_action' ),
                     'authnet_test_nonce'   => wp_create_nonce( 'tta_authnet_test_action' ),
+                    'email_logs_nonce'    => wp_create_nonce( 'tta_email_logs_action' ),
+                    'email_log_clear_nonce' => wp_create_nonce( 'tta_email_clear_action' ),
+                    'banned_members_nonce' => wp_create_nonce( 'tta_banned_members_action' ),
                     'sample_event'        => ( function() {
                         $e = tta_get_next_event();
                         if ( ! $e ) {
@@ -135,6 +141,7 @@ class TTA_Assets {
                         $e['dashboard_waitlist_url'] = home_url( '/member-dashboard/?tab=waitlist' );
                         $e['dashboard_past_url']    = home_url( '/member-dashboard/?tab=past' );
                         $e['dashboard_billing_url'] = home_url( '/member-dashboard/?tab=billing' );
+                        $e['address_link']          = $e['address'] ? esc_url( 'https://maps.google.com/?q=' . rawurlencode( $e['address'] ) ) : '';
                         $e['date']                  = $e['date_formatted'];
                         $e['time']                  = $e['time_formatted'];
                         return $e;
@@ -142,6 +149,19 @@ class TTA_Assets {
                     'sample_member'       => tta_get_sample_member(),
                 ]
             );
+
+            if ( 'tta-settings' === $page ) {
+                wp_localize_script(
+                    'tta-admin-js',
+                    'TTA_Authnet',
+                    [
+                        'live_login'    => get_option( 'tta_authnet_login_id_live', '' ),
+                        'live_key'      => get_option( 'tta_authnet_transaction_key_live', '' ),
+                        'sandbox_login' => get_option( 'tta_authnet_login_id_sandbox', '' ),
+                        'sandbox_key'   => get_option( 'tta_authnet_transaction_key_sandbox', '' ),
+                    ]
+                );
+            }
         }
     }
 
@@ -155,6 +175,34 @@ class TTA_Assets {
             TTA_PLUGIN_URL . 'assets/css/frontend/style.css',
             [],
             TTA_PLUGIN_VERSION
+        );
+
+        // Register assets used by shortcodes.
+        wp_register_style(
+            'tta-homepage-shortcode',
+            TTA_PLUGIN_URL . 'assets/css/frontend/homepage-shortcode.css',
+            [ 'tta-frontend-css' ],
+            TTA_PLUGIN_VERSION
+        );
+        wp_register_script(
+            'tta-homepage-shortcode',
+            TTA_PLUGIN_URL . 'assets/js/frontend/homepage-shortcode.js',
+            [ 'jquery' ],
+            TTA_PLUGIN_VERSION,
+            true
+        );
+        wp_register_style(
+            'tta-popup-css',
+            TTA_PLUGIN_URL . 'assets/css/frontend/profile-popup.css',
+            [ 'tta-frontend-css' ],
+            TTA_PLUGIN_VERSION
+        );
+        wp_register_script(
+            'tta-popup-js',
+            TTA_PLUGIN_URL . 'assets/js/frontend/profile-popup.js',
+            [ 'jquery' ],
+            TTA_PLUGIN_VERSION,
+            true
         );
 
 
@@ -206,6 +254,20 @@ class TTA_Assets {
                 TTA_PLUGIN_VERSION,
                 true
             );
+            wp_enqueue_script(
+                'sticky-sidebar',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-sidebar.min.js',
+                [],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'tta-sticky-ad',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-events-ad.js',
+                [ 'jquery', 'sticky-sidebar' ],
+                TTA_PLUGIN_VERSION,
+                true
+            );
             wp_localize_script(
                 'tta-cart-js',
                 'tta_ajax',
@@ -221,6 +283,11 @@ class TTA_Assets {
                     'limit_msg'      => __( "We're sorry, there's a limit of %d per ticket.", 'tta' ),
                     'prev_limit_msg' => __( "We're sorry, there's a limit of %d per ticket. You've already purchased tickets in a previous transaction.", 'tta' ),
                     'sold_out_msg'   => __( "We're sorry, but someone just purchased the last ticket. It's currently reserved in another member's cart.", 'tta' ),
+                    'email_mismatch_msg' => __( 'Email addresses do not match.', 'tta' ),
+                    'password_mismatch_msg' => __( 'Passwords do not match.', 'tta' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
+                    'request_failed_msg' => __( 'Request failed.', 'tta' ),
+                    'account_created_msg' => __( 'Account created! Reloading in %d…', 'tta' ),
                 ]
             );
         }
@@ -257,6 +324,20 @@ class TTA_Assets {
                 'tta-eventslist-js',
                 TTA_PLUGIN_URL . 'assets/js/frontend/events-list-page.js',
                 [ 'jquery' ],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'sticky-sidebar',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-sidebar.min.js',
+                [],
+                TTA_PLUGIN_VERSION,
+                true
+            );
+            wp_enqueue_script(
+                'tta-sticky-ad',
+                TTA_PLUGIN_URL . 'assets/js/frontend/sticky-events-ad.js',
+                [ 'jquery', 'sticky-sidebar' ],
                 TTA_PLUGIN_VERSION,
                 true
             );
@@ -390,6 +471,7 @@ class TTA_Assets {
                 [
                     'ajax_url' => admin_url( 'admin-ajax.php' ),
                     'nonce'    => wp_create_nonce( 'tta_frontend_nonce' ),
+                    'password_requirements_msg' => __( 'Password must be at least 8 characters and include upper and lower case letters and a number.', 'tta' ),
                 ]
             );
 

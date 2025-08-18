@@ -1,6 +1,12 @@
 # Email and SMS Templates
 
-The plugin sends automated notifications to members. Administrators can edit the text for each message from **Email & SMS** in the WordPress admin menu. Templates are listed in a table similar to the Manage Events page. Click a row to expand an inline form containing the fields for that communication. Each form has its own **Save Changes** button and progress spinner.
+The plugin sends automated notifications to members. Administrators can manage these messages from **TTA Email & SMS** in the WordPress admin. The page contains three tabs:
+
+1. **Email Templates** – existing template editor described below.
+2. **Email Logs** – lists scheduled reminder and thank‑you emails grouped by event. Reminder jobs are automatically queued whenever an event is created or its start time changes and are scheduled using the site's timezone setting. Each entry shows the send time in `MM-DD-YYYY HH:MMAM/PM` format along with a live `HH H, MM M, SS S` countdown using the site's timezone, exposes its current recipient list via AJAX, and can be deleted before it runs.
+3. **Email History** – a running log of all attempted emails including recipient address and delivery result. A **Clear Log** button removes all entries.
+
+Templates are listed in a table similar to the Manage Events page. Click a row to expand an inline form containing the fields for that communication. Each form has its own **Save Changes** button and progress spinner.
 
 ## Available Templates
 
@@ -9,8 +15,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `purchase` | Sent after a successful event purchase. Includes event details automatically. |
 | `reminder_24hr` | Sent 24 hours before an event starts. |
 | `reminder_2hr` | Sent two hours before an event starts. |
-| `new_event` | Internal notice when a new event is created. |
-| `refund_requested` | Internal notice when a member requests a refund. |
+| `refund_requested` | Sent to a member when they request a refund. |
 | `refund_processed` | Sent to attendees when a refund request is approved and issued. |
 | `event_sold_out` | Internal alert when an event reaches capacity. |
 | `waitlist_available` | Sent when a ticket becomes available for someone on the waitlist. |
@@ -19,6 +24,7 @@ The plugin sends automated notifications to members. Administrators can edit the
 | `volunteer_reminder_24hr` | Reminder to volunteers 24 hours before their event. |
 | `volunteer_reminder_2hr` | Reminder to volunteers two hours before their event. |
 | `assistance_request` | Sent to event hosts when a member asks for help finding the group. |
+| `post_event_review` | Sent 24 hours after an event is archived to attendees marked as checked in. |
 
 Each template stores:
 
@@ -37,7 +43,7 @@ Default values are provided on initial install:
 - **Purchase SMS**: "Thanks for registering! View your upcoming events at "
 - **24-Hour Reminder Email Body**: "Heads-up! Your event is just 1 day away! Below are the details."
 - **2-Hour Reminder Email Body**: "Your event is only 2 hours away! Below are the details."
-- **Admin Notifications**: emails are sent when new events are created, refunds are requested or events sell out.
+- **Admin Notifications**: internal alerts are sent when events sell out.
 - **Host and Volunteer Reminders**: internal messages mirror attendee reminders at 24 and 2 hours before the event.
 
 Links to the member dashboard now output the full site URL and include direct links to each dashboard tab, including the waitlist view.
@@ -55,6 +61,7 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 ```
 {event_name}
 {event_address}
+{event_address_link}
 {event_link}
 {dashboard_profile_url}
 {dashboard_upcoming_url}
@@ -70,6 +77,8 @@ Buttons labelled with tokens (e.g. `{event_name}`) insert placeholders into the 
 {member_cost}
 {premium_cost}
 ```
+
+`{event_address_link}` outputs a Google Maps URL for the event address.
 
 Dashboard URL tokens accept an optional `anchor` attribute. For example:
 
@@ -93,6 +102,14 @@ empty or omitted the full URL is printed.
 {member_type}
 ```
 
+### Ban & Re-Entry
+
+```
+{reentry_link}
+```
+
+Insert `{reentry_link}` to output `/checkout?auto=reentry`. Wrap it in Markdown—`[Re-entry Ticket]({reentry_link})`—to create a clickable link that, when the member is logged in, clears any existing items and automatically adds the Re-entry Ticket to their cart. Unauthenticated visitors simply land on the checkout page.
+
 ### Event Attendee Information
 
 ```
@@ -112,9 +129,21 @@ empty or omitted the full URL is printed.
 {attendee4_last_name}
 {attendee4_email}
 {attendee4_phone}
+{assistance_message}
 ```
 
-Each attendee receives a personalized email where these tokens reflect their own details.
+Each attendee receives a personalized email where these tokens reflect their own details. `{assistance_message}` contains any note submitted through the assistance form on the member dashboard.
+
+### Host & Volunteer Information
+
+```
+{event_host}
+{event_volunteer}
+{host_notes}
+```
+
+If no hosts or volunteers are assigned to an event, `{event_host}` and
+`{event_volunteer}` default to `TBD`.
 
 ### Refund Information
 
@@ -129,11 +158,35 @@ Each attendee receives a personalized email where these tokens reflect their own
 {refund_event_time}
 ```
 
-Use the **Line Break** button to insert a newline. Email previews render these breaks as HTML `<br>` tags so the saved text remains plain.
+### Assistance Message
 
-### Hyperlinks
+These tokens insert details from a member's assistance request. Missing values default to `N/A`.
 
-Template text can include Markdown-style links in the form `[Link Text](https://example.com)`. When emails are sent these are converted to clickable `<a>` tags. This works for any URL, including tokens like `{dashboard_upcoming_url}`.
+```
+{assistance_message}
+{assistance_first_name}
+{assistance_last_name}
+{assistance_email}
+{assistance_phone}
+```
+
+### Formatting & Styling
+
+The editor provides helper buttons beneath the token sections:
+
+- **Link This Text** – prompts for a URL or token and wraps the selected text
+  in `[text](url)` Markdown. Links are converted to clickable `<a>` tags when
+  the email is sent.
+- **Line Break** – inserts a newline. Email previews render these as HTML
+  `<br>` tags so the saved text remains plain.
+- **Bold** – wraps the highlighted text with `**` markers. The enclosed text
+  appears in bold in the final email.
+ - **Italic** – wraps the highlighted text with `*` markers. Text appears in italics in the final email.
+
+Styling markers can be combined, so `***bold & italic***` renders as bold and italic.
+
+Template text can include Markdown-style links directly, so
+`[{event_name}]({event_link})` resolves to a link with the event name and URL.
 
 ### Formatting Helpers
 

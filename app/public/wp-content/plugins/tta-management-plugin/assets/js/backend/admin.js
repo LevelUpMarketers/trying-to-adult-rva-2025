@@ -255,6 +255,114 @@ jQuery(function($){
     }, 'json');
   });
 
+  // Email Logs tab
+  var $logs = $('#tta-email-logs');
+  if ($logs.length) {
+    $logs.on('click', '.tta-email-log-event', function(){
+      $(this).next('.tta-email-log-details').toggle();
+      $(this).find('.tta-toggle-arrow').toggleClass('open');
+    });
+
+    $logs.on('click', '.tta-email-log-list', function(e){
+      e.preventDefault();
+      var $btn = $(this);
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_log_recipients',
+        nonce: TTA_Ajax.email_logs_nonce,
+        event_id: $btn.data('event'),
+        hook: $btn.data('hook')
+      }, function(res){
+        if(res.success){
+          alert(res.data.join('\n'));
+        }
+      });
+    });
+
+    $logs.on('click', '.tta-email-log-delete', function(e){
+      e.preventDefault();
+      if(!confirm('Delete this scheduled email?')) return;
+      var $btn = $(this), row=$btn.closest('tr');
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_log_delete',
+        nonce: TTA_Ajax.email_logs_nonce,
+        event_id: $btn.data('event'),
+        hook: $btn.data('hook'),
+        template: $btn.data('template')
+      }, function(res){
+        if(res.success){ row.remove(); }
+      });
+    });
+
+    function pad(num){ return (num < 10 ? '0' : '') + num; }
+    setInterval(function(){
+      $logs.find('.tta-countdown').each(function(){
+        var $el = $(this);
+        var remain = parseInt($el.data('remaining'), 10);
+        if (isNaN(remain)) { return; }
+        remain = Math.max(0, remain - 1);
+        $el.data('remaining', remain);
+        var hours = Math.floor(remain / 3600);
+        var minutes = Math.floor((remain % 3600) / 60);
+        var seconds = remain % 60;
+        $el.text(pad(hours) + ' H, ' + pad(minutes) + ' M, ' + pad(seconds) + ' S');
+      });
+    }, 1000);
+  }
+
+  // Banned Members tab
+  var $banned = $('#tta-banned-members');
+  if ($banned.length) {
+    $banned.on('click', '.tta-banned-member', function(){
+      $(this).next('.tta-banned-details').toggle();
+      $(this).find('.tta-toggle-arrow').toggleClass('open');
+    });
+
+    $banned.on('click', '.tta-banned-reinstate', function(e){
+      e.preventDefault();
+      if(!confirm('Reinstate this member?')) return;
+      var $btn=$(this);
+      $.post(TTA_Ajax.ajax_url, {
+        action:'tta_reinstate_member',
+        nonce:TTA_Ajax.banned_members_nonce,
+        wp_user_id:$btn.data('user')
+      }, function(res){
+        if(res.success){
+          var $details=$btn.closest('tr.tta-banned-details');
+          $details.prev('.tta-banned-member').remove();
+          $details.remove();
+        }
+      });
+    });
+
+    function pad(num){ return (num < 10 ? '0' : '') + num; }
+    setInterval(function(){
+      $banned.find('.tta-countdown').each(function(){
+        var $el=$(this); var remain=parseInt($el.data('remaining'),10);
+        if(isNaN(remain)) return;
+        remain=Math.max(0,remain-1);
+        $el.data('remaining',remain);
+        var hours=Math.floor(remain/3600), minutes=Math.floor((remain%3600)/60), seconds=remain%60;
+        $el.text(pad(hours)+' H, '+pad(minutes)+' M, '+pad(seconds)+' S');
+      });
+    },1000);
+  }
+
+  var $history = $('#tta-email-history');
+  if ($history.length) {
+    $history.on('click', '#tta-email-clear-log', function(e){
+      e.preventDefault();
+      if(!confirm('Clear email log?')) return;
+      $.post(TTA_Ajax.ajax_url, {
+        action: 'tta_email_clear_log',
+        nonce: TTA_Ajax.email_log_clear_nonce
+      }, function(res){
+        if(res.success){
+          $history.find('table tbody').empty();
+        }
+      });
+    });
+  }
+
   // Inline edit for Venues
   $(document).on('click', '#tta-venues-manage .widefat tbody tr[data-venue-id]', function(e){
     if($(e.target).is('a,button,input,textarea,select')) return;
@@ -279,6 +387,37 @@ jQuery(function($){
     $('.tta-admin-progress-spinner-svg').css({opacity:1,display:'inline-block'});
     $('.tta-admin-progress-response-p').text('');
     var data=$form.serialize()+'&action=tta_update_venue'+'&tta_venue_save_nonce='+TTA_Ajax.save_venue_nonce;
+    $.post(TTA_Ajax.ajax_url,data,function(res){
+      $('.tta-admin-progress-spinner-svg').fadeOut(200);
+      var $resp=$('.tta-admin-progress-response-p').removeClass('updated error').addClass(res.success?'updated':'error');
+      $resp.text(res.data.message||'Error');
+    },'json');
+  });
+
+  // Inline edit for Ads
+  $(document).on('click', '#tta-ads-manage .widefat tbody tr[data-ad-id]', function(e){
+    if($(e.target).is('a,button,input,textarea,select,img')) return;
+    var $row=$(this), $arrow=$row.find('.tta-toggle-arrow');
+    var id=$row.data('ad-id'), colspan=$row.find('td').length;
+    var $existing=$row.next('.tta-inline-row');
+    if($existing.length){ $arrow.removeClass('open'); $existing.remove(); return; }
+    $('.tta-inline-row').remove(); $('.tta-toggle-arrow').removeClass('open');
+    $arrow.addClass('open');
+    $.post(TTA_Ajax.ajax_url,{action:'tta_get_ad_form',ad_id:id,get_ad_nonce:TTA_Ajax.get_ad_nonce},function(res){
+      if(!res.success) return;
+      var $new=$('<tr class="tta-inline-row"><td colspan="'+colspan+'"><div class="tta-inline-container" style="display:none;"></div></td></tr>');
+      $row.after($new);
+      var $c=$new.find('.tta-inline-container');
+      $c.html(res.data.html).fadeIn(200);
+    },'json');
+  });
+
+  $(document).on('submit', '#tta-ad-edit-form', function(e){
+    e.preventDefault();
+    var $form=$(this);
+    $('.tta-admin-progress-spinner-svg').css({opacity:1,display:'inline-block'});
+    $('.tta-admin-progress-response-p').text('');
+    var data=$form.serialize()+'&action=tta_update_ad'+'&tta_ad_save_nonce='+TTA_Ajax.save_ad_nonce;
     $.post(TTA_Ajax.ajax_url,data,function(res){
       $('.tta-admin-progress-spinner-svg').fadeOut(200);
       var $resp=$('.tta-admin-progress-response-p').removeClass('updated error').addClass(res.success?'updated':'error');
@@ -323,7 +462,10 @@ jQuery(function($){
       var $container = $new.find('.tta-inline-container');
       $container.html(res.data.html).slideDown(200);
       $container.find('select[name="level"]').each(function(){
-        syncLevelPrice($(this));
+        var $priceInput = $(this).closest('form').find('input[name="price"], input[name="amount"]');
+        if(!$priceInput.val()){
+          syncLevelPrice($(this));
+        }
       });
     }, 'json').fail(function(){ $spinner.fadeTo(200,0,function(){ $(this).hide(); }); });
   });
@@ -747,6 +889,27 @@ jQuery(function($){
       $(this).val(val);
   });
 
+  // Phone mask for Ads
+  $(document).on('input', '#business_phone_edit', function(){
+    var val = $(this).val().replace(/\D/g, '');
+    if ( val.length > 3 && val.length <= 6 ) {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+    } else if ( val.length > 6 ) {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+    }
+    $(this).val( val );
+  });
+
+  $('#business_phone').on('input', function(){
+      var val = $(this).val().replace(/\D/g, '');
+      if (val.length > 3 && val.length <= 6) {
+          val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+      } else if (val.length > 6) {
+          val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+      }
+      $(this).val(val);
+  });
+
 
 
 // ── Inline Edit for Tickets ──────────────────────────────────────────────
@@ -917,7 +1080,8 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
   function handleRefund(e, mode){
     e.preventDefault();
     var id = $(e.currentTarget).data('attendee');
-    var $row = $(e.currentTarget).closest('tr[data-attendee-id]');
+    var $btn = $(e.currentTarget);
+    var $row = $btn.closest('tr[data-attendee-id]');
     var amount = $row.find('.tta-refund-amount').val();
     $.post(TTA_Ajax.ajax_url, {
       action: 'tta_refund_attendee',
@@ -927,6 +1091,13 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
       nonce: TTA_Ajax.attendee_admin_nonce
     }, function(res){
       if(res.success){
+        if(res.data && res.data.pending){
+          $btn.prop('disabled', true)
+              .addClass('tta-disabled tta-tooltip-trigger')
+              .attr('data-tooltip', 'Refund scheduled after settlement');
+          alert(res.data && res.data.message ? res.data.message : 'Refund pending');
+          return;
+        }
         if(mode === 'cancel'){
           $row.remove();
           alert(res.data && res.data.message ? res.data.message : 'Refund processed');
@@ -970,9 +1141,10 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
 
   function handleRefundRequest(e, mode){
     e.preventDefault();
-    var $row = $(e.currentTarget).closest('tr[data-request]');
-    var tx  = $(e.currentTarget).data('tx');
-    var ticket = $(e.currentTarget).data('ticket');
+    var $btn = $(e.currentTarget);
+    var $row = $btn.closest('tr[data-request]');
+    var tx  = $btn.data('tx');
+    var ticket = $btn.data('ticket');
     var amount = $row.find('.tta-refund-amount').val();
     var action = (mode === 'delete') ? 'tta_delete_refund_request' : 'tta_process_refund_request';
     var data = {
@@ -984,6 +1156,13 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     };
     $.post(TTA_Ajax.ajax_url, data, function(res){
       if(res.success){
+        if(res.data && res.data.pending){
+          $btn.prop('disabled', true)
+              .addClass('tta-disabled tta-tooltip-trigger')
+              .attr('data-tooltip', 'Refund scheduled after settlement');
+          alert(res.data && res.data.message ? res.data.message : 'Refund pending');
+          return;
+        }
         $row.remove();
         alert(res.data && res.data.message ? res.data.message : 'OK');
       }else{
@@ -1122,7 +1301,12 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     }
   }
 
-  $('form select[name="level"]').each(function(){ syncLevelPrice($(this)); });
+  $('form select[name="level"]').each(function(){
+    var $priceInput = $(this).closest('form').find('input[name="price"], input[name="amount"]');
+    if(!$priceInput.val()){
+      syncLevelPrice($(this));
+    }
+  });
   $(document).on('change','form select[name="level"]',function(){ syncLevelPrice($(this)); });
 
   // Track the last focused input for token insertion
@@ -1156,8 +1340,85 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     if (activeField) { $(activeField).trigger('blur'); }
   });
 
+  $(document).on('click', '.tta-link-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    // If user selected inside a token, expand to include braces.
+    if (start > 0 && val[start - 1] === '{' && val[end] === '}') {
+      start--;
+      end++;
+    }
+    var sel = val.substring(start, end);
+    var url = prompt('Enter URL or token');
+    if (!url) { return; }
+    url = url.trim();
+    if (url && url[0] !== '{' && !/^[a-z]+:\/\//i.test(url) && url[0] !== '/' && url[0] !== '#') {
+      url = '{' + url.replace(/^\{?|\}?$/g, '') + '}';
+    }
+    var md = '[' + sel + '](' + url + ')';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = field.selectionEnd = start + md.length;
+    $(field).trigger('blur');
+  });
+
+  $(document).on('click', '.tta-bold-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    var sel   = val.substring(start, end);
+    var md    = '**' + sel + '**';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = start;
+    field.selectionEnd   = start + md.length;
+    $(field).trigger('blur');
+  });
+
+  $(document).on('click', '.tta-italic-text', function(){
+    if (!activeField) { return; }
+    var field = activeField;
+    if (field.selectionStart === undefined || field.selectionEnd === undefined) { return; }
+    if (field.selectionStart === field.selectionEnd) { return; }
+    var start = field.selectionStart;
+    var end   = field.selectionEnd;
+    var val   = field.value;
+    var sel   = val.substring(start, end);
+    var md    = '*' + sel + '*';
+    field.value = val.substring(0, start) + md + val.substring(end);
+    field.selectionStart = start;
+    field.selectionEnd   = start + md.length;
+    $(field).trigger('blur');
+  });
+
   function convertLinks(text){
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+
+  function convertBoldItalic(text){
+    return text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+  }
+
+  function convertBold(text){
+    return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function convertItalic(text){
+    return text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+
+  function stripFormatting(text){
+    return text
+      .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1');
   }
 
   function expandAnchors(text,map){
@@ -1172,11 +1433,15 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
     var subj = $form.find('input[name=email_subject]').val() || '';
     var body = $form.find('textarea[name=email_body]').val() || '';
     var sms  = $form.find('textarea[name=sms_text]').val() || '';
+    subj = subj.replace(/\\'/g, "'");
+    body = body.replace(/\\'/g, "'");
+    sms  = sms.replace(/\\'/g, "'");
     var ev   = TTA_Ajax.sample_event || {};
     var mem  = TTA_Ajax.sample_member || {};
     var map  = {
         '{event_name}': ev.name || 'Sample Event',
         '{event_address}': ev.address || '123 Main St',
+        '{event_address_link}': ev.address_link || '#',
         '{event_link}': ev.page_url || '#',
         '{dashboard_profile_url}': ev.dashboard_profile_url || '#',
         '{dashboard_upcoming_url}': ev.dashboard_upcoming_url || '#',
@@ -1191,12 +1456,18 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{base_cost}': ev.base_cost || '0',
         '{member_cost}': ev.member_cost || '0',
         '{premium_cost}': ev.premium_cost || '0',
+        '{event_host}': ev.host_names || 'TBD',
+        '{event_hosts}': ev.host_names || 'TBD',
+        '{event_volunteer}': ev.volunteer_names || 'TBD',
+        '{event_volunteers}': ev.volunteer_names || 'TBD',
+        '{host_notes}': ev.host_notes || '',
         '{first_name}': mem.first_name || 'First',
         '{last_name}': mem.last_name || 'Last',
         '{email}': mem.email || 'member@example.com',
         '{phone}': mem.phone || '555-555-5555',
         '{membership_level}': mem.membership_level || 'basic',
         '{member_type}': mem.member_type || 'member',
+        '{reentry_link}': '/checkout?auto=reentry',
         '{attendee_first_name}': mem.first_name || 'First',
         '{attendee_last_name}': mem.last_name || 'Last',
         '{attendee_email}': mem.email || 'attendee@example.com',
@@ -1212,17 +1483,24 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
         '{attendee4_first_name}': mem.first_name || 'First',
         '{attendee4_last_name}': mem.last_name || 'Last',
         '{attendee4_email}': mem.email || 'attendee4@example.com',
-        '{attendee4_phone}': mem.phone || '555-555-5558'
+        '{attendee4_phone}': mem.phone || '555-555-5558',
+        '{assistance_message}': mem.assistance_message || '',
+        '{assistance_note}': mem.assistance_message || ''
       };
     subj = expandAnchors(subj, map);
     body = expandAnchors(body, map);
     Object.keys(map).forEach(function(tok){
       var val = map[tok];
+      if (typeof val === 'string') {
+        val = val.replace(/\\'/g, "'");
+      }
       subj = subj.split(tok).join(val);
       body = body.split(tok).join(val);
       sms  = sms.split(tok).join(val);
     });
-    body = convertLinks(body);
+    subj = stripFormatting(subj);
+    body = convertItalic(convertBold(convertBoldItalic(convertLinks(body))));
+    sms  = stripFormatting(sms);
     var bodyHtml = body.replace(/\n/g, '<br>');
     $form.find('.tta-email-preview-subject').text(subj);
     $form.find('.tta-email-preview-body').html(bodyHtml);
@@ -1286,6 +1564,26 @@ $(document).on('click', '.tta-remove-waitlist-entry', function(e){
 
 
 
+
+  // API Settings: switch authnet environment
+  var $envSelect = $('#tta_authnet_sandbox');
+  if ($envSelect.length && typeof TTA_Authnet !== 'undefined') {
+    var $login = $('#tta_authnet_login_id');
+    var $trans = $('#tta_authnet_transaction_key');
+
+    function ttaFillCreds(env) {
+      if (env === '1') {
+        $login.val(TTA_Authnet.sandbox_login || '');
+        $trans.val(TTA_Authnet.sandbox_key || '');
+      } else {
+        $login.val(TTA_Authnet.live_login || '');
+        $trans.val(TTA_Authnet.live_key || '');
+      }
+    }
+
+    ttaFillCreds($envSelect.val());
+    $envSelect.on('change', function(){ ttaFillCreds(this.value); });
+  }
 
   // Authorize.Net test suite button
   $(document).on('click', '#tta-authnet-test-button', function(e){

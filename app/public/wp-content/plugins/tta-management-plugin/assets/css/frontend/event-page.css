@@ -7,6 +7,46 @@
   background: #f5f5f5;
   padding: 40px 0;
 }
+.tta-events-ad{
+  padding-bottom: 100px;
+  text-align: left;
+}
+
+.tta-events-ad img{
+  border-radius:4px;
+}
+
+.tta-events-ad h2{
+  display:flex;
+  align-items:center;
+  gap:0.25rem;
+  margin-top:0;
+  margin-bottom:0.5em;
+  font-size:1.25em;
+}
+
+#main > div > div > div > aside.tta-event-right > div > a{
+  position: relative;
+  display: block;
+}
+
+.tta-events-ad__subtitle{
+  margin-bottom: 1em;
+  font-size: 1em;
+  text-align:left;
+}
+
+.tta-events-ad__info{
+  margin-top:1em;
+}
+
+.tta-events-ad__info-item{
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  margin-bottom:0.5em;
+}
+
 .tta-event-hero-inner {
   display: flex;
   flex-wrap: wrap;
@@ -21,7 +61,7 @@
   flex: 1 1 400px;
   padding-right: 20px;
 }
-.tta-event-hero-text a:hover{
+.tta-event-hero-text .tta-button:hover{
   background-color:#2f516a;
   text-decoration:none;
 }
@@ -73,6 +113,12 @@
   color: #fff;
   text-decoration: none;
   border-radius: 4px;
+}
+
+.tta-button-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: default;
 }
 
 .tta-event-main #tta-login-message .tta-button-primary {
@@ -148,6 +194,7 @@
   flex: 0 0 220px;
   align-self: stretch;
   order: 3;
+  position: relative;
 }
 .tta-event-main {
   flex: 1 1 auto;
@@ -248,7 +295,7 @@
   flex-direction: column;
 }
 .tta-related-event-info {
-  margin-top: auto;
+
 }
 
 /* Message Center */
@@ -299,6 +346,7 @@
 #main > div > div > div > main > section.tta-event-section.tta-event-image-gallery-accordion.tta-event-attendees-section > div > div > div > div{
   display:inline-block;
   margin:10px;
+  min-width:85px;
 }
 
 
@@ -310,7 +358,6 @@
   border-radius: 4px;
   background: #fff;
   padding: 20px;
-  margin: 40px 0;
   position: relative;
 }
 .tta-event-buy h2 {
@@ -401,17 +448,16 @@
   to { transform: rotate(360deg); }
 }
 .tta-admin-progress-response-p {
+  display:block;
+  min-height:1.5em;
   font-size:18px;
   font-weight:bold;
   opacity:0;
-  overflow:hidden;
-  max-height:0;
-  transition:opacity 0.2s ease,max-height 0.3s ease;
+  transition:opacity 0.2s ease;
 }
 .tta-admin-progress-response-p.updated,
 .tta-admin-progress-response-p.error {
   opacity:1;
-  max-height:1000px;
 }
 .tta-ticket-price {
   margin-left: auto;
@@ -572,6 +618,10 @@ input[disabled]::before {
   transition: opacity 0.4s ease;   /* fade animation */
 }
 
+.tta-accordion button{
+  margin-top:10px;
+}
+
 .tta-event-sidebar .tta-accordion-content::after {
 }
 .tta-event-sidebar .tta-accordion-content{
@@ -631,6 +681,7 @@ input[disabled]::before {
 
 .tta-event-details-icon-after{
     flex: 1 1 auto;
+    text-align:left;
 }
 
 /* Gallery grid */
@@ -681,13 +732,15 @@ input[disabled]::before {
 
 .tta-attendee-role {
   position: absolute;
-  top: 0;
+  bottom: -5px;
   left: 0;
+  right:0;
   background: #0073aa;
   color: #fff;
   font-size: 12px;
   padding: 2px 4px;
-  border-bottom-right-radius: 4px;
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 .tta-attendee-level {
@@ -709,19 +762,55 @@ input[disabled]::before {
 /* Accordion fade + transition already in place from your description section */
 
 
+#tta-register-form > p{
+  display:inline-block;
+  margin-right: 10px;
+}
+
+.tta-event-main #tta-login-message #loginform .login-username, .tta-event-main #tta-login-message #loginform .login-password{
+  display:inline-block;
+  margin-right:10px;
+}
 
 
 
 
+@media (max-width: 1112px) {
+  .tta-event-hero-text{
+    order:2;
+  }
+}
 
-
-
-
-
+.tta-popup-wrap{
+  text-align: center;
+}
 
 
 /* Responsive */
 @media (max-width: 800px) {
+
+
+
+
+  .tta-event-sidebar{
+    margin:10px;
+  }
+
+  .tta-share-label{
+    display: block;
+    font-weight: bold;
+  }
+
+  .tta-event-main{
+    order:1;
+    margin:10px;
+  }
+
+  .tta-events-ad{
+    text-align:left;
+    padding: 20px;
+  }
+
   .tta-event-columns {
     flex-direction: column;
   }
@@ -739,6 +828,7 @@ input[disabled]::before {
   .tta-event-hero-text {
     flex: 1 1 100%;
     text-align: center;
+    padding-right:0px;
   }
   .tta-related-events-grid {
     flex-direction: column;

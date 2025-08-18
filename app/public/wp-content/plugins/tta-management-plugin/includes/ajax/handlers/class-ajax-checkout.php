@@ -18,7 +18,7 @@ class TTA_Ajax_Checkout {
 
         $ticket_total     = $cart->get_total( $discount_codes, false );
         $membership_level = $_SESSION['tta_membership_purchase'] ?? '';
-        $membership_total = in_array( $membership_level, [ 'basic', 'premium' ], true ) ? tta_get_membership_price( $membership_level ) : 0;
+        $membership_total = in_array( $membership_level, [ 'basic', 'premium', 'reentry' ], true ) ? tta_get_membership_price( $membership_level ) : 0;
         $amount           = $ticket_total + $membership_total;
 
         $exp_input  = tta_sanitize_text_field( $_POST['card_exp'] ?? '' );
@@ -66,7 +66,7 @@ class TTA_Ajax_Checkout {
                 $membership_total,
                 [
                     [
-                        'membership'  => ucfirst( $membership_level ) . ' Membership',
+                        'membership'  => tta_get_membership_label( $membership_level ),
                         'quantity'    => 1,
                         'price'       => $membership_total,
                         'final_price' => $membership_total,
@@ -78,29 +78,40 @@ class TTA_Ajax_Checkout {
                 substr( preg_replace( '/\D/', '', $_POST['card_number'] ?? '' ), -4 )
             );
 
-            $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
-            $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
-            $sub      = $api->create_subscription(
-                $membership_total,
-                preg_replace( '/\D/', '', $_POST['card_number'] ?? '' ),
-                $exp_date,
-                tta_sanitize_text_field( $_POST['card_cvc'] ?? '' ),
-                $billing,
-                $sub_name,
-                $sub_desc,
-                date( 'Y-m-d', strtotime( '+1 month' ) )
-            );
-            if ( ! $sub['success'] ) {
-                wp_send_json_error( [ 'message' => $sub['error'] ] );
+            if ( 'reentry' === $membership_level ) {
+                tta_clear_reinstatement_cron( get_current_user_id() );
+                tta_unban_user( get_current_user_id() );
+                tta_send_banned_reinstatement_email( get_current_user_id() );
+                unset( $_SESSION['tta_membership_purchase'] );
+            } else {
+                $existing_sub = tta_get_user_subscription_id( get_current_user_id() );
+                if ( $existing_sub ) {
+                    $api->cancel_subscription( $existing_sub );
+                }
+                $sub_name = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_NAME : TTA_BASIC_SUBSCRIPTION_NAME;
+                $sub_desc = ( 'premium' === $membership_level ) ? TTA_PREMIUM_SUBSCRIPTION_DESCRIPTION : TTA_BASIC_SUBSCRIPTION_DESCRIPTION;
+                $sub      = $api->create_subscription(
+                    $membership_total,
+                    preg_replace( '/\D/', '', $_POST['card_number'] ?? '' ),
+                    $exp_date,
+                    tta_sanitize_text_field( $_POST['card_cvc'] ?? '' ),
+                    $billing,
+                    $sub_name,
+                    $sub_desc,
+                    date( 'Y-m-d', strtotime( '+1 month' ) )
+                );
+                if ( ! $sub['success'] ) {
+                    wp_send_json_error( [ 'message' => $sub['error'] ] );
+                }
+                tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'], 'active' );
+                $_SESSION['tta_checkout_sub'] = [
+                    'subscription_id' => $sub['subscription_id'],
+                    'result_code'     => $sub['result_code'] ?? '',
+                    'message_code'    => $sub['message_code'] ?? '',
+                    'message_text'    => $sub['message_text'] ?? '',
+                ];
+                unset( $_SESSION['tta_membership_purchase'] );
             }
-            tta_update_user_membership_level( get_current_user_id(), $membership_level, $sub['subscription_id'] );
-            $_SESSION['tta_checkout_sub'] = [
-                'subscription_id' => $sub['subscription_id'],
-                'result_code'     => $sub['result_code'] ?? '',
-                'message_code'    => $sub['message_code'] ?? '',
-                'message_text'    => $sub['message_text'] ?? '',
-            ];
-            unset( $_SESSION['tta_membership_purchase'] );
         }
 
         if ( $ticket_total > 0 ) {

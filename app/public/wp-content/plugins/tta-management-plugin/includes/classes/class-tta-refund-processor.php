@@ -9,43 +9,72 @@ class TTA_Refund_Processor {
         }
     }
 
-    /** Schedule refund retry events twice daily. */
-    public static function schedule_retry_events() {
-        if ( ! wp_next_scheduled( 'tta_refund_retry_morning' ) ) {
-            $morning = strtotime( '08:15' );
-            if ( $morning <= time() ) {
-                $morning += DAY_IN_SECONDS;
-            }
-            wp_schedule_event( $morning, 'daily', 'tta_refund_retry_morning' );
-        }
-        if ( ! wp_next_scheduled( 'tta_refund_retry_night' ) ) {
-            $night = strtotime( '01:15' );
-            if ( $night <= time() ) {
-                $night += DAY_IN_SECONDS;
-            }
-            wp_schedule_event( $night, 'daily', 'tta_refund_retry_night' );
-        }
-    }
-
     /** Clear cron event. */
     public static function clear_event() {
         wp_clear_scheduled_hook( 'tta_refund_request_cron' );
     }
 
-    /** Clear refund retry events. */
-    public static function clear_retry_events() {
-        wp_clear_scheduled_hook( 'tta_refund_retry_morning' );
-        wp_clear_scheduled_hook( 'tta_refund_retry_night' );
+    /**
+     * Calculate the next expected settlement time for Authorize.Net batches.
+     * Authorize.Net batches typically settle once daily around 3:00 AM in the
+     * merchant's timezone. We schedule retries shortly after this time.
+     *
+     * @return int Timestamp for the next settlement window.
+     */
+    public static function get_next_settlement_time() {
+        $now  = current_time( 'timestamp' );
+        $next = strtotime( '3:15am', $now );
+        if ( $next <= $now ) {
+            $next = strtotime( 'tomorrow 3:15am', $now );
+        }
+        return $next;
+    }
+
+    /**
+     * Schedule a refund retry for an unsettled transaction.
+     *
+     * @param string $gateway_tx_id Gateway transaction ID.
+     * @param int    $ticket_id     Ticket ID.
+     * @param int    $attendee_id   Attendee ID.
+     * @param float  $amount        Refund amount.
+     */
+    public static function schedule_unsettled_refund( $gateway_tx_id, $ticket_id, $attendee_id, $amount ) {
+        $time = self::get_next_settlement_time();
+        wp_schedule_single_event( $time, 'tta_process_unsettled_refund', [ $gateway_tx_id, intval( $ticket_id ), intval( $attendee_id ), floatval( $amount ) ] );
+    }
+
+    /**
+     * Attempt to process a refund that previously failed due to an unsettled transaction.
+     * Reschedules itself if the transaction is still unsettled.
+     *
+     * @param string $gateway_tx_id Gateway transaction ID.
+     * @param int    $ticket_id     Ticket ID.
+     * @param int    $attendee_id   Attendee ID.
+     * @param float  $amount        Refund amount.
+     */
+    public static function process_unsettled_refund( $gateway_tx_id, $ticket_id, $attendee_id, $amount ) {
+        $req = tta_get_refund_request( $gateway_tx_id, $ticket_id, $attendee_id );
+        if ( ! $req ) {
+            return;
+        }
+
+        self::process_refund_request( $req, $amount );
+
+        if ( tta_get_refund_request( $gateway_tx_id, $ticket_id, $attendee_id ) ) {
+            // Still pending; try again after next settlement window.
+            self::schedule_unsettled_refund( $gateway_tx_id, $ticket_id, $attendee_id, $amount );
+        }
     }
 
     /** Initialize hooks. */
     public static function init() {
         add_action( 'tta_after_purchase_logged', [ __CLASS__, 'handle_purchase' ], 10, 2 );
         add_action( 'tta_refund_request_cron', [ __CLASS__, 'expire_requests' ] );
-        add_action( 'tta_refund_retry_morning', [ __CLASS__, 'retry_pending_requests' ] );
-        add_action( 'tta_refund_retry_night', [ __CLASS__, 'retry_pending_requests' ] );
+        add_action( 'tta_process_unsettled_refund', [ __CLASS__, 'process_unsettled_refund' ], 10, 4 );
+        // Clear legacy retry hooks replaced by per-request scheduling.
+        wp_clear_scheduled_hook( 'tta_refund_retry_morning' );
+        wp_clear_scheduled_hook( 'tta_refund_retry_night' );
         self::schedule_event();
-        self::schedule_retry_events();
     }
 
     /**
@@ -55,16 +84,19 @@ class TTA_Refund_Processor {
      * @param int   $user_id Buyer user ID.
      */
     public static function handle_purchase( array $items, $user_id ) {
-        global $wpdb;
         $events = [];
 
         foreach ( $items as $it ) {
-            $tid       = intval( $it['ticket_id'] );
             $event_ute = $it['event_ute_id'] ?? '';
             if ( $event_ute ) {
                 $events[ $event_ute ] = true;
             }
         }
+
+        // First process any refund requests that can now be issued. This must
+        // happen before releasing additional refund tickets so counts stay
+        // accurate and purchased refund tickets are removed from the pool.
+        self::retry_pending_requests();
 
         foreach ( array_keys( $events ) as $ute ) {
             tta_release_refund_tickets( $ute );
@@ -97,9 +129,14 @@ class TTA_Refund_Processor {
             ) );
 
             $sold_from_pool = max( 0, $released - $stock );
-            $to_refund      = min( count( $list ), $sold_from_pool );
+
+            $eligible = array_values( array_filter( $list, function( $req ) {
+                return 'settlement' !== ( $req['pending_reason'] ?? '' );
+            } ) );
+
+            $to_refund = min( count( $eligible ), $sold_from_pool );
             for ( $i = 0; $i < $to_refund; $i++ ) {
-                self::process_refund_request( $list[ $i ] );
+                self::process_refund_request( $eligible[ $i ] );
             }
         }
     }
@@ -127,6 +164,29 @@ class TTA_Refund_Processor {
         if ( ! $res['success'] ) {
             $msg = strtolower( $res['error'] );
             if ( false !== strpos( $msg, 'not meet the criteria' ) || false !== strpos( $msg, 'not settled' ) || false !== strpos( $msg, 'unsuccessful' ) || false !== strpos( strtolower( $status_res['status'] ?? '' ), 'pending' ) ) {
+                global $wpdb;
+                $hist_table = $wpdb->prefix . 'tta_memberhistory';
+                if ( ! empty( $req['history_id'] ) ) {
+                    $data = [
+                        'transaction_id' => $req['transaction_id'],
+                        'ticket_id'      => intval( $req['ticket_id'] ),
+                        'reason'         => $req['reason'] ?? '',
+                        'mode'           => $req['mode'] ?? 'cancel',
+                        'pending_reason' => 'settlement',
+                        'attendee'       => $req['attendee'],
+                    ];
+                    $wpdb->update(
+                        $hist_table,
+                        [ 'action_data' => wp_json_encode( $data ) ],
+                        [ 'id' => intval( $req['history_id'] ) ],
+                        [ '%s' ],
+                        [ '%d' ]
+                    );
+                    TTA_Cache::delete( 'tta_refund_requests' );
+                    tta_clear_pending_refund_cache( intval( $req['ticket_id'] ), intval( $req['event_id'] ) );
+                }
+                self::schedule_unsettled_refund( $req['transaction_id'], intval( $req['ticket_id'] ), intval( $req['attendee']['id'] ?? 0 ), $amount );
+                tta_decrement_released_refund_count( intval( $req['ticket_id'] ) );
                 return;
             }
         }

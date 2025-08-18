@@ -68,6 +68,53 @@ class DummyWpdbHelpers {
     }
 }
 
+require_once __DIR__ . '/../includes/classes/class-tta-refund-processor.php';
+
+class TTA_Refund_Processor_Test extends TTA_Refund_Processor {
+    public static $processed = [];
+
+    public static function process_refund_request( array $req, $amount_override = null ) {
+        self::$processed[] = $req['transaction_id'];
+    }
+
+    public static function retry_pending_requests() {
+        global $wpdb;
+        $requests = tta_get_refund_requests();
+        if ( ! $requests ) {
+            return;
+        }
+
+        $grouped = [];
+        foreach ( $requests as $req ) {
+            $tid = intval( $req['ticket_id'] );
+            $grouped[ $tid ][] = $req;
+        }
+
+        foreach ( $grouped as $tid => $list ) {
+            $released = tta_get_released_refund_count( $tid );
+            if ( $released <= 0 ) {
+                continue;
+            }
+
+            $stock = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT ticketlimit FROM {$wpdb->prefix}tta_tickets WHERE id = %d",
+                $tid
+            ) );
+
+            $sold_from_pool = max( 0, $released - $stock );
+
+            $eligible = array_values( array_filter( $list, function( $req ) {
+                return 'settlement' !== ( $req['pending_reason'] ?? '' );
+            } ) );
+
+            $to_refund = min( count( $eligible ), $sold_from_pool );
+            for ( $i = 0; $i < $to_refund; $i++ ) {
+                static::process_refund_request( $eligible[ $i ] );
+            }
+        }
+    }
+}
+
 class HelpersTest extends TestCase {
     private $wpdb;
 
@@ -99,7 +146,7 @@ class HelpersTest extends TestCase {
         if (!function_exists('get_permalink')) { function get_permalink($id){ return 'post/'.$id; } }
         if (!function_exists('date_i18n')) { function date_i18n($format,$ts){ return date($format,$ts); } }
         if (!function_exists('wp_json_encode')) { function wp_json_encode($data, $options = 0, $depth = 512){ return json_encode($data, $options, $depth); } }
-        if (!function_exists('current_time')) { function current_time($type = 'mysql'){ return date('Y-m-d H:i:s'); } }
+        if (!function_exists('current_time')) { function current_time($type = 'mysql', $gmt = false){ return 'timestamp' === $type ? time() : date('Y-m-d H:i:s'); } }
         if (!function_exists('get_option')) { function get_option($k,$d=null){ return $GLOBALS['options'][$k] ?? $d; } }
         if (!function_exists('update_option')) { function update_option($k,$v,$autoload=true){ $GLOBALS['options'][$k]=$v; } }
         if (!function_exists('add_action')) { function add_action($t,$c,$p=10,$a=1){} }
@@ -358,6 +405,9 @@ class HelpersTest extends TestCase {
             'baseeventcost' => 10,
             'discountedmembercost' => 8,
             'premiummembercost' => 7,
+            'hosts' => 'Ann Bee',
+            'volunteers' => 'Ben Dee',
+            'host_notes' => 'Bring ID',
         ];
         TTA_Cache::delete('tta_next_event');
         $ev1 = tta_get_next_event();
@@ -366,6 +416,9 @@ class HelpersTest extends TestCase {
         $this->assertSame('Soon Event', $ev1['name']);
         $this->assertSame('February 1st, 2030', $ev1['date_formatted']);
         $this->assertSame('8:00 pm - 10:00 pm', $ev1['time_formatted']);
+        $this->assertSame('Ann Bee', $ev1['host_names']);
+        $this->assertSame('Ben Dee', $ev1['volunteer_names']);
+        $this->assertSame('Bring ID', $ev1['host_notes']);
     }
 
     public function test_set_attendance_status_updates_db() {
@@ -424,6 +477,37 @@ class HelpersTest extends TestCase {
         $count = tta_get_remaining_ticket_count('ute1');
         $this->assertSame(7, $count);
         $this->assertStringContainsString('wp_tta_tickets', $wpdb->last_query);
+    }
+
+    public function test_ticket_cost_range_returns_min_max() {
+        global $wpdb;
+        $wpdb = new class {
+            public $prefix = 'wp_';
+            public $rows = [];
+            public $last_query = '';
+            public function get_results( $q, $o = ARRAY_A ) { $this->last_query = $q; return $this->rows; }
+            public function prepare( $q, ...$a ) { foreach ( $a as $v ) { $q = preg_replace( '/%s/', $v, $q, 1 ); } return $q; }
+        };
+        $wpdb->rows = [
+            [ 'baseeventcost' => 20, 'discountedmembercost' => 10, 'premiummembercost' => 9 ],
+            [ 'baseeventcost' => 90, 'discountedmembercost' => 70, 'premiummembercost' => 65 ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+
+        $range = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( 20.0, $range['base_min'] );
+        $this->assertSame( 90.0, $range['base_max'] );
+        $this->assertSame( 10.0, $range['basic_min'] );
+        $this->assertSame( 70.0, $range['basic_max'] );
+        $this->assertSame( 9.0, $range['premium_min'] );
+        $this->assertSame( 65.0, $range['premium_max'] );
+
+        // Confirm cached result is returned
+        $wpdb->rows = [];
+        $range2 = tta_get_ticket_cost_range( 'ev1' );
+        $this->assertSame( $range, $range2 );
     }
 
     public function test_get_upcoming_events_returns_rows() {
@@ -503,8 +587,20 @@ class HelpersTest extends TestCase {
 
     public function test_get_ads_functions() {
         update_option('tta_ads', [
-            ['image_id' => 1, 'url' => 'https://example.com/a'],
-            ['image_id' => 2, 'url' => 'https://example.com/b'],
+            [
+                'image_id'        => 1,
+                'url'             => 'https://example.com/a',
+                'business_name'   => 'Biz A',
+                'business_phone'  => '111-222-3333',
+                'business_address'=> '1 Main St',
+            ],
+            [
+                'image_id'        => 2,
+                'url'             => 'https://example.com/b',
+                'business_name'   => 'Biz B',
+                'business_phone'  => '444-555-6666',
+                'business_address'=> '2 Main St',
+            ],
         ], false);
 
         require_once __DIR__ . '/../includes/helpers.php';
@@ -512,9 +608,10 @@ class HelpersTest extends TestCase {
 
         $ads = tta_get_ads();
         $this->assertCount(2, $ads);
+        $this->assertSame('Biz A', $ads[0]['business_name']);
 
         $ad = tta_get_random_ad();
-        $this->assertArrayHasKey('image_id', $ad);
+        $this->assertArrayHasKey('business_phone', $ad);
     }
 
     public function test_global_discount_code_helpers() {
@@ -649,6 +746,8 @@ class HelpersTest extends TestCase {
         $this->assertSame('a@example.com', $rows[0]['email']);
         $this->assertSame(10.0, $rows[0]['amount_paid']);
         $this->assertSame(55, $rows[0]['attendee_id']);
+        $this->assertArrayHasKey('attendee', $rows[0]);
+        $this->assertSame('Ann', $rows[0]['attendee']['first_name']);
         $this->assertSame(1, $wpdb->results_calls);
         $cached = tta_get_refund_requests();
         $this->assertSame(1, $wpdb->results_calls);
@@ -743,11 +842,177 @@ class HelpersTest extends TestCase {
         $this->assertSame( 1, $this->wpdb->row_calls );
     }
 
+    public function test_refund_pool_count_excludes_settlement_requests() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        TTA_Cache::delete( 'pending_refund_attendees_9_20' );
+        $att1 = [
+            'id'         => 1,
+            'first_name' => 'Ann',
+            'last_name'  => 'Bee',
+            'email'      => 'a@example.com',
+            'phone'      => '123',
+            'amount_paid'=> 10.0,
+        ];
+        $att2 = [
+            'id'         => 2,
+            'first_name' => 'Carl',
+            'last_name'  => 'Dee',
+            'email'      => 'c@example.com',
+            'phone'      => '555',
+            'amount_paid'=> 10.0,
+        ];
+        $wpdb->results_data = [
+            [
+                'member_id'   => 7,
+                'action_date' => '2025-07-01 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'waitlist',
+                    'attendee'       => $att1,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Ann',
+                'last_name'  => 'Bee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+            [
+                'member_id'   => 8,
+                'action_date' => '2025-07-02 10:00:00',
+                'action_data' => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'pending_reason' => 'settlement',
+                    'attendee'       => $att2,
+                ]),
+                'event_id'   => 20,
+                'first_name' => 'Carl',
+                'last_name'  => 'Dee',
+                'event_name' => 'Fun Event',
+                'page_id'    => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/helpers.php';
+        $this->assertCount( 2, tta_get_ticket_pending_refund_attendees( 9, 20 ) );
+        $this->assertSame( 1, tta_get_ticket_refund_pool_count( 9, 20 ) );
+    }
+
+    public function test_get_refund_requests_returns_oldest_first() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        $wpdb->results_data = [
+            [
+                'id'           => 1,
+                'member_id'    => 7,
+                'action_date'  => '2025-07-01 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Ann',
+                'last_name'    => 'Bee',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+            [
+                'id'           => 2,
+                'member_id'    => 8,
+                'action_date'  => '2025-07-02 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 9,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Bob',
+                'last_name'    => 'See',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+        ];
+
+        require_once __DIR__ . '/../includes/classes/class-tta-cache.php';
+        require_once __DIR__ . '/../includes/helpers.php';
+        $reqs = tta_get_refund_requests();
+        $this->assertSame( 'tx1', $reqs[0]['transaction_id'] );
+        $this->assertSame( 'tx2', $reqs[1]['transaction_id'] );
+    }
+
+    public function test_retry_pending_requests_skips_settlement() {
+        global $wpdb;
+        TTA_Cache::delete( 'tta_refund_requests' );
+        $wpdb->results_data = [
+            [
+                'id'           => 1,
+                'member_id'    => 7,
+                'action_date'  => '2025-07-01 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx1',
+                    'ticket_id'      => 5,
+                    'pending_reason' => 'settlement',
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Ann',
+                'last_name'    => 'Bee',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+            [
+                'id'           => 2,
+                'member_id'    => 8,
+                'action_date'  => '2025-07-02 10:00:00',
+                'action_data'  => json_encode([
+                    'transaction_id' => 'tx2',
+                    'ticket_id'      => 5,
+                    'attendee'       => []
+                ]),
+                'event_id'     => 20,
+                'first_name'   => 'Bob',
+                'last_name'    => 'See',
+                'event_name'   => 'Fun Event',
+                'page_id'      => 2,
+            ],
+        ];
+        update_option( 'tta_refund_pool_released', [ 5 => 1 ] );
+        $wpdb->var_value = 0;
+        TTA_Refund_Processor_Test::$processed = [];
+        TTA_Refund_Processor_Test::retry_pending_requests();
+        $this->assertSame( [ 'tx2' ], TTA_Refund_Processor_Test::$processed );
+    }
+
     public function test_convert_links_transforms_markdown() {
         require_once __DIR__ . '/../includes/helpers.php';
         $in  = 'Check [your profile](/member-dashboard/?tab=profile) today.';
         $out = 'Check <a href="/member-dashboard/?tab=profile">your profile</a> today.';
         $this->assertSame( $out, tta_convert_links( $in ) );
+    }
+
+    public function test_convert_links_handles_tokens() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $tokens = [
+            '{event_name}' => 'Roller Skating #2',
+            '{event_link}' => 'https://example.com/roller-skating-2/',
+        ];
+        $in  = '[{event_name}]({event_link})';
+        $out = '<a href="https://example.com/roller-skating-2/">Roller Skating #2</a>';
+        $this->assertSame( $out, tta_convert_links( strtr( $in, $tokens ) ) );
+    }
+
+    public function test_convert_links_handles_address_tokens() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $tokens = [
+            '{event_address}' => '500 Sample St',
+            '{event_address_link}' => 'https://maps.google.com/?q=500+Sample+St',
+        ];
+        $in  = '[{event_address}]({event_address_link})';
+        $out = '<a href="https://maps.google.com/?q=500+Sample+St">500 Sample St</a>';
+        $this->assertSame( $out, tta_convert_links( strtr( $in, $tokens ) ) );
     }
 
     public function test_expand_anchor_tokens_handles_anchor() {
@@ -764,5 +1029,13 @@ class HelpersTest extends TestCase {
         $in  = 'Go {dashboard_upcoming_url anchor=""} now.';
         $exp = 'Go http://example.com/member-dashboard/?tab=upcoming now.';
         $this->assertSame( $exp, tta_expand_anchor_tokens( $in, $tokens ) );
+    }
+
+    public function test_convert_bold_and_strip_bold() {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $in = 'Hello **World** *there* ***friend***';
+        $exp = 'Hello <strong>World</strong> <em>there</em> <strong><em>friend</em></strong>';
+        $this->assertSame( $exp, tta_convert_bold( $in ) );
+        $this->assertSame( 'Hello World there friend', tta_strip_bold( $in ) );
     }
 }

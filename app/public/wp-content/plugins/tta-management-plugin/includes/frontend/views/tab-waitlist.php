@@ -21,6 +21,7 @@
               $time_str  = trim( $start_fmt . ( $end_fmt ? ' – ' . $end_fmt : '' ) );
           }
           ?>
+          <div class="tta-upcoming-event-indiv-holder">
           <div class="tta-upcoming-event">
             <?php if ( $thumb ) : ?>
               <div class="tta-upcoming-thumb"><?php echo $thumb; ?></div>
@@ -35,6 +36,7 @@
               </button>
             </div>
           </div>
+        </div>
       <?php endforeach; ?>
   <?php else : ?>
       <p><?php esc_html_e( 'You are not currently on any waitlists.', 'tta' ); ?></p>

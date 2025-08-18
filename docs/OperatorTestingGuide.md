@@ -6,7 +6,7 @@ This document provides a repeatable process for ChatGPT Operator to validate eve
 
 1. Ensure the plugin is installed and activated.
 2. Reference [TestingInformation.md](TestingInformation.md) for test account credentials. Each membership level and user role is represented there.
-3. The debug log is available from **TTA Settings** at `/wp-admin/admin.php?page=tta-settings`.
+3. The debug log is available from **TTA Settings → Logging** at `/wp-admin/admin.php?page=tta-settings&tab=logging`.
 4. Do **not** test the `/become-a-member/` page or other links in the site's header or footer.
 
 ## Testing Checklist

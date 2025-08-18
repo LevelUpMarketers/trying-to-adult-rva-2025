@@ -1,6 +1,6 @@
 # Testing Information
 
-This document summarizes test accounts and card numbers used for local development of the Trying To Adult Management Plugin. The data below is provided by Authorize.Net for sandbox use only.
+This document summarizes test accounts and card numbers used for local development of the Trying To Adult Management Plugin. The data below is provided by Authorize.Net for sandbox use only. The plugin talks to the live Authorize.Net environment by default; switch to the sandbox under **TTA Settings → API Settings** by selecting the sandbox environment. Each environment remembers its own API Login ID and Transaction Key and the form auto-fills the saved credentials whenever you toggle between Live and Sandbox.
 
 ## Test Members
 

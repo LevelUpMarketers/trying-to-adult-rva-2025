@@ -10,6 +10,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
+$header_shortcode = '[vc_row full_width="stretch_row_content_no_spaces" css=".vc_custom_1670382516702{background-image: url(https://trying-to-adult-rva-2025.local/wp-content/uploads/2022/12/IMG-4418.png?id=70) !important;background-position: center !important;background-repeat: no-repeat !important;background-size: cover !important;}"][vc_column][vc_empty_space height="300px" el_id="jre-header-title-empty"][vc_column_text css_animation="slideInLeft" el_id="jre-homepage-id-1" css=".vc_custom_1671885403487{margin-left: 50px !important;padding-left: 50px !important;}"]<p id="jre-homepage-id-3">EVENTS</p>[/vc_column_text][/vc_column][/vc_row]';
+echo do_shortcode( $header_shortcode );
+
 $paged    = max( 1, get_query_var( 'paged', 1 ) );
 $per_page = 5;
 $data     = tta_get_upcoming_events( $paged, $per_page );
@@ -126,7 +129,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                     <p><?php esc_html_e( 'You have no upcoming events.', 'tta' ); ?></p>
                 <?php endif; ?>
             <?php else : ?>
-                <p><?php esc_html_e( 'Log in to see your upcoming events.', 'tta' ); ?></p>
+                <p><?php echo wp_kses_post( sprintf( __( 'Log in to see your upcoming events. Not a member yet? <a href="%s">Click here to join now!</a>', 'tta' ), esc_url( home_url( '/become-a-member' ) ) ) ); ?></p>
                 <div class="login-wrap">
                     <?php wp_login_form( [ 'echo' => true ] ); ?>
                 </div>
@@ -204,7 +207,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
             if ( ! $context['is_logged_in'] || 'free' === $context['membership_level'] ) :
                 ?>
                 <a href="<?php echo esc_url( $become_url ); ?>">
-                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="Become a Member">
+                    <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/NotLoggedInMembershipAdvert.png' ); ?>" alt="Become a Member">
                 </a>
                 <p><?php esc_html_e( 'Become a member today to unlock discounts and exclusive events!', 'tta' ); ?></p>
             <?php elseif ( 'basic' === $context['membership_level'] ) : ?>
@@ -244,8 +247,61 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
         $excerpt   = wp_trim_words( wp_strip_all_tags( $content ), 25, '…' );
         $remaining = tta_get_remaining_ticket_count( $ev['ute_id'] );
         $has_waitlist = ( '1' === (string) ( $ev['waitlistavailable'] ?? '0' ) );
-        $cost      = floatval( $ev['baseeventcost'] ?? 0 );
-        $cost_str  = $cost ? sprintf( esc_html__( '$%s', 'tta' ), number_format_i18n( $cost, 2 ) ) : esc_html__( 'Free', 'tta' );
+
+        $cost_range = tta_get_ticket_cost_range( $ev['ute_id'] );
+        $base_min   = floatval( $cost_range['base_min'] );
+        $base_max   = floatval( $cost_range['base_max'] );
+        $basic_min  = floatval( $cost_range['basic_min'] );
+        $basic_max  = floatval( $cost_range['basic_max'] );
+        $premium_min = floatval( $cost_range['premium_min'] );
+        $premium_max = floatval( $cost_range['premium_max'] );
+
+        $format_cost = static function( $min, $max ) {
+            if ( 0 === $min && 0 === $max ) {
+                return __( 'Free', 'tta' );
+            }
+            $min_str = sprintf( __( '$%s', 'tta' ), number_format_i18n( $min, 2 ) );
+            if ( $min === $max ) {
+                return $min_str;
+            }
+            $max_str = sprintf( __( '$%s', 'tta' ), number_format_i18n( $max, 2 ) );
+            return $min_str . ' - ' . $max_str;
+        };
+
+        $base_str    = $format_cost( $base_min, $base_max );
+        $basic_str   = $format_cost( $basic_min, $basic_max );
+        $premium_str = $format_cost( $premium_min, $premium_max );
+
+        if ( $context['is_logged_in'] ) {
+            if ( 'basic' === $context['membership_level'] && ( $basic_min !== $base_min || $basic_max !== $base_max ) ) {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-basic'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str ),
+                    esc_html( $basic_str )
+                );
+            } elseif ( 'premium' === $context['membership_level'] && ( $premium_min !== $base_min || $premium_max !== $base_max ) ) {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class tta-event-costmod-class-strikethrough tta-event-costmod-class-premium'><strong>%s</strong> <span class='tta-price-strike'>%s</span> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str ),
+                    esc_html( $premium_str )
+                );
+            } else {
+                $cost_html = sprintf(
+                    "<span class='tta-ticket-price tta-event-costmod-class'><strong>%s</strong> %s</span>",
+                    esc_html__( 'Cost:', 'tta' ),
+                    esc_html( $base_str )
+                );
+            }
+        } else {
+            $cost_html = sprintf(
+                "<span class='tta-ticket-price tta-event-costmod-class'><strong>%s</strong> %s</span>",
+                esc_html__( 'Cost:', 'tta' ),
+                esc_html( $base_str )
+            );
+        }
+
         $type_map  = [
             'free'       => __( 'Open Event', 'tta' ),
             'paid'       => __( 'Basic Membership Required', 'tta' ),
@@ -270,7 +326,7 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
                         </li>
                         <li>
                             <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/money.svg' ); ?>" alt="">
-                            <div class="tta-event-details-icon-after"><strong><?php esc_html_e( 'Cost:', 'tta' ); ?></strong> <?php echo esc_html( $cost_str ); ?></div>
+                            <div class="tta-event-details-icon-after"><?php echo wp_kses_post( $cost_html ); ?></div>
                         </li>
                         <?php if ( $event_type ) : ?>
                         <li>
@@ -351,12 +407,42 @@ $next_url = $next_allowed ? add_query_arg( [ 'cal_year' => $next_year, 'cal_mont
     </main>
     <aside class="tta-events-right">
         <div class="tta-events-ad">
+            <h2><img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/deal.svg' ); ?>" alt=""><?php esc_html_e( 'Meet Our Local Partners', 'tta' ); ?></h2>
+            <p class="tta-events-ad__subtitle"><?php esc_html_e( 'We\'re grateful for local partners & businesses that help make Trying to Adult possible. Check out our featured partner below!', 'tta' ); ?></p>
             <?php $ad = tta_get_random_ad(); ?>
             <?php if ( $ad ) : ?>
                 <?php $img = wp_get_attachment_image( intval( $ad['image_id'] ), 'medium' ); ?>
-                <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>"><?php endif; ?>
+                <?php if ( $ad['url'] ) : ?><a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php endif; ?>
                 <?php echo $img ? $img : '<img src="' . esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ) . '" alt="">'; ?>
                 <?php if ( $ad['url'] ) : ?></a><?php endif; ?>
+                <div class="tta-events-ad__info">
+                    <?php if ( ! empty( $ad['business_name'] ) ) : ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/store.svg' ); ?>" alt="<?php esc_attr_e( 'Business', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after">
+                                <?php if ( ! empty( $ad['url'] ) ) : ?>
+                                    <a href="<?php echo esc_url( $ad['url'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_name'] ); ?></a>
+                                <?php else : ?>
+                                    <?php echo esc_html( $ad['business_name'] ); ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $ad['business_phone'] ) ) : ?>
+                        <?php $tel = preg_replace( '/[^0-9+]/', '', $ad['business_phone'] ); ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/phone-outline.svg' ); ?>" alt="<?php esc_attr_e( 'Phone', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after"><a href="tel:<?php echo esc_attr( $tel ); ?>"><?php echo esc_html( $ad['business_phone'] ); ?></a></div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $ad['business_address'] ) ) : ?>
+                        <?php $map = 'https://www.google.com/maps/search/?api=1&query=' . urlencode( $ad['business_address'] ); ?>
+                        <div class="tta-events-ad__info-item">
+                            <img class="tta-event-details-icon" src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/public/event-page-icons/location.svg' ); ?>" alt="<?php esc_attr_e( 'Address', 'tta' ); ?>">
+                            <div class="tta-event-details-icon-after"><a href="<?php echo esc_url( $map ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $ad['business_address'] ); ?></a></div>
+                        </div>
+                    <?php endif; ?>
+                </div>
             <?php else : ?>
                 <img src="<?php echo esc_url( TTA_PLUGIN_URL . 'assets/images/ads/placeholder1.svg' ); ?>" alt="Ad" />
             <?php endif; ?>
