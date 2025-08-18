@@ -480,8 +480,8 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <label>
         <?php esc_html_e( 'New Level', 'tta' ); ?><br />
         <select name="level">
-          <option value="basic">Basic</option>
-          <option value="premium">Premium</option>
+          <option value="basic" <?php selected( $level, 'basic' ); ?>><?php esc_html_e( 'Basic', 'tta' ); ?></option>
+          <option value="premium" <?php selected( $level, 'premium' ); ?>><?php esc_html_e( 'Premium', 'tta' ); ?></option>
         </select>
       </label>
     </p>
