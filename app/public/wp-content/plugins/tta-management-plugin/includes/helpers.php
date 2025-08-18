@@ -4804,11 +4804,11 @@ function tta_render_login_register_section( $redirect ) {
       <div class="tta-accordion">
         <p>
           <?php
-          printf(
-              /* translators: 1: action buttons */
-              esc_html__( "Ticket discounts may be available! Log in below to check. Don't have an account? Create one below or become a Member today!%1$s", 'tta' ),
-              '<div><a href="#tta-login-message" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="' . esc_url( home_url( '/become-a-member' ) ) . '" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>'
-          );
+            printf(
+                /* translators: 1: action buttons */
+                esc_html__( 'Ticket discounts may be available! Log in below to check. Don\'t have an account? Create one below or become a Member today!%1$s', 'tta' ),
+                '<div><a href="#tta-login-message" class="tta-button tta-button-primary tta-show-register">' . esc_html__( 'Create Account', 'tta' ) . '</a><a href="' . esc_url( home_url( '/become-a-member' ) ) . '" class="tta-button tta-button-primary">' . esc_html__( 'Become a Member', 'tta' ) . '</a></div>'
+            );
           ?>
         </p>
         <div class="tta-accordion-content expanded">
