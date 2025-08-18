@@ -25,6 +25,7 @@ messages will not be sent.
 - [Object Caching](docs/ObjectCaching.md)
   - Plugin caches can now be cleared reliably even on hosts with persistent object caching.
 - [Alert Bar](docs/AlertBar.md)
+- [Admin Bar Visibility](docs/AdminBarVisibility.md)
 - [Input Sanitization Helpers](docs/InputSanitization.md)
 - [Authorize.Net Error Codes](docs/AuthorizeNetErrors.md)
 - [Address Helper Functions](docs/AddressHelpers.md)

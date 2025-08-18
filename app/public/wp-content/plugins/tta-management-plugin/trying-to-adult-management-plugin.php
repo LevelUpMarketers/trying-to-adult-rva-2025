@@ -45,6 +45,7 @@ require_once TTA_PLUGIN_DIR . 'includes/helpers.php';
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-debug-logger.php';
 TTA_Debug_Logger::init();
 require_once TTA_PLUGIN_DIR . 'includes/classes/class-tta-tooltips.php';
+require_once TTA_PLUGIN_DIR . 'includes/admin-bar.php';
 
 // Load Authorize.Net and SendGrid credentials from the database or environment variables.
 $tta_authnet_sandbox     = get_option( 'tta_authnet_sandbox', false );
