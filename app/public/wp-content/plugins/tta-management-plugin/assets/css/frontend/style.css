@@ -138,6 +138,11 @@
   min-width: 150px;
 }
 
+.button.tta-mark-attendance:disabled{
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .tta-info-title{
   display:none;
   font-weight:600;

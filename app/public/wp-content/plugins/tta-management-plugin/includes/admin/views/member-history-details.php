@@ -97,15 +97,16 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
 
   <div class="tta-subscription-info">
     <?php
-    $level    = strtolower( $member['membership_level'] ?? 'free' );
-    $status   = strtolower( $member['subscription_status'] ?? '' );
-    $sub_id   = $member['subscription_id'] ?? '';
-    $sub_info   = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
-    $last4      = $sub_info['last4'] ?? '';
-    $prev_level = get_user_meta( $member['wpuserid'], 'tta_prev_level', true );
-    if ( ! $prev_level && $cancel ) {
-        $prev_level = $cancel['level'] ?? '';
-    }
+      $level    = strtolower( $member['membership_level'] ?? 'free' );
+      $status   = strtolower( $member['subscription_status'] ?? '' );
+      $sub_id   = $member['subscription_id'] ?? '';
+      $sub_info   = $sub_id ? tta_get_subscription_status_info( $sub_id ) : [];
+      $last4      = $sub_info['last4'] ?? '';
+      $cancel   = tta_get_last_membership_cancellation( $member['wpuserid'] );
+      $prev_level = get_user_meta( $member['wpuserid'], 'tta_prev_level', true );
+      if ( ! $prev_level && $cancel ) {
+          $prev_level = $cancel['level'] ?? '';
+      }
     $react_amount = $sub_info['amount'] ?? 0;
     if ( ! $react_amount && $prev_level ) {
         $react_amount = tta_get_membership_price( $prev_level );
@@ -122,8 +123,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
     if ( ! empty( $sub_info['exp_date'] ) && preg_match( '/^(\d{4})-(\d{2})$/', $sub_info['exp_date'], $m ) ) {
         $exp_prefill = $m[2] . '/' . substr( $m[1], -2 );
     }
-    $cancel   = tta_get_last_membership_cancellation( $member['wpuserid'] );
-    $had_mem  = tta_user_had_membership( $member['wpuserid'] );
+      $had_mem  = tta_user_had_membership( $member['wpuserid'] );
 
     if ( ! $sub_id ) {
         if ( $cancel ) {
@@ -141,7 +141,7 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
             echo '<p>' . esc_html__( 'This member has never purchased a membership.', 'tta' ) . '</p>';
         }
     } else {
-        $price = tta_get_membership_price( $level );
+        $price = $react_amount;
         echo '<p><strong>' . esc_html( tta_get_membership_label( $level ) ) . '</strong> - $' . number_format( $price, 2 ) . ' ' . esc_html__( 'Per Month', 'tta' ) . '</p>';
         $display_status = 'paymentproblem' === $status ? __( 'Payment problem', 'tta' ) : ucfirst( $status );
         echo '<p>' . esc_html__( 'Status:', 'tta' ) . ' <span>' . esc_html( $display_status ) . '</span></p>';
@@ -480,15 +480,15 @@ $billing_history = tta_get_member_billing_history( $member['wpuserid'] );
       <label>
         <?php esc_html_e( 'New Level', 'tta' ); ?><br />
         <select name="level">
-          <option value="basic">Basic</option>
-          <option value="premium">Premium</option>
+          <option value="basic" <?php selected( $level, 'basic' ); ?>><?php esc_html_e( 'Basic', 'tta' ); ?></option>
+          <option value="premium" <?php selected( $level, 'premium' ); ?>><?php esc_html_e( 'Premium', 'tta' ); ?></option>
         </select>
       </label>
     </p>
     <p>
       <label>
         <?php esc_html_e( 'Price Per Month', 'tta' ); ?><br />
-        <input type="number" step="0.01" name="price" required />
+        <input type="number" step="0.01" name="price" value="<?php echo esc_attr( $react_amount ); ?>" required />
       </label>
     </p>
     <p class="submit">

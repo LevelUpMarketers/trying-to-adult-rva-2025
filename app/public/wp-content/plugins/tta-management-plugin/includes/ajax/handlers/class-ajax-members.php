@@ -14,6 +14,7 @@ class TTA_Ajax_Members {
         add_action( 'wp_ajax_tta_get_member_history', [ __CLASS__, 'get_member_history' ] );
         add_action( 'wp_ajax_tta_update_member',      [ __CLASS__, 'update_member' ] );
         add_action( 'wp_ajax_tta_front_update_member',[ __CLASS__, 'update_member_front' ] );
+        add_action( 'wp_ajax_tta_reinstate_member',   [ __CLASS__, 'reinstate_member' ] );
     }
 
     public static function save_member() {
@@ -425,6 +426,20 @@ class TTA_Ajax_Members {
         TTA_Cache::flush();
 
         wp_send_json_success([ 'message' => 'Member updated successfully!' ]);
+    }
+
+
+    public static function reinstate_member() {
+        check_ajax_referer( 'tta_banned_members_action', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Unauthorized.' ] );
+        }
+        $wp_user_id = intval( $_POST['wp_user_id'] ?? 0 );
+        if ( ! $wp_user_id ) {
+            wp_send_json_error( [ 'message' => 'Invalid member.' ] );
+        }
+        tta_unban_user( $wp_user_id );
+        wp_send_json_success( [ 'message' => 'Member reinstated.' ] );
     }
 
 

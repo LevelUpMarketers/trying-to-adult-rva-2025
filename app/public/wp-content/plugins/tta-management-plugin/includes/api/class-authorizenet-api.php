@@ -745,13 +745,14 @@ class TTA_AuthorizeNet_API {
     }
 
     /**
-     * Update the monthly amount for an existing subscription.
+     * Update the monthly amount and optional name for an existing subscription.
      *
      * @param string $subscription_id Subscription ID.
      * @param float  $amount          New monthly amount.
+     * @param string $name            Optional new subscription name.
      * @return array { success:bool, error?:string }
      */
-    public function update_subscription_amount( $subscription_id, $amount ) {
+    public function update_subscription_amount( $subscription_id, $amount, $name = '' ) {
         if ( empty( $this->login_id ) || empty( $this->transaction_key ) ) {
             return [ 'success' => false, 'error' => 'Authorize.Net credentials not configured' ];
         }
@@ -762,6 +763,9 @@ class TTA_AuthorizeNet_API {
 
         $subscription = new AnetAPI\ARBSubscriptionType();
         $subscription->setAmount( $amount );
+        if ( $name ) {
+            $subscription->setName( $name );
+        }
 
         $request = new AnetAPI\ARBUpdateSubscriptionRequest();
         $request->setMerchantAuthentication( $merchantAuthentication );
