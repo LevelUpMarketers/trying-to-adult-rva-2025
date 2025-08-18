@@ -110,7 +110,8 @@ class EmailReminderScheduleTest extends TestCase {
         $this->assertSame( $expected, $timestamp );
     }
 
-    public function test_schedule_adjusts_for_server_offset() {
+    public function test_schedule_ignores_time_offset_transient() {
+        // Simulate an offset transient which should now be ignored.
         $GLOBALS['transients'] = [ 'tta_time_offset' => -4 * HOUR_IN_SECONDS ];
         require_once __DIR__ . '/../includes/email/class-email-reminders.php';
         TTA_Email_Reminders::schedule_event_emails( 1 );
@@ -122,8 +123,8 @@ class EmailReminderScheduleTest extends TestCase {
             }
         }
         $this->assertNotNull( $timestamp );
-        $real = ( new DateTime( '2030-08-14 18:00', wp_timezone() ) )->setTimezone( new DateTimeZone( 'UTC' ) )->getTimestamp();
-        $this->assertSame( $real + 4 * HOUR_IN_SECONDS, $timestamp );
+        $expected = ( new DateTime( '2030-08-14 18:00', wp_timezone() ) )->setTimezone( new DateTimeZone( 'UTC' ) )->getTimestamp();
+        $this->assertSame( $expected, $timestamp );
     }
 
     public function test_schedule_post_event_thanks_creates_event() {

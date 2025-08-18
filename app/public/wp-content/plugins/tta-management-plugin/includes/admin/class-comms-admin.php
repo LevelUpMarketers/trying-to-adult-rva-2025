@@ -360,10 +360,10 @@ class TTA_Comms_Admin {
                 echo '<td colspan="2"><div class="tta-inline-container">';
                 echo '<table class="widefat striped"><thead><tr><th>' . esc_html__( 'Type', 'tta' ) . '</th><th>' . esc_html__( 'Scheduled Time', 'tta' ) . '</th><th>' . esc_html__( 'Time Until', 'tta' ) . '</th><th>' . esc_html__( 'Actions', 'tta' ) . '</th></tr></thead><tbody>';
                 $tz  = wp_timezone();
-                $now = wp_date( 'U', TTA_Email_Reminders::current_time(), $tz );
+                $now = TTA_Email_Reminders::current_time();
                 foreach ( $info['jobs'] as $job ) {
-                    $send_ts = wp_date( 'U', $job['timestamp'], $tz );
-                    $time    = wp_date( 'm-d-Y g:iA', $job['timestamp'], $tz );
+                    $send_ts = $job['timestamp'];
+                    $time    = wp_date( 'm-d-Y g:iA', $send_ts, $tz );
                     $diff    = max( 0, $send_ts - $now );
                     $hours   = floor( $diff / HOUR_IN_SECONDS );
                     $minutes = floor( ( $diff % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
