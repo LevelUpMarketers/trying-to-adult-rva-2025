@@ -87,6 +87,42 @@
   background: #005177;
 }
 
+.tta-membership-mobile {
+  display: none;
+}
+
+.tta-tier-card {
+  border: 1px solid #ccc;
+  margin: 20px 0;
+  padding: 15px;
+}
+
+.tta-tier-card h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.tta-tier-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.tta-tier-card li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+  .tta-membership-table {
+    display: none;
+  }
+
+  .tta-membership-mobile {
+    display: block;
+  }
+}
+
 
 
 

@@ -18,41 +18,79 @@ echo do_shortcode( $header_shortcode );
   <h1><?php esc_html_e( 'Become a Trying to Adult Member', 'tta' ); ?></h1>
   <p><?php esc_html_e( 'Join our community and unlock special perks at local events.', 'tta' ); ?></p>
 
+<?php
+  $tiers = array(
+    'non_member' => __( 'Non-member', 'tta' ),
+    'basic'      => __( 'Standard Member', 'tta' ),
+    'premium'    => __( 'Premium Member', 'tta' ),
+  );
+
+  $features = array(
+    'monthly_cost'            => array(
+      'label'      => __( 'Monthly Cost', 'tta' ),
+      'non_member' => '$0',
+      'basic'      => '$10',
+      'premium'    => '$17',
+    ),
+    'monthly_new_friend_social' => array(
+      'label'      => __( 'Monthly New Friend Social', 'tta' ),
+      'non_member' => __( 'N/A', 'tta' ),
+      'basic'      => __( 'N/A', 'tta' ),
+      'premium'    => __( 'N/A', 'tta' ),
+    ),
+    'classic_events' => array(
+      'label'      => __( '3+ Classic Events Monthly', 'tta' ),
+      'non_member' => '$5 ' . __( 'access pass', 'tta' ),
+      'basic'      => __( 'Free access pass', 'tta' ),
+      'premium'    => __( 'Free access pass', 'tta' ),
+    ),
+    'special_events' => array(
+      'label'      => __( '3+ Special Events Monthly', 'tta' ),
+      'non_member' => '$7 ' . __( 'access pass', 'tta' ),
+      'basic'      => '$5 ' . __( 'access pass', 'tta' ),
+      'premium'    => __( 'Free access pass', 'tta' ),
+    ),
+    'guess_pass' => array(
+      'label'      => __( 'Guest Pass', 'tta' ),
+      'non_member' => __( 'N/A', 'tta' ),
+      'basic'      => __( 'N/A', 'tta' ),
+      'premium'    => __( 'N/A', 'tta' ),
+    ),
+    'waitlist_notice' => array(
+      'label'      => __( 'Advanced Notice on Waitlist Openings', 'tta' ),
+      'non_member' => __( 'N/A', 'tta' ),
+      'basic'      => __( 'N/A', 'tta' ),
+      'premium'    => __( 'N/A', 'tta' ),
+    ),
+    'special_rates' => array(
+      'label'      => __( 'Special Rates for Select Events', 'tta' ),
+      'non_member' => __( 'N/A', 'tta' ),
+      'basic'      => __( 'N/A', 'tta' ),
+      'premium'    => __( 'N/A', 'tta' ),
+    ),
+  );
+?>
+
   <table class="tta-membership-table">
     <thead>
       <tr>
         <th><?php esc_html_e( 'Benefits', 'tta' ); ?></th>
-        <th><?php esc_html_e( 'Basic', 'tta' ); ?></th>
-        <th><?php esc_html_e( 'Premium', 'tta' ); ?></th>
+        <?php foreach ( $tiers as $tier_label ) : ?>
+          <th><?php echo esc_html( $tier_label ); ?></th>
+        <?php endforeach; ?>
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td><?php esc_html_e( 'Access to free events every month', 'tta' ); ?></td>
-        <td class="check">&#10003;</td>
-        <td class="check">&#10003;</td>
-      </tr>
-      <tr>
-        <td><?php esc_html_e( 'Early access to new events', 'tta' ); ?></td>
-        <td></td>
-        <td class="check">&#10003;</td>
-      </tr>
-      <tr>
-        <td><?php esc_html_e( 'Discounts on paid events', 'tta' ); ?></td>
-        <td></td>
-        <td class="check">&#10003;</td>
-      </tr>
-      <tr>
-        <td><?php esc_html_e( 'Local discounts (coming soon)', 'tta' ); ?></td>
-        <td></td>
-        <td class="check">&#10003;</td>
-      </tr>
-      <tr class="tta-pricing-row">
-        <td><strong><?php esc_html_e( 'Price per month', 'tta' ); ?></strong></td>
-        <td>$5</td>
-        <td>$10</td>
-      </tr>
+      <?php foreach ( $features as $feature ) : ?>
+        <tr>
+          <td><?php echo esc_html( $feature['label'] ); ?></td>
+          <?php foreach ( $tiers as $tier_key => $tier_label ) : ?>
+            <td><?php echo esc_html( $feature[ $tier_key ] ); ?></td>
+          <?php endforeach; ?>
+        </tr>
+      <?php endforeach; ?>
       <tr class="tta-membership-actions">
+        <td></td>
         <td></td>
         <td>
           <button type="button" id="tta-basic-signup" class="tta-button tta-button-primary">
@@ -67,6 +105,31 @@ echo do_shortcode( $header_shortcode );
       </tr>
     </tbody>
   </table>
+
+  <div class="tta-membership-mobile">
+    <?php foreach ( $tiers as $tier_key => $tier_label ) : ?>
+      <div class="tta-tier-card">
+        <h2><?php echo esc_html( $tier_label ); ?></h2>
+        <ul>
+          <?php foreach ( $features as $feature ) : ?>
+            <li>
+              <span class="tta-feature-label"><?php echo esc_html( $feature['label'] ); ?></span>
+              <span class="tta-feature-value"><?php echo esc_html( $feature[ $tier_key ] ); ?></span>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if ( 'basic' === $tier_key ) : ?>
+          <button type="button" id="tta-basic-signup" class="tta-button tta-button-primary">
+            <?php esc_html_e( 'Sign Up', 'tta' ); ?>
+          </button>
+        <?php elseif ( 'premium' === $tier_key ) : ?>
+          <button type="button" id="tta-premium-signup" class="tta-button tta-button-primary">
+            <?php esc_html_e( 'Sign Up', 'tta' ); ?>
+          </button>
+        <?php endif; ?>
+      </div>
+    <?php endforeach; ?>
+  </div>
 </div>
 <?php
 get_footer();
