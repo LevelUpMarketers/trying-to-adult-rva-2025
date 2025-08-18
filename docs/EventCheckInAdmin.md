@@ -34,4 +34,5 @@ desktop slides the attendee list into view for a smoother experience.
 - Clicking the **Check In** or **No-Show** buttons now updates the status label with proper capitalization.
 - Selecting **No-Show** prompts a confirmation explaining that a third no-show automatically bans the member until they purchase a Re-entry Ticket and sends them an email with reinstatement instructions.
 - Once an attendee is marked as a no-show or checked in, both action buttons are disabled—and remain disabled on reload—to prevent duplicate submissions.
+- The ban and notification email trigger immediately once a member's total no-shows reach three or more, counting the event just marked.
 - Event headers display the date and time in a friendly format like `Saturday July 19, 2025 - 6:00 PM to 8:00 PM`. The venue name links to its website and the address links directly to Google Maps for quick directions. Event details are loaded via `tta_get_event_for_email()` so the venue information always appears.
