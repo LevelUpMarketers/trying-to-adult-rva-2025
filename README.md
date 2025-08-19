@@ -15,6 +15,7 @@ messages will not be sent.
 ## Development Quick Start
 
 1. Install PHP and Composer.
+   - PHP 8.1 or newer is supported. The `maennchen/zipstream-php` dependency is pinned to `^2.3` to avoid the PHP 8.2 requirement introduced in newer releases.
 2. Run `composer install` from the project root.
 3. Run `composer install` inside `app/public/wp-content/plugins/tta-management-plugin`.
 4. Execute `vendor/bin/phpunit` to ensure all tests pass.
